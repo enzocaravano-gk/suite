@@ -776,6 +776,78 @@
 }
 .row .field input[type="date"]::-webkit-date-and-time-value { text-align: left; margin: 0; }
 </style>
+<script>
+/* Suite: salva/apri la partita come file sul dispositivo (nessun server).
+   Stesso sistema della Lavagna: finestra nativa (Chrome/Edge), condivisione
+   su iPad/iPhone (Salva su File, AirDrop, Mail…), altrimenti download. */
+window.SuiteFile = (function () {
+  let handle = null;
+  async function save(obj, name, done) {
+    const data = JSON.stringify(obj, null, 2);
+    done = done || function () {};
+    if (handle) {
+      try { const w = await handle.createWritable(); await w.write(data); await w.close(); done('File salvato'); return; }
+      catch (e) { handle = null; }
+    }
+    if (window.showSaveFilePicker) {
+      try {
+        const h = await window.showSaveFilePicker({ suggestedName: name,
+          types: [{ description: 'Partita (JSON)', accept: { 'application/json': ['.json'] } }] });
+        const w = await h.createWritable(); await w.write(data); await w.close();
+        handle = h; done('File salvato'); return;
+      } catch (e) { if (e && e.name === 'AbortError') return; }
+    }
+    try {
+      const file = new File([data], name, { type: 'application/json' });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], title: name });
+        done('File salvato'); return;
+      }
+    } catch (e) { if (e && e.name === 'AbortError') return; }
+    try {
+      const url = URL.createObjectURL(new Blob([data], { type: 'application/json' }));
+      const a = document.createElement('a'); a.href = url; a.download = name; a.rel = 'noopener';
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1500);
+      done('File scaricato'); return;
+    } catch (e) {}
+    alert('Impossibile salvare il file su questo dispositivo.');
+  }
+  async function open(onText) {
+    if (window.showOpenFilePicker) {
+      try {
+        const [h] = await window.showOpenFilePicker({ multiple: false,
+          types: [{ description: 'Partita (JSON)', accept: { 'application/json': ['.json'] } }] });
+        const f = await h.getFile(); handle = h; onText(await f.text()); return;
+      } catch (e) { if (e && e.name === 'AbortError') return; }
+    }
+    // iPad/iPhone: l'input deve stare nel documento per aprirsi
+    const inp = document.createElement('input');
+    inp.type = 'file'; inp.accept = '.json,application/json,application/octet-stream';
+    inp.style.position = 'fixed'; inp.style.left = '-9999px'; inp.style.top = '0';
+    document.body.appendChild(inp);
+    inp.addEventListener('change', () => {
+      const f = inp.files && inp.files[0];
+      if (f) { const fr = new FileReader(); fr.onload = () => onText(String(fr.result)); fr.readAsText(f); }
+      setTimeout(() => inp.remove(), 0);
+    });
+    inp.click();
+  }
+  function fileName(app, opponent, date) {
+    return (app + '_' + (opponent || 'partita') + '_' + (date || new Date().toISOString().slice(0, 10)))
+      .replace(/[^\w\-]+/g, '_').replace(/_+/g, '_') + '.json';
+  }
+  // legge il file e controlla che sia dell'app giusta; null se non valido
+  function parse(text, app, labels) {
+    let f;
+    try { f = JSON.parse(text); } catch (e) { alert(labels.invalid); return null; }
+    if (!f || typeof f !== 'object' || !f.dati || typeof f.dati !== 'object') { alert(labels.invalid); return null; }
+    if (f.app !== app) { alert(labels.wrongApp); return null; }
+    return f;
+  }
+  return { save, open, fileName, parse };
+})();
+</script>
 </head>
 <body>
 
@@ -903,6 +975,8 @@
     <div class="actions">
         <div class="left">
             <button class="btn btn-primary" id="previewBtn">📄 Salva PDF</button>
+            <button class="btn btn-outline" id="saveFileBtn" title="Salva la partita come file sul dispositivo">💾 Salva file</button>
+            <button class="btn btn-outline" id="openFileBtn" title="Apri una partita salvata sul dispositivo">📂 Apri file</button>
             <button class="btn btn-outline" id="newSchemeBtn">➕ Nuovo schema</button>
             <button class="btn btn-outline" id="clearBtn">🧹 Pulisci posizionamenti</button>
             <button class="btn btn-outline" id="resetBtn">⟲ Reset completo</button>
@@ -1157,7 +1231,15 @@
         'Pallone': 'Ball', 'Personalizzati': 'Custom', '➕ Aggiungi modulo…': '➕ Add formation…', '🗑 Elimina modulo {f}': '🗑 Delete formation {f}',
         'Nuovo modulo': 'New formation', 'Modulo (es. {e})': 'Formation (e.g. {e})', 'Eliminare il modulo {f}?': 'Delete the formation {f}?',
         'Scrivi il modulo con i numeri delle linee separati da trattini, ad esempio {e}. La somma deve fare {n} (portiere escluso).':
-            'Write the formation as the number of players per line separated by dashes, for example {e}. They must add up to {n} (goalkeeper excluded).', '🌐 English': '🌐 English', '🌐 Italiano': '🌐 Italiano'
+            'Write the formation as the number of players per line separated by dashes, for example {e}. They must add up to {n} (goalkeeper excluded).', '🌐 English': '🌐 English', '🌐 Italiano': '🌐 Italiano',
+        '💾 Salva file': '💾 Save file', '📂 Apri file': '📂 Open file',
+        'Salva la partita come file sul dispositivo': 'Save the match as a file on this device',
+        'Apri una partita salvata sul dispositivo': 'Open a match saved on this device',
+        'File salvato': 'File saved', 'File scaricato': 'File downloaded',
+        'File non valido: non è una partita salvata.': 'Invalid file: not a saved match.',
+        'Questo file non è di Posizionamenti: aprilo dall\'app giusta (Lavagna o Report).': 'This file is not from Positioning: open it from the right app (Board or Report).',
+        'Aprire questa partita? La scheda attuale verrà sostituita (se ti serve, salvala prima con 💾 Salva file).': 'Open this match? The current sheet will be replaced (save it first with 💾 Save file if you need it).',
+        'Impossibile aprire il file su questo dispositivo.': 'Could not open the file on this device.'
     };
     function t(str, vars) {
         let out = lang === 'en' && Object.prototype.hasOwnProperty.call(EN, str) ? EN[str] : str;
@@ -4160,6 +4242,27 @@
         try { localStorage.setItem(LANG_KEY, lang); } catch (_) {}
         applyLang();
         render();
+    });
+
+    // ---- SALVA / APRI FILE: la partita resta sul dispositivo ----
+    $('saveFileBtn').addEventListener('click', () => {
+        save();
+        const m = state.meta || {};
+        SuiteFile.save({ app: 'posizionamenti', versione: 1, salvatoIl: new Date().toISOString(), dati: state },
+            SuiteFile.fileName('posizionamenti', m.opponent, m.date), msg => showToast(t(msg)));
+    });
+    $('openFileBtn').addEventListener('click', () => {
+        SuiteFile.open(text => {
+            const f = SuiteFile.parse(text, 'posizionamenti', {
+                invalid: t('File non valido: non è una partita salvata.'),
+                wrongApp: t('Questo file non è di Posizionamenti: aprilo dall\'app giusta (Lavagna o Report).')
+            });
+            if (!f) return;
+            if (!confirm(t('Aprire questa partita? La scheda attuale verrà sostituita (se ti serve, salvala prima con 💾 Salva file).'))) return;
+            try { localStorage.setItem(STORAGE_KEY, JSON.stringify(f.dati)); }
+            catch (_) { alert(t('Impossibile aprire il file su questo dispositivo.')); return; }
+            location.reload();
+        });
     });
 
     // ---- INIT ----

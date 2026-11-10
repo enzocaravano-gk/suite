@@ -908,6 +908,78 @@
             display: none !important;
         }
     </style>
+<script>
+/* Suite: salva/apri la partita come file sul dispositivo (nessun server).
+   Stesso sistema della Lavagna: finestra nativa (Chrome/Edge), condivisione
+   su iPad/iPhone (Salva su File, AirDrop, Mail…), altrimenti download. */
+window.SuiteFile = (function () {
+  let handle = null;
+  async function save(obj, name, done) {
+    const data = JSON.stringify(obj, null, 2);
+    done = done || function () {};
+    if (handle) {
+      try { const w = await handle.createWritable(); await w.write(data); await w.close(); done('File salvato'); return; }
+      catch (e) { handle = null; }
+    }
+    if (window.showSaveFilePicker) {
+      try {
+        const h = await window.showSaveFilePicker({ suggestedName: name,
+          types: [{ description: 'Partita (JSON)', accept: { 'application/json': ['.json'] } }] });
+        const w = await h.createWritable(); await w.write(data); await w.close();
+        handle = h; done('File salvato'); return;
+      } catch (e) { if (e && e.name === 'AbortError') return; }
+    }
+    try {
+      const file = new File([data], name, { type: 'application/json' });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], title: name });
+        done('File salvato'); return;
+      }
+    } catch (e) { if (e && e.name === 'AbortError') return; }
+    try {
+      const url = URL.createObjectURL(new Blob([data], { type: 'application/json' }));
+      const a = document.createElement('a'); a.href = url; a.download = name; a.rel = 'noopener';
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1500);
+      done('File scaricato'); return;
+    } catch (e) {}
+    alert('Impossibile salvare il file su questo dispositivo.');
+  }
+  async function open(onText) {
+    if (window.showOpenFilePicker) {
+      try {
+        const [h] = await window.showOpenFilePicker({ multiple: false,
+          types: [{ description: 'Partita (JSON)', accept: { 'application/json': ['.json'] } }] });
+        const f = await h.getFile(); handle = h; onText(await f.text()); return;
+      } catch (e) { if (e && e.name === 'AbortError') return; }
+    }
+    // iPad/iPhone: l'input deve stare nel documento per aprirsi
+    const inp = document.createElement('input');
+    inp.type = 'file'; inp.accept = '.json,application/json,application/octet-stream';
+    inp.style.position = 'fixed'; inp.style.left = '-9999px'; inp.style.top = '0';
+    document.body.appendChild(inp);
+    inp.addEventListener('change', () => {
+      const f = inp.files && inp.files[0];
+      if (f) { const fr = new FileReader(); fr.onload = () => onText(String(fr.result)); fr.readAsText(f); }
+      setTimeout(() => inp.remove(), 0);
+    });
+    inp.click();
+  }
+  function fileName(app, opponent, date) {
+    return (app + '_' + (opponent || 'partita') + '_' + (date || new Date().toISOString().slice(0, 10)))
+      .replace(/[^\w\-]+/g, '_').replace(/_+/g, '_') + '.json';
+  }
+  // legge il file e controlla che sia dell'app giusta; null se non valido
+  function parse(text, app, labels) {
+    let f;
+    try { f = JSON.parse(text); } catch (e) { alert(labels.invalid); return null; }
+    if (!f || typeof f !== 'object' || !f.dati || typeof f.dati !== 'object') { alert(labels.invalid); return null; }
+    if (f.app !== app) { alert(labels.wrongApp); return null; }
+    return f;
+  }
+  return { save, open, fileName, parse };
+})();
+</script>
 </head>
 <body>
 
@@ -1041,6 +1113,8 @@
                     <span class="btn-text">📄 Esporta PDF</span>
                     <span class="spinner"></span>
                 </button>
+                <button class="btn btn-outline" id="saveFileBtn" title="Salva la partita come file sul dispositivo">💾 Salva file</button>
+                <button class="btn btn-outline" id="openFileBtn" title="Apri una partita salvata sul dispositivo">📂 Apri file</button>
                 <button class="btn btn-clear" id="clearBtn">🧹 Pulisci formazione</button>
                 <button class="btn btn-reset" id="resetBtn">⟲ Reset completo</button>
             </div>
@@ -1677,6 +1751,40 @@
                     return true;
                 } catch (_) { return false; }
             }
+
+            // ---- SALVA / APRI FILE: la partita resta sul dispositivo ----
+            (function () {
+                const saveBtn = document.getElementById('saveFileBtn');
+                const openBtn = document.getElementById('openFileBtn');
+                function flash(btn, msg) {
+                    const orig = btn.dataset.orig || btn.textContent;
+                    btn.dataset.orig = orig;
+                    btn.textContent = '✓ ' + msg;
+                    setTimeout(() => { btn.textContent = orig; }, 1600);
+                }
+                saveBtn.addEventListener('click', () => {
+                    autoSave();
+                    let dati = null;
+                    try { dati = JSON.parse(localStorage.getItem('matchReportState20') || 'null'); } catch (_) {}
+                    if (!dati) { alert('Impossibile preparare il file su questo dispositivo.'); return; }
+                    SuiteFile.save({ app: 'report', versione: 1, salvatoIl: new Date().toISOString(), dati: dati },
+                        SuiteFile.fileName('report', opponentEl.value.trim()), msg => flash(saveBtn, msg));
+                });
+                openBtn.addEventListener('click', () => {
+                    SuiteFile.open(text => {
+                        const f = SuiteFile.parse(text, 'report', {
+                            invalid: 'File non valido: non è una partita salvata.',
+                            wrongApp: "Questo file non è di Report: aprilo dall'app giusta (Lavagna o Posizionamenti)."
+                        });
+                        if (!f) return;
+                        if (!confirm('Aprire questa partita? Il report attuale verrà sostituito (se ti serve, salvalo prima con 💾 Salva file).')) return;
+                        try { localStorage.setItem('matchReportState20', JSON.stringify(f.dati)); }
+                        catch (_) { alert('Impossibile aprire il file su questo dispositivo.'); return; }
+                        if (loadState()) flash(openBtn, 'Partita aperta');
+                        else alert('File non valido: non è una partita salvata.');
+                    });
+                });
+            })();
 
             // ---- CLEAR / RESET ----
             function clearFormation() {
