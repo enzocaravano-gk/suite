@@ -1,0 +1,2254 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Match Report · Bianco Nero Granata</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js">
+    </script>
+    <style>
+        :root {
+            --accent: #8B0000;
+            --accent-dark: #600000;
+            --accent-rgb: 139, 0, 0;
+        }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+            background: #f4f4f4;
+            padding: 20px;
+            color: #1a1a1a;
+        }
+        .app {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 28px;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+            padding: 30px 35px 40px;
+            border: 1px solid #e0e0e0;
+            position: relative;
+        }
+
+        /* ---- LOGO ROW ---- */
+        .logo-row {
+            display: flex;
+            align-items: center;
+            gap: 30px;
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid var(--accent);
+            flex-wrap: wrap;
+        }
+        .logo-box {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            flex: 1 1 300px;
+        }
+        .logo-box img {
+            max-height: 80px;
+            max-width: 160px;
+            object-fit: contain;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 6px;
+            background: #fff;
+            transition: 0.2s;
+        }
+        .logo-box img:not([src]),
+        .logo-box img[src=""] {
+            display: none;
+        }
+        .logo-box img[src]:not([src=""]) {
+            display: block;
+        }
+        .logo-placeholder {
+            font-size: 13px;
+            color: #888;
+        }
+
+        /* ---- HAMBURGER MENU ---- */
+        .hamburger-wrap {
+            position: relative;
+            margin-left: auto;
+        }
+        .hamburger-btn {
+            background: transparent;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            padding: 6px 10px;
+            color: var(--accent);
+            transition: 0.2s;
+            line-height: 1;
+        }
+        .hamburger-btn:hover {
+            color: var(--accent-dark);
+            transform: scale(1.05);
+        }
+        .hamburger-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: #ffffff;
+            border: 1.5px solid var(--accent);
+            border-radius: 14px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+            padding: 16px 20px;
+            min-width: 240px;
+            display: none;
+            z-index: 100;
+            margin-top: 8px;
+        }
+        .hamburger-dropdown.open {
+            display: block;
+        }
+        .hamburger-dropdown .logo-upload {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .hamburger-dropdown .logo-upload label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--accent);
+            letter-spacing: 0.3px;
+            cursor: pointer;
+        }
+        .hamburger-dropdown .logo-upload input[type="file"] {
+            font-size: 13px;
+            padding: 6px 8px;
+            border: 1.5px dashed var(--accent);
+            border-radius: 10px;
+            background: #fcfcfc;
+            cursor: pointer;
+        }
+        .hamburger-dropdown .logo-upload input[type="file"]::-webkit-file-upload-button {
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        .hamburger-dropdown .logo-upload input[type="file"]::-webkit-file-upload-button:hover {
+            background: var(--accent-dark);
+        }
+        .hamburger-dropdown .logo-upload.hidden {
+            display: none;
+        }
+        .hamburger-dropdown .menu-item {
+            padding: 6px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .hamburger-dropdown .menu-item:last-child {
+            border-bottom: none;
+        }
+        .color-picker {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .color-picker-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--accent);
+            letter-spacing: 0.3px;
+        }
+        .color-swatches {
+            display: flex;
+            gap: 9px;
+            flex-wrap: wrap;
+        }
+        .color-swatch {
+            width: 26px;
+            height: 26px;
+            padding: 0;
+            border: 2px solid #fff;
+            border-radius: 50%;
+            box-shadow: 0 0 0 1.5px #d0d0d0;
+            cursor: pointer;
+            transition: 0.15s;
+        }
+        .color-swatch:hover {
+            transform: scale(1.12);
+        }
+        .color-swatch.selected {
+            box-shadow: 0 0 0 1.5px #fff, 0 0 0 3.5px var(--accent);
+        }
+        .link-btn {
+            background: none;
+            border: none;
+            color: var(--accent);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            padding: 0;
+            font-family: inherit;
+            text-align: left;
+        }
+        .coach-name { font-size: 13px; color: #555; word-break: break-word; }
+        .coach-name:empty { display: none; }
+
+        /* firma dell'allenatore: compare solo nel PDF, in fondo a destra */
+        .coach-sign { display: none; }
+        .app.pdf-export .coach-sign:not(:empty) {
+            display: block;
+            text-align: right;
+            font-size: 11px;
+            color: #9a9a9a;
+            letter-spacing: 0.3px;
+            margin-top: 10px;
+        }
+
+        /* ---- HEADER ---- */
+        h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1a1a1a;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 28px;
+            border-bottom: 3px solid var(--accent);
+            padding-bottom: 16px;
+        }
+        h1 small {
+            font-size: 15px;
+            font-weight: 400;
+            color: var(--accent);
+            margin-left: auto;
+        }
+
+        /* ---- FORM ROWS ---- */
+        .row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px 30px;
+            margin-bottom: 20px;
+            align-items: flex-end;
+        }
+        .row .field {
+            display: flex;
+            flex-direction: column;
+            flex: 1 1 140px;
+            min-width: 120px;
+        }
+        .row .field label {
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            color: var(--accent);
+            margin-bottom: 4px;
+        }
+        .row .field input,
+        .row .field select {
+            padding: 10px 14px;
+            border: 1.5px solid #d0d0d0;
+            border-radius: 12px;
+            font-size: 15px;
+            background: #fafafa;
+            transition: 0.2s;
+            width: 100%;
+            font-family: inherit;
+            color: #1a1a1a;
+        }
+        .row .field input:focus,
+        .row .field select:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.15);
+            background: #fff;
+        }
+
+        /* ---- TABLE ---- */
+        .table-wrap {
+            overflow-x: auto;
+            margin: 24px 0 18px;
+            border-radius: 16px;
+            border: 1.5px solid #e0e0e0;
+            background: #ffffff;
+        }
+        .player-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+            min-width: 800px;
+        }
+        .player-table th {
+            background: var(--accent);
+            color: #ffffff;
+            font-weight: 600;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 12px 8px;
+            text-align: left;
+            border-bottom: 2px solid var(--accent-dark);
+            white-space: nowrap;
+        }
+        .player-table td {
+            padding: 6px 6px;
+            border-bottom: 1px solid #eeeeee;
+            vertical-align: middle;
+        }
+        .player-table tr:hover td {
+            background: #fdf6f6;
+        }
+        .col-num {
+            width: 40px;
+            text-align: center;
+            font-weight: 600;
+            color: var(--accent);
+        }
+        .col-name {
+            min-width: 130px;
+        }
+        .col-role {
+            width: 140px;
+        }
+        .col-min {
+            width: 85px;
+        }
+        .col-eval {
+            width: 80px;
+            text-align: center;
+        }
+        .col-notes {
+            min-width: 140px;
+        }
+
+        .player-table input[type="text"],
+        .player-table input[type="number"],
+        .player-table select {
+            width: 100%;
+            padding: 6px 8px;
+            border: 1.5px solid #d0d0d0;
+            border-radius: 10px;
+            font-size: 14px;
+            background: #fff;
+            transition: 0.15s;
+            font-family: inherit;
+            color: #1a1a1a;
+        }
+        .player-table input:focus,
+        .player-table select:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.12);
+        }
+        .player-table input[type="number"] {
+            width: 70px;
+            text-align: center;
+            padding: 6px 4px;
+        }
+
+        /* ---- DETTATURA VOCALE FORMAZIONE (pulsante unico) ---- */
+        .dictation-bar {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+            margin: 4px 0 18px;
+        }
+        .btn-dictate {
+            background: #ffffff;
+            color: var(--accent);
+            border: 1.5px solid var(--accent);
+        }
+        .btn-dictate:hover {
+            background: #fdf6f6;
+            border-color: var(--accent-dark);
+        }
+        .btn-dictate.listening {
+            background: var(--accent);
+            color: #fff;
+            animation: mic-pulse 1s ease-in-out infinite;
+        }
+        .btn-dictate:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .dictation-hint {
+            font-style: italic;
+        }
+        @keyframes mic-pulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(var(--accent-rgb), 0.45); }
+            50% { box-shadow: 0 0 0 8px rgba(var(--accent-rgb), 0); }
+        }
+
+        /* ---- RATING CIRCLE (VERDE, GIALLO, ROSSO) ---- */
+        .rating-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 3px solid #b0b0b0;
+            background: #ffffff;
+            cursor: pointer;
+            transition: 0.2s;
+            margin: 0 auto;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+        }
+        .rating-circle:hover {
+            transform: scale(1.08);
+            border-color: var(--accent);
+        }
+        .rating-circle.rating-1 {
+            background: #2b9e2b;
+            border-color: #1e7a1e;
+            box-shadow: 0 2px 10px rgba(43, 158, 43, 0.4);
+        }
+        .rating-circle.rating-2 {
+            background: #e8c42b;
+            border-color: #c4a020;
+            box-shadow: 0 2px 10px rgba(232, 196, 43, 0.4);
+        }
+        .rating-circle.rating-3 {
+            background: #d43d3d;
+            border-color: #b02a2a;
+            box-shadow: 0 2px 10px rgba(212, 61, 61, 0.4);
+        }
+
+        /* ---- NOTE GENERALI ---- */
+        .notes-section {
+            margin: 22px 0 16px;
+        }
+        .notes-section label {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--accent);
+            display: block;
+            margin-bottom: 6px;
+        }
+        .notes-section textarea {
+            width: 100%;
+            padding: 14px 18px;
+            border: 1.5px solid #d0d0d0;
+            border-radius: 16px;
+            font-size: 15px;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 90px;
+            background: #fafafa;
+            transition: 0.2s;
+            color: #1a1a1a;
+        }
+        .notes-section textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.10);
+            background: #fff;
+        }
+
+        /* ---- BOTTONI ---- */
+        .actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 14px;
+            margin-top: 28px;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .actions .left {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 14px;
+        }
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 40px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            font-family: inherit;
+        }
+        .btn-pdf {
+            background: var(--accent);
+            color: #fff;
+            box-shadow: 0 4px 14px rgba(var(--accent-rgb), 0.35);
+        }
+        .btn-pdf:hover {
+            background: var(--accent-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(var(--accent-rgb), 0.40);
+        }
+        .btn-pdf:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .btn-clear {
+            background: #ffffff;
+            color: var(--accent);
+            border: 1.5px solid var(--accent);
+        }
+        .btn-clear:hover {
+            background: #fdf6f6;
+            border-color: var(--accent-dark);
+        }
+        .btn-reset {
+            background: #ffffff;
+            color: var(--accent);
+            border: 1.5px solid var(--accent);
+        }
+        .btn-reset:hover {
+            background: #fdf6f6;
+            border-color: var(--accent-dark);
+        }
+        .text-muted {
+            color: #6a6a6a;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        /* ---- SPINNER ---- */
+        .spinner {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border: 3px solid rgba(255, 255, 255, 0.25);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 0.7s linear infinite;
+        }
+        .btn-pdf .spinner {
+            display: none;
+        }
+        .btn-pdf.loading .spinner {
+            display: inline-block;
+        }
+        .btn-pdf.loading .btn-text {
+            display: none;
+        }
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* ---- BOTTONI GENERICI (finestra roster) ---- */
+        .btn-primary {
+            background: var(--accent);
+            color: #fff;
+            box-shadow: 0 4px 14px rgba(var(--accent-rgb), 0.35);
+        }
+        .btn-primary:hover { background: var(--accent-dark); }
+        .btn-outline {
+            background: #fff;
+            color: var(--accent);
+            border: 1.5px solid var(--accent);
+        }
+        .btn-outline:hover { background: #fdf6f6; border-color: var(--accent-dark); }
+
+        /* ---- AVVISO TEMPORANEO ---- */
+        .toast {
+            position: fixed; left: 50%; bottom: max(24px, env(safe-area-inset-bottom));
+            transform: translate(-50%, 20px); opacity: 0; pointer-events: none;
+            background: #222; color: #fff; padding: 11px 18px; border-radius: 12px;
+            font-size: 14px; font-weight: 600; box-shadow: 0 6px 24px rgba(0,0,0,0.3);
+            transition: opacity 0.2s, transform 0.2s; z-index: 900; max-width: calc(100% - 32px); text-align: center;
+        }
+        .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+        /* ---- ANTEPRIMA PDF ---- */
+        .modal {
+            position: fixed;
+            inset: 0;
+            background: #3a3a3a;
+            display: none;
+            flex-direction: column;
+            z-index: 500;
+        }
+        .modal.open { display: flex; }
+        .modal-bar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 20px;
+            padding-top: max(12px, env(safe-area-inset-top));
+            padding-left: max(20px, env(safe-area-inset-left));
+            padding-right: max(20px, env(safe-area-inset-right));
+            background: #fff;
+            flex-wrap: wrap;
+        }
+        .modal-bar strong { font-size: 17px; margin-right: auto; }
+        .modal-bar .btn { padding: 10px 20px; }
+        .zoom-group { display: inline-flex; border: 1.5px solid var(--accent); border-radius: 40px; overflow: hidden; }
+        .zoom-group button {
+            background: #fff;
+            color: var(--accent);
+            border: none;
+            min-width: 44px;
+            height: 42px;
+            padding: 0 12px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        .zoom-group button + button { border-left: 1px solid rgba(var(--accent-rgb), 0.3); }
+        .modal-body {
+            flex: 1;
+            overflow: auto;
+            -webkit-overflow-scrolling: touch;
+            padding: 20px 16px;
+            padding-bottom: max(20px, env(safe-area-inset-bottom));
+        }
+        /* margin auto (non justify-content) così, quando il foglio
+           ingrandito supera lo schermo, si scorre anche verso sinistra */
+        .modal-body canvas {
+            display: block;
+            margin: 0 auto;
+            height: auto;
+            background: #fff;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        /* ---- ROSTER SQUADRA (finestra) ---- */
+        .pl-editor {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.45);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 600;
+            padding: 16px;
+        }
+        .pl-editor.open { display: flex; }
+        .pl-card {
+            background: #fff;
+            border-radius: 18px;
+            width: 100%;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+        }
+        .pl-card h3 { font-size: 16px; color: var(--accent); }
+        .pl-card textarea {
+            padding: 10px 12px;
+            border: 1.5px solid #d0d0d0;
+            border-radius: 12px;
+            font-family: inherit;
+            width: 100%;
+            resize: vertical;
+            color: #1a1a1a;
+        }
+        .pl-card textarea:focus { outline: none; border-color: var(--accent); }
+        .pl-card .row-btns { display: flex; gap: 10px; }
+        .pl-card.roster-card {
+            max-width: 560px; max-height: calc(100vh - 32px); max-height: calc(100dvh - 32px);
+            display: flex; flex-direction: column; padding: 18px 18px 16px;
+        }
+        .roster-card h3 { margin-bottom: 6px; }
+        .roster-help { font-size: 13px; color: #666; line-height: 1.4; margin-bottom: 12px; }
+        .roster-tools { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+        .roster-tools .btn, .roster-card .row-btns .btn, .roster-confirm .btn { padding: 9px 14px; font-size: 14px; }
+        .roster-paste, .roster-confirm {
+            background: #f6f6f6; border-radius: 12px; padding: 10px; margin-bottom: 12px;
+        }
+        .roster-paste textarea { min-height: 110px; font-size: 15px; margin-bottom: 8px; }
+        .roster-paste .row-btns, .roster-confirm .row-btns { flex-wrap: wrap; }
+        .roster-confirm p { font-size: 14px; font-weight: 600; margin-bottom: 8px; }
+        .roster-list { flex: 1; min-height: 120px; overflow-y: auto; border: 1px solid #e3e3e3; border-radius: 12px; margin-bottom: 10px; }
+        .roster-list .r-row { display: grid; grid-template-columns: 58px 1fr 92px 36px; border-bottom: 1px solid #eee; }
+        .roster-list .r-row:last-child { border-bottom: none; }
+        .roster-list .r-head { position: sticky; top: 0; background: #faf6f6; z-index: 1; font-size: 11px; font-weight: 800; color: var(--accent); text-transform: uppercase; }
+        .roster-list .r-head span { padding: 7px 10px; }
+        .roster-list input {
+            border: none; border-radius: 0; padding: 9px 10px; font-size: 15px; background: transparent;
+            min-width: 0; width: 100%; font-family: inherit; color: #1a1a1a;
+        }
+        .roster-list input:focus { outline: 2px solid var(--accent); outline-offset: -2px; background: #fffdf8; }
+        .roster-list input.r-num { text-align: center; font-weight: 700; }
+        .roster-list input.dup { color: #c00; background: #fff0f0; }
+        .roster-list .r-del { border: none; background: none; color: #aaa; font-size: 18px; cursor: pointer; }
+        .roster-list .r-del:hover { color: #c00; }
+        .roster-empty { padding: 22px 14px; text-align: center; color: #888; font-size: 14px; }
+        .roster-add { align-self: flex-start; margin-bottom: 12px; border: none; background: none; color: var(--accent); font: inherit; font-weight: 700; cursor: pointer; padding: 4px 2px; }
+        .roster-card .row-btns { justify-content: space-between; }
+        @media (max-width: 480px) {
+            .roster-list .r-row { grid-template-columns: 50px 1fr 64px 32px; }
+            .roster-tools .btn { flex: 1 1 calc(50% - 4px); justify-content: center; }
+        }
+
+        /* ---- RESPONSIVE ---- */
+        @media (max-width: 760px) {
+            .app {
+                padding: 18px 16px 30px;
+            }
+            h1 {
+                font-size: 22px;
+                flex-wrap: wrap;
+            }
+            h1 small {
+                margin-left: 0;
+                width: 100%;
+                font-size: 13px;
+            }
+            .logo-row {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+            .hamburger-wrap {
+                margin-left: 0;
+                align-self: flex-end;
+            }
+            .row .field {
+                flex: 1 1 100%;
+                min-width: 100%;
+            }
+            .player-table {
+                font-size: 13px;
+                min-width: 700px;
+            }
+            .rating-circle {
+                width: 32px;
+                height: 32px;
+            }
+            .actions {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .actions .left {
+                flex-direction: column;
+            }
+            .btn {
+                justify-content: center;
+                padding: 14px 20px;
+            }
+            .player-table input[type="number"] {
+                width: 54px;
+            }
+            .hamburger-dropdown {
+                right: -10px;
+                min-width: 180px;
+            }
+        }
+
+        /* ---- STYLES PER PDF (applicate con classe .pdf-export) ----
+           Il PDF usa un formato pagina calcolato dinamicamente sull'altezza
+           reale del contenuto (vedi savePdf in JS), quindi qui NON serve
+           schiacciare tutto per farlo stare in una A4 fissa: basta una
+           larghezza fissa e coerente, e nascondere gli elementi solo-UI. */
+        .app.pdf-export {
+            width: 800px !important;
+            max-width: 800px !important;
+            margin: 0 auto !important;
+            padding: 22px 26px 26px !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
+            border: none !important;
+        }
+        /* il PDF ha sempre l'impaginazione "da computer", anche se si
+           esporta da telefono: le regole mobile (logo in colonna, riquadro
+           logo alto 300px, "Rosa 26" a capo) qui vanno annullate */
+        .app.pdf-export .logo-row {
+            margin-bottom: 14px !important;
+            padding-bottom: 12px !important;
+            flex-direction: row !important;
+            align-items: center !important;
+        }
+        .app.pdf-export .logo-box {
+            flex: 1 1 auto !important;
+        }
+        .app.pdf-export .logo-box img {
+            max-height: 55px !important;
+            max-width: 110px !important;
+        }
+        .app.pdf-export .logo-placeholder,
+        .app.pdf-export .actions,
+        .app.pdf-export .hamburger-wrap {
+            display: none !important;
+        }
+        .app.pdf-export h1 {
+            font-size: 20px !important;
+            margin-bottom: 16px !important;
+            flex-wrap: nowrap !important;
+        }
+        .app.pdf-export h1 small {
+            font-size: 12px !important;
+            margin-left: auto !important;
+            width: auto !important;
+        }
+        .app.pdf-export .row {
+            gap: 8px 10px !important;
+            margin-bottom: 14px !important;
+            flex-wrap: nowrap !important;
+        }
+        .app.pdf-export .row .field {
+            flex: 1 1 0 !important;
+            min-width: 0 !important;
+        }
+        .app.pdf-export .row .field:first-child {
+            flex: 2 1 0 !important;
+        }
+        .app.pdf-export .row .field.field-result {
+            flex: 0 0 80px !important;
+            min-width: 0 !important;
+            width: 80px !important;
+        }
+        .app.pdf-export .row .field label {
+            font-size: 10px !important;
+        }
+        .app.pdf-export .row .field input,
+        .app.pdf-export .row .field select {
+            padding: 5px 8px !important;
+            font-size: 12px !important;
+        }
+        .app.pdf-export .table-wrap {
+            overflow: visible !important;
+            margin: 12px 0 14px !important;
+        }
+        .app.pdf-export .player-table {
+            font-size: 12px !important;
+            min-width: 0 !important;
+            width: 100% !important;
+            table-layout: fixed !important;
+        }
+        .app.pdf-export .player-table th {
+            font-size: 10px !important;
+            padding: 6px 4px !important;
+        }
+        .app.pdf-export .player-table td {
+            padding: 3px 4px !important;
+            vertical-align: top !important;
+        }
+        .app.pdf-export .col-num {
+            width: 24px !important;
+        }
+        .app.pdf-export .col-name {
+            width: 120px !important;
+            min-width: 0 !important;
+        }
+        .app.pdf-export .col-role {
+            width: 48px !important;
+        }
+        .app.pdf-export .col-min {
+            /* più larga del necessario per "45": lo spazio in eccesso
+               resta vuoto a destra del numero (la cella non è centrata)
+               e serve a staccare la colonna Valutazione da Minuti. */
+            width: 78px !important;
+        }
+        .app.pdf-export .col-notes {
+            /* nessuna larghezza esplicita: la colonna Note prende
+               tutto lo spazio residuo della tabella */
+            min-width: 0 !important;
+        }
+        .app.pdf-export .player-table input[type="text"],
+        .app.pdf-export .player-table input[type="number"],
+        .app.pdf-export .player-table select {
+            padding: 3px 5px !important;
+            font-size: 11px !important;
+        }
+        .app.pdf-export .player-table input[type="number"] {
+            width: 40px !important;
+        }
+        .app.pdf-export .dictation-bar {
+            display: none !important;
+        }
+        .app.pdf-export .col-eval {
+            /* è la larghezza di Minuti (sopra) a fare il lavoro di
+               staccare questa colonna da Minuti; qui serve solo lo
+               spazio minimo che fa stare "Valut." su una riga senza
+               sbordare nell'intestazione di Note. */
+            width: 46px !important;
+        }
+        .app.pdf-export .rating-circle {
+            width: 22px !important;
+            height: 22px !important;
+            border-width: 2px !important;
+            /* l'alone colorato (box-shadow) del pallino valutato è pensato
+               per l'interfaccia a schermo intero: nella colonna stretta del
+               PDF "mangia" lo spazio verso Minuti dando l'impressione di
+               sovrapposizione, quindi qui lo rimuoviamo. */
+            box-shadow: none !important;
+            margin: 3px auto 0 !important;
+        }
+        .app.pdf-export .notes-section {
+            margin: 14px 0 4px !important;
+        }
+        .app.pdf-export .notes-section label {
+            font-size: 12px !important;
+        }
+        .app.pdf-export .notes-section textarea {
+            padding: 8px 10px !important;
+            font-size: 12px !important;
+            min-height: 50px !important;
+        }
+        .app.pdf-export .text-muted {
+            display: none !important;
+        }
+
+        /* ---- "GEMELLI" DI TESTO PER L'ESPORTAZIONE PDF ----
+           html2canvas non va a capo correttamente il testo dentro
+           input/textarea (lo disegna tutto su una riga, che sbord fuori
+           dal riquadro). In fase di export sostituiamo ogni campo con un
+           div identico nell'aspetto ma con wrapping vero: se la nota è
+           lunga, il div cresce in altezza invece di essere tagliato. */
+        .print-value {
+            white-space: pre-wrap;
+            word-break: break-word;
+            overflow-wrap: anywhere;
+        }
+        [data-pdf-hidden] {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app" id="app">
+
+        <!-- LOGO + HAMBURGER -->
+        <div class="logo-row">
+            <div class="logo-box">
+                <img id="clubLogo" alt="Logo società" />
+                <span class="logo-placeholder" id="logoPlaceholder">(logo non caricato)</span>
+            </div>
+            <div class="hamburger-wrap">
+                <button class="hamburger-btn" id="hamburgerBtn" aria-label="Menu">☰</button>
+                <div class="hamburger-dropdown" id="hamburgerDropdown">
+                    <div class="menu-item" id="logoUploadMenuItem">
+                        <div class="logo-upload" id="logoUploadContainer">
+                            <label for="logoUpload" id="logoUploadLabel">⬆️ Carica logo</label>
+                            <input type="file" id="logoUpload" accept="image/*" />
+                            <button type="button" class="link-btn" id="removeLogoBtn" hidden>✕ Rimuovi logo</button>
+                        </div>
+                    </div>
+                    <div class="menu-item">
+                        <div class="color-picker">
+                            <span class="color-picker-label">✍️ Firma allenatore</span>
+                            <span class="coach-name" id="coachNameLbl"></span>
+                            <button type="button" class="link-btn" id="coachBtn">Aggiungi nome allenatore</button>
+                        </div>
+                    </div>
+                    <div class="menu-item">
+                        <div class="color-picker">
+                            <span class="color-picker-label">🎨 Colore squadra</span>
+                            <div class="color-swatches" id="colorSwatches">
+                                <button type="button" class="color-swatch selected" data-accent="#8B0000" data-accent-dark="#600000" data-accent-rgb="139, 0, 0" style="background:#8B0000" title="Granata" aria-label="Granata"></button>
+                                <button type="button" class="color-swatch" data-accent="#1652a1" data-accent-dark="#0f3b73" data-accent-rgb="22, 82, 161" style="background:#1652a1" title="Blu" aria-label="Blu"></button>
+                                <button type="button" class="color-swatch" data-accent="#d32f2f" data-accent-dark="#a02323" data-accent-rgb="211, 47, 47" style="background:#d32f2f" title="Rosso" aria-label="Rosso"></button>
+                                <button type="button" class="color-swatch" data-accent="#1e8449" data-accent-dark="#14602f" data-accent-rgb="30, 132, 73" style="background:#1e8449" title="Verde" aria-label="Verde"></button>
+                                <button type="button" class="color-swatch" data-accent="#0288d1" data-accent-dark="#01579b" data-accent-rgb="2, 136, 209" style="background:#0288d1" title="Azzurro" aria-label="Azzurro"></button>
+                                <button type="button" class="color-swatch" data-accent="#6a3fa0" data-accent-dark="#4d2d75" data-accent-rgb="106, 63, 160" style="background:#6a3fa0" title="Viola" aria-label="Viola"></button>
+                                <button type="button" class="color-swatch" data-accent="#222222" data-accent-dark="#000000" data-accent-rgb="34, 34, 34" style="background:#222222" title="Nero" aria-label="Nero"></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- HEADER -->
+        <h1>
+            Scheda Partita
+            <small>Rosa 26 · ruoli a scelta</small>
+        </h1>
+
+        <!-- ANAGRAFICA GARA -->
+        <div class="row">
+            <div class="field">
+                <label for="opponent">Avversario</label>
+                <input type="text" id="opponent" placeholder="es. Milan" />
+            </div>
+            <div class="field field-result">
+                <label for="result">Risultato</label>
+                <input type="text" id="result" placeholder="es. 2-1" />
+            </div>
+            <div class="field">
+                <label for="matchType">Tipo gara</label>
+                <select id="matchType">
+                    <option value="Amichevole">Amichevole</option>
+                    <option value="Campionato" selected>Campionato</option>
+                    <option value="Coppa">Coppa</option>
+                    <option value="Torneo">Torneo</option>
+                    <option value="Altro">Altro</option>
+                </select>
+            </div>
+            <div class="field">
+                <label for="venue">Sede</label>
+                <select id="venue">
+                    <option value="Casa">🏠 Casa</option>
+                    <option value="Trasferta">🚌 Trasferta</option>
+                    <option value="Neutro">⚖️ Neutro</option>
+                </select>
+            </div>
+            <div class="field">
+                <label for="titolarCount">Titolari</label>
+                <select id="titolarCount">
+                    <option value="11">11</option>
+                    <option value="9">9</option>
+                </select>
+            </div>
+            <div class="field">
+                <label for="formation">Modulo</label>
+                <select id="formation"></select>
+            </div>
+        </div>
+
+        <!-- DETTATURA FORMAZIONE -->
+        <div class="dictation-bar">
+            <button type="button" class="btn btn-dictate" id="dictateFormationBtn">
+                <span class="btn-text">🎙️ Detta formazione</span>
+            </button>
+            <button type="button" class="btn btn-outline" id="rosterBtn">👥 Roster squadra</button>
+            <span class="text-muted dictation-hint">Di': "numero 1 Caravano, numero 2 Fusco…"</span>
+        </div>
+        <datalist id="rosterList"></datalist>
+
+        <!-- TABELLA GIOCATORI -->
+        <div class="table-wrap">
+            <table class="player-table" id="playerTable">
+                <thead>
+                    <tr>
+                        <th class="col-num">#</th>
+                        <th class="col-name">Calciatore</th>
+                        <th class="col-role">Ruolo</th>
+                        <th class="col-min">Minuti</th>
+                        <th class="col-eval">Valut.</th>
+                        <th class="col-notes">Note</th>
+                    </tr>
+                </thead>
+                <tbody id="playerBody"></tbody>
+            </table>
+        </div>
+
+        <!-- NOTE GENERALI -->
+        <div class="notes-section">
+            <label for="generalNotes">📝 Note generali sulla gara</label>
+            <textarea id="generalNotes" placeholder="Inserisci qui le osservazioni, i cambi, la prestazione della squadra…"></textarea>
+        </div>
+
+        <!-- BOTTONI -->
+        <div class="actions">
+            <div class="left">
+                <button class="btn btn-pdf" id="exportPdfBtn">
+                    <span class="btn-text">📄 Esporta PDF</span>
+                    <span class="spinner"></span>
+                </button>
+                <button class="btn btn-clear" id="clearBtn">🧹 Pulisci formazione</button>
+                <button class="btn btn-reset" id="resetBtn">⟲ Reset completo</button>
+            </div>
+            <span class="text-muted" id="playerCountLabel">26 giocatori · 11 titolari · modulo 4-4-2</span>
+        </div>
+
+        <div class="coach-sign" id="coachSign"></div>
+
+    </div>
+
+    <!-- ROSTER SQUADRA -->
+    <div class="pl-editor" id="rosterModal" aria-hidden="true">
+        <div class="pl-card roster-card" role="dialog" aria-labelledby="rosterTitle">
+            <h3 id="rosterTitle">👥 Roster squadra</h3>
+            <p class="roster-help">Quando scrivi un nome nella tabella, i giocatori del roster compaiono nell'elenco dei suggerimenti e, scegliendone uno, il ruolo si imposta da solo. Il roster resta salvato su questo dispositivo (ed è lo stesso dell'app Posizionamenti): esportalo per averne una copia o per passarlo ai collaboratori.</p>
+            <div class="roster-tools">
+                <button type="button" class="btn btn-outline" id="rosterImportBtn">📂 Importa file</button>
+                <button type="button" class="btn btn-outline" id="rosterPasteBtn">📋 Incolla elenco</button>
+                <button type="button" class="btn btn-outline" id="rosterExportBtn">💾 Esporta</button>
+                <button type="button" class="btn btn-outline" id="rosterShareBtn" hidden>📤 Condividi</button>
+                <input type="file" id="rosterFile" accept=".csv,.txt,.json,text/csv,text/plain,application/json" hidden />
+            </div>
+            <div class="roster-paste" id="rosterPaste" hidden>
+                <textarea id="rosterPasteText" placeholder="Un giocatore per riga, ad esempio:&#10;1 Rossi&#10;7 Bianchi Marco&#10;10 Verdi (A)"></textarea>
+                <div class="row-btns">
+                    <button type="button" class="btn btn-primary" id="rosterPasteOk">Leggi elenco</button>
+                    <button type="button" class="btn btn-outline" id="rosterPasteCancel">Annulla</button>
+                </div>
+            </div>
+            <div class="roster-confirm" id="rosterConfirm" hidden>
+                <p id="rosterConfirmText"></p>
+                <div class="row-btns">
+                    <button type="button" class="btn btn-primary" id="rosterReplace">Sostituisci roster</button>
+                    <button type="button" class="btn btn-outline" id="rosterMerge">Aggiungi</button>
+                    <button type="button" class="btn btn-outline" id="rosterImportCancel">Annulla</button>
+                </div>
+            </div>
+            <div class="roster-list" id="rosterRows"></div>
+            <button type="button" class="roster-add" id="rosterAddBtn">＋ Aggiungi giocatore</button>
+            <div class="row-btns">
+                <button type="button" class="btn btn-outline" id="rosterClearBtn">🗑 Svuota</button>
+                <button type="button" class="btn btn-primary" id="rosterDoneBtn">Fatto</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ANTEPRIMA PDF -->
+    <div class="modal" id="previewModal" aria-hidden="true">
+        <div class="modal-bar">
+            <strong>Anteprima PDF</strong>
+            <div class="zoom-group">
+                <button type="button" id="zoomOutBtn" aria-label="Riduci">−</button>
+                <button type="button" id="zoomFitBtn" title="Adatta alla larghezza">Adatta</button>
+                <button type="button" id="zoomInBtn" aria-label="Ingrandisci">+</button>
+            </div>
+            <button type="button" class="btn btn-outline" id="closePreviewBtn">✕ Chiudi</button>
+            <button type="button" class="btn btn-pdf" id="savePdfBtn">
+                <span class="btn-text">✓ Conferma e salva</span>
+                <span class="spinner"></span>
+            </button>
+        </div>
+        <div class="modal-body" id="modalBody"></div>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <script>
+        (function() {
+            'use strict';
+
+            // ---- DOM REFS ----
+            const opponentEl = document.getElementById('opponent');
+            const resultEl = document.getElementById('result');
+            const matchTypeEl = document.getElementById('matchType');
+            const venueEl = document.getElementById('venue');
+            const titolarCountEl = document.getElementById('titolarCount');
+            const formationEl = document.getElementById('formation');
+            const playerBody = document.getElementById('playerBody');
+            const generalNotesEl = document.getElementById('generalNotes');
+            const exportBtn = document.getElementById('exportPdfBtn');
+            const clearBtn = document.getElementById('clearBtn');
+            const resetBtn = document.getElementById('resetBtn');
+            const playerCountLabel = document.getElementById('playerCountLabel');
+            const logoImg = document.getElementById('clubLogo');
+            const logoPlaceholder = document.getElementById('logoPlaceholder');
+            const logoUpload = document.getElementById('logoUpload');
+            const hamburgerBtn = document.getElementById('hamburgerBtn');
+            const hamburgerDropdown = document.getElementById('hamburgerDropdown');
+
+            const TOTAL_PLAYERS = 26;
+            const ROLES = ['Portiere', 'Difensore', 'Centrocampista', 'Attaccante'];
+
+            // ---- FORMATIONS ----
+            const FORMATIONS_11 = ['4-4-2', '4-3-3', '4-2-3-1', '3-5-2', '5-3-2', '4-1-2-1-2'];
+            const FORMATIONS_9 = ['3-3-2', '3-2-3', '3-4-1', '2-3-3'];
+
+            // ---- STATE ----
+            let playerData = [];
+
+            // ---- ROSTER SQUADRA (dati) ----
+            // Stessa chiave e stesso formato dell'app Posizionamenti: le due
+            // app sono sullo stesso sito, quindi il roster inserito in una
+            // compare anche nell'altra. Non viene toccato da Pulisci/Reset.
+            const ROSTER_KEY = 'posizionamentiRoster';
+            let roster = [];
+            try {
+                const r = JSON.parse(localStorage.getItem(ROSTER_KEY) || '[]');
+                if (Array.isArray(r)) roster = r.map(p => ({ num: String(p.num || ''), name: String(p.name || ''), role: String(p.role || '') }));
+            } catch (_) {}
+            function saveRoster() {
+                try { localStorage.setItem(ROSTER_KEY, JSON.stringify(roster)); } catch (_) {}
+            }
+            function findRosterPlayer(name) {
+                const n = String(name || '').trim().toLowerCase();
+                return n ? roster.find(p => p.name.trim().toLowerCase() === n) : null;
+            }
+            // ruolo scritto liberamente nel roster → uno dei 4 ruoli della tabella
+            function rosterRoleToRole(r) {
+                const s = String(r || '').trim().toLowerCase();
+                if (/^(p|por|portiere|gk)$/.test(s)) return 'Portiere';
+                if (/^(d|dif|difensore|terzino|centrale|difesa)$/.test(s)) return 'Difensore';
+                if (/^(c|cen|centrocampista|mediano|regista|mezzala|trequartista|centrocampo)$/.test(s)) return 'Centrocampista';
+                if (/^(a|att|attaccante|punta|ala|attacco)$/.test(s)) return 'Attaccante';
+                return '';
+            }
+
+            // ---- MODULI PERSONALIZZATI ----
+            // Salvati a parte (per 11 e per 9 titolari), così restano anche
+            // dopo "Reset completo".
+            const CUSTOM_FORMATIONS_KEY = 'reportGaraCustomFormations';
+            const customFormations = { '11': [], '9': [] };
+            try {
+                const c = JSON.parse(localStorage.getItem(CUSTOM_FORMATIONS_KEY) || 'null');
+                if (c) ['11', '9'].forEach(k => {
+                    if (Array.isArray(c[k])) customFormations[k] = c[k].filter(f => typeof f === 'string');
+                });
+            } catch (_) {}
+            function saveCustomFormations() {
+                try { localStorage.setItem(CUSTOM_FORMATIONS_KEY, JSON.stringify(customFormations)); } catch (_) {}
+            }
+            let currentFormation = '';
+
+            // ---- DETTATURA VOCALE FORMAZIONE ("numero 1 Caravano, numero 2 Fusco…") ----
+            const SpeechRecognitionCtor = window.SpeechRecognition || window.webkitSpeechRecognition;
+            const speechSupported = !!SpeechRecognitionCtor;
+            const dictateBtn = document.getElementById('dictateFormationBtn');
+
+            const NUMBER_WORDS = {
+                uno: 1, due: 2, tre: 3, quattro: 4, cinque: 5, sei: 6, sette: 7, otto: 8,
+                nove: 9, dieci: 10, undici: 11, dodici: 12, tredici: 13, quattordici: 14,
+                quindici: 15, sedici: 16, diciassette: 17, diciotto: 18, diciannove: 19, venti: 20,
+                ventuno: 21, ventidue: 22, ventitre: 23, 'ventitré': 23, ventiquattro: 24,
+                venticinque: 25, ventisei: 26
+            };
+
+            let formationRecognition = null;
+            let formationListening = false;
+            let formationFinalTranscript = '';
+
+            function capitalizeName(str) {
+                return str.trim().split(/\s+/).map(function(w) {
+                    return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
+                }).join(' ');
+            }
+
+            // Riconosce ripetizioni del pattern "numero <N> <nome>" nel testo
+            // dettato, sia con cifre ("numero 1") sia con numeri scritti in
+            // lettere ("numero uno"), e ne estrae le coppie {numero, nome}.
+            function parseFormationTranscript(text) {
+                const matches = [];
+                const re = /numero\s+([a-zà]+|\d{1,2})\s+([^]*?)(?=\bnumero\b|$)/gi;
+                let m;
+                while ((m = re.exec(text)) !== null) {
+                    const token = m[1].toLowerCase();
+                    const num = /^\d+$/.test(token) ? parseInt(token, 10) : NUMBER_WORDS[token];
+                    const name = m[2].replace(/[.,;]+$/, '').trim();
+                    if (num >= 1 && num <= TOTAL_PLAYERS && name) {
+                        matches.push({ num: num, name: capitalizeName(name) });
+                    }
+                }
+                return matches;
+            }
+
+            function applyFormationTranscript(text) {
+                const matches = parseFormationTranscript(text);
+                if (!matches.length) return;
+                let changed = false;
+                matches.forEach(function(m) {
+                    const idx = m.num - 1;
+                    if (!playerData[idx]) return;
+                    // nome dettato presente nel roster: si usa come è scritto
+                    // lì e, se il ruolo è riconoscibile, si imposta anche quello
+                    const rp = findRosterPlayer(m.name);
+                    const name = rp ? rp.name.trim() : m.name;
+                    const role = rp ? rosterRoleToRole(rp.role) : '';
+                    if (playerData[idx].name !== name) {
+                        playerData[idx].name = name;
+                        changed = true;
+                    }
+                    if (role && playerData[idx].role !== role) {
+                        playerData[idx].role = role;
+                        changed = true;
+                    }
+                });
+                if (changed) {
+                    renderPlayers();
+                    autoSave();
+                }
+            }
+
+            function updateDictateBtnUI() {
+                if (!dictateBtn) return;
+                dictateBtn.classList.toggle('listening', formationListening);
+                dictateBtn.disabled = !speechSupported;
+                const label = dictateBtn.querySelector('.btn-text');
+                if (label) {
+                    label.textContent = formationListening ? '🛑 Ferma dettatura' : '🎙️ Detta formazione';
+                }
+            }
+
+            function runFormationRecognition() {
+                const recognition = new SpeechRecognitionCtor();
+                recognition.lang = 'it-IT';
+                recognition.continuous = true;
+                recognition.interimResults = false;
+                recognition.maxAlternatives = 1;
+                formationRecognition = recognition;
+
+                recognition.onresult = function(e) {
+                    let hasFinal = false;
+                    for (let i = e.resultIndex; i < e.results.length; i++) {
+                        if (e.results[i].isFinal) {
+                            formationFinalTranscript += e.results[i][0].transcript + ' ';
+                            hasFinal = true;
+                        }
+                    }
+                    if (hasFinal) applyFormationTranscript(formationFinalTranscript);
+                };
+                recognition.onerror = function(e) {
+                    if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
+                        formationListening = false;
+                        updateDictateBtnUI();
+                        alert('Permesso microfono negato. Consenti l\'accesso al microfono per usare la dettatura.');
+                    }
+                    // altri errori (silenzio, rete) vengono gestiti da onend,
+                    // che riavvia automaticamente l'ascolto se l'utente non
+                    // ha premuto "Ferma dettatura".
+                };
+                recognition.onend = function() {
+                    formationRecognition = null;
+                    if (formationListening) {
+                        runFormationRecognition();
+                    } else {
+                        updateDictateBtnUI();
+                    }
+                };
+
+                try {
+                    recognition.start();
+                } catch (err) {
+                    formationListening = false;
+                    formationRecognition = null;
+                    updateDictateBtnUI();
+                }
+            }
+
+            function toggleFormationDictation() {
+                if (!speechSupported) return;
+                if (formationListening) {
+                    formationListening = false;
+                    if (formationRecognition) formationRecognition.stop();
+                    updateDictateBtnUI();
+                } else {
+                    formationFinalTranscript = '';
+                    formationListening = true;
+                    updateDictateBtnUI();
+                    runFormationRecognition();
+                }
+            }
+
+            if (dictateBtn) {
+                dictateBtn.addEventListener('click', toggleFormationDictation);
+                if (!speechSupported) {
+                    dictateBtn.disabled = true;
+                    dictateBtn.title = 'Dettatura vocale non supportata in questo browser';
+                }
+            }
+
+            // ---- HAMBURGER TOGGLE ----
+            hamburgerBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                hamburgerDropdown.classList.toggle('open');
+            });
+            document.addEventListener('click', function(e) {
+                if (!hamburgerDropdown.contains(e.target) && e.target !== hamburgerBtn) {
+                    hamburgerDropdown.classList.remove('open');
+                }
+            });
+
+            // ---- COLORE SQUADRA ----
+            const colorSwatches = document.querySelectorAll('.color-swatch');
+
+            function applyAccentColor(accent, accentDark, accentRgb) {
+                document.documentElement.style.setProperty('--accent', accent);
+                document.documentElement.style.setProperty('--accent-dark', accentDark);
+                document.documentElement.style.setProperty('--accent-rgb', accentRgb);
+                colorSwatches.forEach(function(sw) {
+                    sw.classList.toggle('selected', sw.dataset.accent.toLowerCase() === accent.toLowerCase());
+                });
+            }
+
+            colorSwatches.forEach(function(sw) {
+                sw.addEventListener('click', function() {
+                    const accent = this.dataset.accent;
+                    const accentDark = this.dataset.accentDark;
+                    const accentRgb = this.dataset.accentRgb;
+                    applyAccentColor(accent, accentDark, accentRgb);
+                    try {
+                        localStorage.setItem('clubAccentColor', JSON.stringify({ accent: accent, accentDark: accentDark, accentRgb: accentRgb }));
+                    } catch (_) {}
+                });
+            });
+
+            try {
+                const savedColor = JSON.parse(localStorage.getItem('clubAccentColor') || 'null');
+                if (savedColor && savedColor.accent && savedColor.accentDark && savedColor.accentRgb) {
+                    applyAccentColor(savedColor.accent, savedColor.accentDark, savedColor.accentRgb);
+                }
+            } catch (_) {}
+
+            // ---- LOGO MANAGEMENT ----
+            const removeLogoBtn = document.getElementById('removeLogoBtn');
+            const logoUploadLabel = document.getElementById('logoUploadLabel');
+            function setLogo(dataUrl) {
+                if (dataUrl) {
+                    logoImg.src = dataUrl;
+                    logoPlaceholder.style.display = 'none';
+                } else {
+                    logoImg.removeAttribute('src');
+                    logoPlaceholder.style.display = '';
+                }
+                removeLogoBtn.hidden = !dataUrl;
+                logoUploadLabel.textContent = dataUrl ? '⬆️ Cambia logo' : '⬆️ Carica logo';
+            }
+            try {
+                const savedLogo = localStorage.getItem('clubLogoData');
+                if (savedLogo && savedLogo.startsWith('data:image')) setLogo(savedLogo);
+            } catch (_) {}
+
+            logoUpload.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = function(ev) {
+                    const dataUrl = ev.target.result;
+                    setLogo(dataUrl);
+                    logoUpload.value = '';
+                    hamburgerDropdown.classList.remove('open');
+                    try {
+                        localStorage.setItem('clubLogoData', dataUrl);
+                    } catch (_) {
+                        alert('Logo troppo grande per il salvataggio automatico. Verrà mantenuto solo per questa sessione.');
+                    }
+                };
+                reader.readAsDataURL(file);
+            });
+            removeLogoBtn.addEventListener('click', function() {
+                setLogo('');
+                try { localStorage.removeItem('clubLogoData'); } catch (_) {}
+                hamburgerDropdown.classList.remove('open');
+            });
+
+            // ---- FIRMA DELL'ALLENATORE ----
+            // Nome e cognome salvati su questo dispositivo (stessa chiave di
+            // Posizionamenti); compaiono in fondo al PDF.
+            const COACH_KEY = 'posizionamentiCoach';
+            const coachBtn = document.getElementById('coachBtn');
+            let coachName = '';
+            try { coachName = (localStorage.getItem(COACH_KEY) || '').trim(); } catch (_) {}
+            function updateCoachUI() {
+                document.getElementById('coachNameLbl').textContent = coachName;
+                coachBtn.textContent = coachName ? 'Modifica nome' : 'Aggiungi nome allenatore';
+                document.getElementById('coachSign').textContent = coachName ? 'Allenatore: ' + coachName : '';
+            }
+            updateCoachUI();
+            coachBtn.addEventListener('click', function() {
+                hamburgerDropdown.classList.remove('open');
+                const v = prompt('Nome e cognome dell\'allenatore (lascia vuoto per toglierlo):', coachName);
+                if (v === null) return;
+                coachName = v.replace(/\s+/g, ' ').trim();
+                try { coachName ? localStorage.setItem(COACH_KEY, coachName) : localStorage.removeItem(COACH_KEY); } catch (_) {}
+                updateCoachUI();
+            });
+
+            // ---- HELPERS ----
+            function escHtml(str) {
+                if (!str) return '';
+                return str.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            }
+
+            // ---- UPDATE FORMATION OPTIONS ----
+            // In fondo all'elenco: "Aggiungi modulo…" e, se quello scelto è
+            // personalizzato, "Elimina modulo".
+            function updateFormationOptions(desired) {
+                const count = parseInt(titolarCountEl.value, 10);
+                const base = count === 11 ? FORMATIONS_11 : FORMATIONS_9;
+                const custom = customFormations[String(count)];
+                let want = desired !== undefined ? desired : currentFormation;
+                if (!base.includes(want) && !custom.includes(want)) want = base[0];
+                currentFormation = want;
+                const opt = f => `<option value="${escHtml(f)}">${escHtml(f)}</option>`;
+                formationEl.innerHTML = base.map(opt).join('') +
+                    (custom.length ? `<optgroup label="Personalizzati">${custom.map(opt).join('')}</optgroup>` : '') +
+                    '<option value="__add">➕ Aggiungi modulo…</option>' +
+                    (custom.includes(want) ? `<option value="__del">🗑 Elimina modulo ${escHtml(want)}</option>` : '');
+                formationEl.value = want;
+                playerCountLabel.textContent =
+                    `${TOTAL_PLAYERS} giocatori · ${count} titolari · modulo ${want}`;
+            }
+
+            function addCustomFormation() {
+                const count = parseInt(titolarCountEl.value, 10);
+                const outfield = count - 1;
+                const example = count === 11 ? '3-4-2-1' : '3-2-2-1';
+                const input = prompt(`Nuovo modulo (es. ${example}).\nLa somma dei giocatori deve fare ${outfield}: portiere escluso.`, '');
+                if (input === null) { updateFormationOptions(currentFormation); return; }
+                let f = input.trim();
+                if (/^\d{2,5}$/.test(f)) f = f.split('').join('-');   // "343" → "3-4-3"
+                f = f.replace(/[^\d]+/g, '-').replace(/^-|-$/g, '');
+                const parts = f.split('-').map(Number);
+                if (!f || parts.length < 2 || parts.length > 5 || parts.some(n => !n) || parts.reduce((a, b) => a + b, 0) !== outfield) {
+                    alert(`Modulo non valido. Scrivi i numeri delle linee separati da trattini, ad esempio ${example}: la somma deve fare ${outfield} (portiere escluso).`);
+                    updateFormationOptions(currentFormation);
+                    return;
+                }
+                const base = count === 11 ? FORMATIONS_11 : FORMATIONS_9;
+                const list = customFormations[String(count)];
+                if (!base.includes(f) && !list.includes(f)) {
+                    list.push(f);
+                    saveCustomFormations();
+                }
+                updateFormationOptions(f);
+                autoSave();
+            }
+
+            function deleteCustomFormation() {
+                const count = parseInt(titolarCountEl.value, 10);
+                const key = String(count);
+                const f = currentFormation;
+                if (!customFormations[key].includes(f) || !confirm(`Eliminare il modulo ${f}?`)) {
+                    updateFormationOptions(f);
+                    return;
+                }
+                customFormations[key] = customFormations[key].filter(x => x !== f);
+                saveCustomFormations();
+                updateFormationOptions((count === 11 ? FORMATIONS_11 : FORMATIONS_9)[0]);
+                autoSave();
+            }
+
+            // ---- RENDER ----
+            function renderPlayers() {
+                while (playerData.length < TOTAL_PLAYERS) {
+                    playerData.push({ name: '', role: 'Difensore', minutes: '', rating: 0, notes: '' });
+                }
+                while (playerData.length > TOTAL_PLAYERS) {
+                    playerData.pop();
+                }
+
+                let html = '';
+                for (let i = 0; i < TOTAL_PLAYERS; i++) {
+                    const p = playerData[i];
+                    const num = i + 1;
+                    const rating = p.rating || 0;
+
+                    let roleOpts = '';
+                    ROLES.forEach(r => {
+                        const sel = (p.role === r) ? 'selected' : '';
+                        roleOpts += `<option value="${r}" ${sel}>${r}</option>`;
+                    });
+
+                    const ratingClass = (rating > 0) ? `rating-${rating}` : '';
+
+                    html += `
+                        <tr data-index="${i}">
+                            <td class="col-num">${num}</td>
+                            <td class="col-name">
+                                <input type="text" class="player-name" data-index="${i}" value="${escHtml(p.name)}" placeholder="Nome" list="rosterList" autocomplete="off" />
+                            </td>
+                            <td class="col-role">
+                                <select class="player-role" data-index="${i}">${roleOpts}</select>
+                            </td>
+                            <td class="col-min">
+                                <input type="number" class="player-minutes" data-index="${i}" value="${p.minutes}" placeholder="min" min="0" max="120" />
+                            </td>
+                            <td class="col-eval">
+                                <div class="rating-circle ${ratingClass}" data-player="${i}"></div>
+                            </td>
+                            <td class="col-notes">
+                                <input type="text" class="player-notes" data-index="${i}" value="${escHtml(p.notes)}" placeholder="Note" />
+                            </td>
+                        </tr>
+                    `;
+                }
+
+                playerBody.innerHTML = html;
+
+                // ---- EVENTI RATING ----
+                document.querySelectorAll('.rating-circle').forEach(circle => {
+                    circle.addEventListener('click', function(e) {
+                        const idx = parseInt(this.dataset.player, 10);
+                        const current = playerData[idx]?.rating || 0;
+                        const newVal = (current + 1) % 4;
+                        playerData[idx].rating = newVal;
+                        renderPlayers();
+                        autoSave();
+                    });
+                });
+
+                // ---- EVENTI CAMPI ----
+                document.querySelectorAll('.player-name').forEach(inp => {
+                    inp.addEventListener('input', function() {
+                        const idx = parseInt(this.dataset.index, 10);
+                        playerData[idx].name = this.value;
+                        autoSave();
+                    });
+                    // nome del roster: scritto come nel roster e ruolo impostato
+                    inp.addEventListener('change', function() {
+                        const idx = parseInt(this.dataset.index, 10);
+                        const rp = findRosterPlayer(this.value);
+                        if (rp) {
+                            const name = rp.name.trim();
+                            if (this.value !== name) {
+                                this.value = name;
+                                playerData[idx].name = name;
+                            }
+                            const role = rosterRoleToRole(rp.role);
+                            if (role && playerData[idx].role !== role) {
+                                playerData[idx].role = role;
+                                const sel = playerBody.querySelector(`.player-role[data-index="${idx}"]`);
+                                if (sel) sel.value = role;
+                            }
+                            autoSave();
+                        }
+                        updateRosterList();
+                    });
+                });
+                document.querySelectorAll('.player-role').forEach(sel => {
+                    sel.addEventListener('change', function() {
+                        const idx = parseInt(this.dataset.index, 10);
+                        playerData[idx].role = this.value;
+                        autoSave();
+                    });
+                });
+                document.querySelectorAll('.player-minutes').forEach(inp => {
+                    inp.addEventListener('input', function() {
+                        const idx = parseInt(this.dataset.index, 10);
+                        playerData[idx].minutes = this.value;
+                        autoSave();
+                    });
+                });
+                document.querySelectorAll('.player-notes').forEach(inp => {
+                    inp.addEventListener('input', function() {
+                        const idx = parseInt(this.dataset.index, 10);
+                        playerData[idx].notes = this.value;
+                        autoSave();
+                    });
+                });
+
+                updateRosterList();
+            }
+
+            // suggerimenti del roster: solo i giocatori non ancora in tabella
+            function updateRosterList() {
+                const used = new Set(playerData.map(p => p.name.trim().toLowerCase()).filter(Boolean));
+                document.getElementById('rosterList').innerHTML = roster
+                    .filter(p => p.name.trim() && !used.has(p.name.trim().toLowerCase()))
+                    .map(p => {
+                        const info = [p.num.trim() ? 'n° ' + p.num.trim() : '', p.role.trim()].filter(Boolean).join(' · ');
+                        return `<option value="${escHtml(p.name.trim())}">${escHtml(info)}</option>`;
+                    }).join('');
+                document.getElementById('rosterBtn').textContent = '👥 Roster squadra' + (roster.length ? ' · ' + roster.length : '');
+            }
+
+            // ---- SALVATAGGIO LOCALE ----
+            function autoSave() {
+                try {
+                    const state = {
+                        opponent: opponentEl.value,
+                        result: resultEl.value,
+                        matchType: matchTypeEl.value,
+                        venue: venueEl.value,
+                        titolarCount: titolarCountEl.value,
+                        formation: currentFormation,
+                        playerData: playerData,
+                        generalNotes: generalNotesEl.value
+                    };
+                    localStorage.setItem('matchReportState20', JSON.stringify(state));
+                } catch (_) { /* ignore */ }
+            }
+
+            function loadState() {
+                try {
+                    const raw = localStorage.getItem('matchReportState20');
+                    if (!raw) return false;
+                    const state = JSON.parse(raw);
+                    opponentEl.value = state.opponent || '';
+                    resultEl.value = state.result || '';
+                    matchTypeEl.value = state.matchType || 'Campionato';
+                    venueEl.value = state.venue || 'Casa';
+                    titolarCountEl.value = state.titolarCount || '11';
+                    updateFormationOptions(state.formation || '');
+                    if (state.playerData && Array.isArray(state.playerData) && state.playerData.length === TOTAL_PLAYERS) {
+                        playerData = state.playerData.map(p => ({
+                            name: p.name || '',
+                            role: p.role || 'Difensore',
+                            minutes: p.minutes || '',
+                            rating: p.rating || 0,
+                            notes: p.notes || ''
+                        }));
+                    } else {
+                        playerData = Array.from({ length: TOTAL_PLAYERS }, () => ({
+                            name: '',
+                            role: 'Difensore',
+                            minutes: '',
+                            rating: 0,
+                            notes: ''
+                        }));
+                    }
+                    generalNotesEl.value = state.generalNotes || '';
+                    renderPlayers();
+                    const count = parseInt(titolarCountEl.value, 10);
+                    playerCountLabel.textContent =
+                        `${TOTAL_PLAYERS} giocatori · ${count} titolari · modulo ${formationEl.value}`;
+                    return true;
+                } catch (_) { return false; }
+            }
+
+            // ---- CLEAR / RESET ----
+            function clearFormation() {
+                if (!confirm('Cancellare nomi, minuti, valutazioni e note di tutti i giocatori?')) return;
+                playerData = playerData.map(p => ({
+                    ...p,
+                    name: '',
+                    minutes: '',
+                    rating: 0,
+                    notes: ''
+                }));
+                renderPlayers();
+                autoSave();
+            }
+
+            function resetAll() {
+                if (!confirm('Resettare completamente tutti i dati della scheda?')) return;
+                opponentEl.value = '';
+                resultEl.value = '';
+                matchTypeEl.value = 'Campionato';
+                venueEl.value = 'Casa';
+                titolarCountEl.value = '11';
+                updateFormationOptions(FORMATIONS_11[0]);
+                generalNotesEl.value = '';
+                playerData = Array.from({ length: TOTAL_PLAYERS }, () => ({
+                    name: '',
+                    role: 'Difensore',
+                    minutes: '',
+                    rating: 0,
+                    notes: ''
+                }));
+                renderPlayers();
+                autoSave();
+                localStorage.removeItem('matchReportState20');
+                const count = parseInt(titolarCountEl.value, 10);
+                playerCountLabel.textContent =
+                    `${TOTAL_PLAYERS} giocatori · ${count} titolari · modulo ${formationEl.value}`;
+            }
+
+            // ---- "GEMELLI" DI TESTO PER L'ESPORTAZIONE PDF ----
+            // html2canvas non va a capo il testo dentro input/textarea (lo
+            // disegna su una riga sola, che sborda fuori dal riquadro).
+            // Prima di catturare, sostituiamo ogni campo con un div dello
+            // stesso aspetto ma con wrapping vero: se il contenuto è lungo
+            // il div cresce in altezza (e quindi la riga della tabella)
+            // invece di essere tagliato.
+            // Nel PDF il ruolo viene abbreviato: la colonna è stretta per
+            // lasciare spazio alle note, e "Centrocampista" non ci
+            // starebbe su una riga sola.
+            const ROLE_ABBR = { Portiere: 'POR', Difensore: 'DIF', Centrocampista: 'CEN', Attaccante: 'ATT' };
+
+            function buildPrintOverlay(app) {
+                const fields = app.querySelectorAll(
+                    '.row .field input, .row .field select, .player-table input, .player-table select, .notes-section textarea'
+                );
+                const overlayNodes = [];
+                fields.forEach(function(field) {
+                    let text;
+                    if (field.tagName === 'SELECT') {
+                        text = field.options[field.selectedIndex] ? field.options[field.selectedIndex].text : '';
+                        if (field.classList.contains('player-role')) {
+                            text = ROLE_ABBR[text] || text;
+                        }
+                    } else {
+                        text = field.value || '';
+                    }
+
+                    // Solo le note (per giocatore e generali) vanno a capo e
+                    // fanno crescere la riga: tutti gli altri campi restano
+                    // su una riga sola, come nella struttura originale, e si
+                    // troncano con "…" nel raro caso non ci stiano.
+                    const isNoteField = field.tagName === 'TEXTAREA' || field.classList.contains('player-notes');
+
+                    const cs = getComputedStyle(field);
+                    const div = document.createElement('div');
+                    div.className = 'print-value';
+                    div.textContent = text;
+                    div.style.boxSizing = 'border-box';
+                    div.style.width = field.offsetWidth + 'px';
+                    div.style.minHeight = field.offsetHeight + 'px';
+                    div.style.padding = cs.padding;
+                    div.style.border = cs.border;
+                    div.style.borderRadius = cs.borderRadius;
+                    div.style.background = cs.backgroundColor;
+                    div.style.fontSize = cs.fontSize;
+                    div.style.fontFamily = cs.fontFamily;
+                    div.style.color = cs.color;
+                    div.style.textAlign = field.tagName === 'INPUT' && field.type === 'number' ? 'center' : cs.textAlign;
+                    div.style.lineHeight = '1.35';
+                    if (isNoteField) {
+                        div.style.whiteSpace = 'pre-wrap';
+                        div.style.wordBreak = 'break-word';
+                        div.style.overflowWrap = 'anywhere';
+                    } else {
+                        div.style.whiteSpace = 'nowrap';
+                        div.style.overflow = 'hidden';
+                        div.style.textOverflow = 'ellipsis';
+                        div.style.display = 'flex';
+                        div.style.alignItems = 'center';
+                        div.style.justifyContent = field.tagName === 'INPUT' && field.type === 'number' ? 'center' : 'flex-start';
+                    }
+                    field.insertAdjacentElement('afterend', div);
+                    field.dataset.pdfHidden = '1';
+                    overlayNodes.push(div);
+                });
+                return overlayNodes;
+            }
+
+            function removePrintOverlay(app, overlayNodes) {
+                overlayNodes.forEach(function(n) { n.remove(); });
+                app.querySelectorAll('[data-pdf-hidden]').forEach(function(f) {
+                    delete f.dataset.pdfHidden;
+                });
+            }
+
+            // ---- ANTEPRIMA ED ESPORTAZIONE PDF ----
+            // "Esporta PDF" cattura il report una sola volta e lo mostra in
+            // anteprima; "Conferma e salva" crea il PDF da quella stessa
+            // immagine, quindi il file è identico a ciò che si vede. La pagina
+            // è verticale e alta quanto il contenuto: il report sta sempre per
+            // intero in un'unica pagina, qualsiasi sia il numero di righe/note.
+            const CAPTURE_SCALE = 2;
+            const previewModal = document.getElementById('previewModal');
+            const previewBody = document.getElementById('modalBody');
+            const savePdfBtn = document.getElementById('savePdfBtn');
+            let previewCanvas = null;
+            let previewZoom = null;   // null = adatta alla larghezza dello schermo
+
+            function captureReport() {
+                const app = document.getElementById('app');
+                const nextFrame = () => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+                let overlayNodes = [];
+                app.classList.add('pdf-export');
+                // Azzera eventuali scroll (pagina e tabella) che sfaserebbero
+                // l'area catturata da html2canvas.
+                window.scrollTo(0, 0);
+                document.querySelectorAll('.table-wrap').forEach(el => { el.scrollLeft = 0; });
+                // Due attese: la prima per applicare il layout PDF prima di
+                // creare i "gemelli" di testo, la seconda perché i testi lunghi
+                // vadano a capo e facciano crescere le righe prima della cattura.
+                // NON passiamo width/height/windowWidth/windowHeight a html2canvas
+                // (forzarli causa un disallineamento noto, con contenuto tagliato
+                // a sinistra): rileva da solo l'area dell'elemento.
+                return nextFrame()
+                    .then(() => { overlayNodes = buildPrintOverlay(app); return nextFrame(); })
+                    .then(() => html2pdf().set({
+                        html2canvas: {
+                            scale: CAPTURE_SCALE,
+                            useCORS: true,
+                            logging: false,
+                            letterRendering: true,
+                            backgroundColor: '#ffffff',
+                            scrollX: -window.scrollX,
+                            scrollY: -window.scrollY
+                        }
+                    }).from(app).toCanvas().get('canvas'))
+                    .finally(() => {
+                        removePrintOverlay(app, overlayNodes);
+                        app.classList.remove('pdf-export');
+                    });
+            }
+
+            function fitPreview() {
+                if (!previewCanvas) return;
+                const docWidth = previewCanvas.width / CAPTURE_SCALE;
+                const cs = getComputedStyle(previewBody);
+                const avail = previewBody.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+                const scale = previewZoom == null ? Math.min(1, avail / docWidth) : previewZoom;
+                previewCanvas.style.width = Math.round(docWidth * scale) + 'px';
+                document.getElementById('zoomFitBtn').textContent = Math.round(scale * 100) + '%';
+            }
+            function changeZoom(step) {
+                const cs = getComputedStyle(previewBody);
+                const avail = previewBody.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+                const base = previewZoom == null ? Math.min(1, avail / (previewCanvas.width / CAPTURE_SCALE)) : previewZoom;
+                previewZoom = Math.max(0.25, Math.min(2, Math.round((base + step) * 4) / 4));
+                fitPreview();
+            }
+
+            function openPreview() {
+                if (typeof html2pdf === 'undefined') {
+                    alert('Libreria PDF non caricata. Controlla la connessione e riapri la pagina.');
+                    return;
+                }
+                if (exportBtn.disabled) return;
+                autoSave();
+                exportBtn.classList.add('loading');
+                exportBtn.disabled = true;
+                captureReport()
+                    .then(canvas => {
+                        previewCanvas = canvas;
+                        previewBody.replaceChildren(canvas);
+                        previewModal.classList.add('open');
+                        previewModal.setAttribute('aria-hidden', 'false');
+                        document.body.style.overflow = 'hidden';
+                        previewZoom = null;
+                        fitPreview();
+                        previewBody.scrollTop = 0;
+                    })
+                    .catch(err => {
+                        console.error('Preview error:', err);
+                        alert('Errore durante la preparazione dell\'anteprima. Riprova.');
+                    })
+                    .finally(() => {
+                        exportBtn.classList.remove('loading');
+                        exportBtn.disabled = false;
+                    });
+            }
+            function closePreview() {
+                previewModal.classList.remove('open');
+                previewModal.setAttribute('aria-hidden', 'true');
+                document.body.style.overflow = '';
+            }
+
+            function savePdf() {
+                if (!previewCanvas || savePdfBtn.disabled) return;
+                savePdfBtn.classList.add('loading');
+                savePdfBtn.disabled = true;
+                const PX_TO_MM = 25.4 / 96;
+                const widthMm = previewCanvas.width / CAPTURE_SCALE * PX_TO_MM;
+                // altezza in proporzione esatta all'immagine (+ un soffio contro
+                // gli arrotondamenti), così non nasce mai una seconda pagina
+                const heightMm = widthMm * previewCanvas.height / previewCanvas.width + 0.5;
+                html2pdf().set({
+                    margin: 0,
+                    filename: `match-report_${new Date().toISOString().slice(0, 10)}.pdf`,
+                    image: { type: 'jpeg', quality: 0.95 },
+                    jsPDF: { unit: 'mm', format: [widthMm, heightMm], orientation: 'portrait' }
+                }).from(previewCanvas, 'canvas').save()
+                    .then(closePreview)
+                    .catch(err => {
+                        console.error('PDF error:', err);
+                        alert('Errore durante la generazione del PDF. Riprova.');
+                    })
+                    .then(() => {
+                        savePdfBtn.classList.remove('loading');
+                        savePdfBtn.disabled = false;
+                    });
+            }
+
+            document.getElementById('zoomInBtn').addEventListener('click', () => changeZoom(0.25));
+            document.getElementById('zoomOutBtn').addEventListener('click', () => changeZoom(-0.25));
+            document.getElementById('zoomFitBtn').addEventListener('click', () => { previewZoom = null; fitPreview(); });
+            document.getElementById('closePreviewBtn').addEventListener('click', closePreview);
+            savePdfBtn.addEventListener('click', savePdf);
+            previewBody.addEventListener('click', (e) => { if (e.target === previewBody) closePreview(); });
+            window.addEventListener('resize', () => { if (previewModal.classList.contains('open')) fitPreview(); });
+
+            // ---- AVVISO TEMPORANEO ----
+            let toastTimer = null;
+            function showToast(msg) {
+                const t = document.getElementById('toast');
+                t.textContent = msg;
+                t.classList.add('show');
+                clearTimeout(toastTimer);
+                toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
+            }
+
+            // ---- ROSTER: FINESTRA ----
+            const $ = (id) => document.getElementById(id);
+            const rosterModal = $('rosterModal');
+            function sortRoster() {
+                roster.sort((a, b) => (parseInt(a.num, 10) || 999) - (parseInt(b.num, 10) || 999) || a.name.localeCompare(b.name));
+            }
+            function openRoster() {
+                renderRosterRows();
+                $('rosterPaste').hidden = true;
+                $('rosterConfirm').hidden = true;
+                rosterModal.classList.add('open');
+                rosterModal.setAttribute('aria-hidden', 'false');
+            }
+            function closeRoster() {
+                // ordinato per numero di maglia (chi non ha numero in fondo)
+                roster = roster.filter(p => p.name.trim() || p.num.trim());
+                sortRoster();
+                saveRoster();
+                rosterModal.classList.remove('open');
+                rosterModal.setAttribute('aria-hidden', 'true');
+                updateRosterList();
+            }
+            function renderRosterRows() {
+                const nums = roster.map(p => p.num.trim()).filter(Boolean);
+                const dup = new Set(nums.filter((n, i) => nums.indexOf(n) !== i));
+                $('rosterRows').innerHTML = '<div class="r-row r-head"><span>N°</span><span>Nome</span><span>Ruolo</span><span></span></div>' +
+                    (roster.length ? roster.map((p, i) => `<div class="r-row">
+                        <input class="r-num${dup.has(p.num.trim()) ? ' dup' : ''}" data-i="${i}" data-f="num" value="${escHtml(p.num)}" inputmode="numeric" maxlength="3" aria-label="Numero"/>
+                        <input data-i="${i}" data-f="name" value="${escHtml(p.name)}" placeholder="Nome" aria-label="Nome"/>
+                        <input data-i="${i}" data-f="role" value="${escHtml(p.role)}" placeholder="—" aria-label="Ruolo"/>
+                        <button type="button" class="r-del" data-del="${i}" aria-label="Elimina">✕</button>
+                    </div>`).join('')
+                    : '<div class="roster-empty">Nessun giocatore. Importa un file, incolla un elenco o aggiungili uno per uno.</div>');
+                $('rosterTitle').textContent = '👥 Roster squadra' + (roster.length ? ' · ' + roster.length : '');
+            }
+            $('rosterBtn').addEventListener('click', openRoster);
+            $('rosterDoneBtn').addEventListener('click', closeRoster);
+            rosterModal.addEventListener('click', (e) => { if (e.target === rosterModal) closeRoster(); });
+            $('rosterRows').addEventListener('input', (e) => {
+                const i = e.target.dataset.i, f = e.target.dataset.f;
+                if (!roster[i] || !f) return;
+                roster[i][f] = e.target.value;
+                saveRoster();
+                if (f === 'num') {
+                    const nums = roster.map(p => p.num.trim()).filter(Boolean);
+                    const dup = new Set(nums.filter((n, k) => nums.indexOf(n) !== k));
+                    $('rosterRows').querySelectorAll('.r-num').forEach(el => el.classList.toggle('dup', dup.has(el.value.trim())));
+                }
+            });
+            $('rosterRows').addEventListener('click', (e) => {
+                const i = e.target.dataset.del;
+                if (i === undefined) return;
+                roster.splice(+i, 1);
+                saveRoster();
+                renderRosterRows();
+            });
+            $('rosterAddBtn').addEventListener('click', () => {
+                roster.push({ num: '', name: '', role: '' });
+                renderRosterRows();
+                const rows = $('rosterRows').querySelectorAll('.r-num');
+                const last = rows[rows.length - 1];
+                if (last) { last.scrollIntoView({ block: 'nearest' }); last.focus(); }
+            });
+            $('rosterClearBtn').addEventListener('click', () => {
+                if (!roster.length || !confirm('Svuotare il roster? I nomi già inseriti nella tabella restano.')) return;
+                roster = [];
+                saveRoster();
+                renderRosterRows();
+            });
+
+            // ---- ROSTER: LETTURA DI FILE ED ELENCHI ----
+            // Accetta il file esportato dall'app (CSV), CSV/TSV da Excel, Numbers
+            // o Fogli Google, testo semplice ("7 Rossi", "Rossi 7", "Rossi (D)")
+            // e il JSON. Il numero è una cifra da 1 a 3 caratteri.
+            const ROLE_RE = /^(p|d|c|a|por|dif|cen|att|portiere|difensore|centrocampista|attaccante|terzino|centrale|esterno|mediano|regista|mezzala|trequartista|ala|punta)$/i;
+            function splitCsv(line, sep) {
+                const out = [];
+                let cur = '', q = false;
+                for (let i = 0; i < line.length; i++) {
+                    const ch = line[i];
+                    if (q) {
+                        if (ch === '"' && line[i + 1] === '"') { cur += '"'; i++; }
+                        else if (ch === '"') q = false;
+                        else cur += ch;
+                    } else if (ch === '"') q = true;
+                    else if (ch === sep) { out.push(cur); cur = ''; }
+                    else cur += ch;
+                }
+                out.push(cur);
+                return out.map(c => c.trim());
+            }
+            function parseRoster(text) {
+                text = String(text || '').replace(/^﻿/, '').trim();
+                if (!text) return [];
+                try {
+                    const j = JSON.parse(text);
+                    const arr = Array.isArray(j) ? j : (j && j.players);
+                    if (Array.isArray(arr)) {
+                        return arr.map(p => typeof p === 'string' ? { num: '', name: p.trim(), role: '' } : {
+                            num: String(p.num ?? p.numero ?? '').trim(),
+                            name: String(p.name ?? p.nome ?? '').trim(),
+                            role: String(p.role ?? p.ruolo ?? '').trim()
+                        }).filter(p => p.name);
+                    }
+                } catch (_) {}
+                const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+                const sepOf = (l) => l.includes('\t') ? '\t' : l.includes(';') ? ';' : l.includes(',') ? ',' : null;
+                const isNumTok = (t) => /^\d{1,3}$/.test(t);
+                const out = [];
+                let cols = null;   // colonne dell'intestazione, se c'è
+                lines.forEach((line) => {
+                    const sep = sepOf(line);
+                    if (sep) {
+                        const cells = splitCsv(line, sep);
+                        const HEAD = /^(n|n°|no|nr|num|number|numero|maglia|#|nome|cognome|giocatore|nominativo|name|surname|ruolo|role|posizione)\.?$/i;
+                        if (!cells.some(isNumTok) && cells.filter(Boolean).length && cells.filter(Boolean).every(c => HEAD.test(c))) {
+                            cols = { num: -1, role: -1, name: [] };
+                            cells.forEach((c, i) => {
+                                if (/^(n|n°|no|nr|num|number|numero|maglia|#)\.?$/i.test(c)) cols.num = i;
+                                else if (/^(ruolo|role|posizione)$/i.test(c)) cols.role = i;
+                                else if (/^(nome|cognome|giocatore|name|surname|nominativo)$/i.test(c)) cols.name.push(i);
+                            });
+                            return;
+                        }
+                        if (cols && cols.name.length) {
+                            out.push({
+                                num: cols.num >= 0 ? (cells[cols.num] || '') : '',
+                                name: cols.name.map(i => cells[i] || '').filter(Boolean).join(' '),
+                                role: cols.role >= 0 ? (cells[cols.role] || '') : ''
+                            });
+                            return;
+                        }
+                        const rest = cells.filter(Boolean);
+                        const ni = rest.findIndex(isNumTok);
+                        const num = ni >= 0 ? rest.splice(ni, 1)[0] : '';
+                        const ri = rest.length > 1 ? rest.findIndex(t => ROLE_RE.test(t)) : -1;
+                        const role = ri >= 0 ? rest.splice(ri, 1)[0] : '';
+                        out.push({ num, name: rest.join(' '), role });
+                        return;
+                    }
+                    // riga di testo: elenco puntato, "7 Rossi", "7. Rossi", "Rossi 7", "Rossi (D)"
+                    let t = line.replace(/^[-•*·–]\s*/, '');
+                    let role = '';
+                    const rm = /\s*\(([^)]{1,20})\)\s*$/.exec(t);
+                    if (rm && !isNumTok(rm[1].trim())) { role = rm[1].trim(); t = t.slice(0, rm.index); }
+                    let num = '';
+                    let m = /^#?(\d{1,3})[\s.)\-–:]+(.+)$/.exec(t);
+                    if (m) { num = m[1]; t = m[2]; }
+                    else if ((m = /^(.+?)[\s\-–:(#]+(\d{1,3})\)?$/.exec(t))) { t = m[1]; num = m[2]; }
+                    out.push({ num, name: t.trim(), role });
+                });
+                return out.filter(p => p.name && !/^(nome|cognome|giocatore|name|ruolo|numero)$/i.test(p.name));
+            }
+
+            let pendingImport = null;
+            function proposeImport(list, source) {
+                if (!list.length) {
+                    alert(source === 'file'
+                        ? 'Non ho trovato giocatori nel file. Serve un giocatore per riga, ad esempio "7 Rossi".'
+                        : 'Non ho trovato giocatori nell\'elenco. Serve un giocatore per riga, ad esempio "7 Rossi".');
+                    return;
+                }
+                $('rosterPaste').hidden = true;
+                if (!roster.length) { applyImport(list, true); return; }
+                pendingImport = list;
+                $('rosterConfirmText').textContent = `Trovati ${list.length} giocatori. Il roster ne ha già ${roster.length}: vuoi sostituirlo o aggiungere quelli nuovi?`;
+                $('rosterConfirm').hidden = false;
+            }
+            function applyImport(list, replace) {
+                if (replace) roster = [];
+                list.forEach(p => {
+                    const ex = roster.find(r => r.name.trim().toLowerCase() === p.name.trim().toLowerCase());
+                    if (ex) {
+                        if (p.num) ex.num = p.num;
+                        if (p.role) ex.role = p.role;
+                    } else roster.push({ num: p.num || '', name: p.name, role: p.role || '' });
+                });
+                sortRoster();
+                saveRoster();
+                pendingImport = null;
+                $('rosterConfirm').hidden = true;
+                renderRosterRows();
+                updateRosterList();
+                showToast(`Roster: ${roster.length} giocatori`);
+            }
+            $('rosterReplace').addEventListener('click', () => pendingImport && applyImport(pendingImport, true));
+            $('rosterMerge').addEventListener('click', () => pendingImport && applyImport(pendingImport, false));
+            $('rosterImportCancel').addEventListener('click', () => { pendingImport = null; $('rosterConfirm').hidden = true; });
+
+            $('rosterImportBtn').addEventListener('click', () => { $('rosterFile').value = ''; $('rosterFile').click(); });
+            $('rosterFile').addEventListener('change', (e) => {
+                const f = e.target.files && e.target.files[0];
+                if (!f) return;
+                if (/\.(xlsx?|numbers|docx?|pdf)$/i.test(f.name)) {
+                    alert('Questo tipo di file non si può leggere. Da Excel, Numbers o Fogli Google usa "Salva come / Esporta → CSV", oppure copia le celle e usa "Incolla elenco".');
+                    return;
+                }
+                const rd = new FileReader();
+                rd.onload = () => proposeImport(parseRoster(rd.result), 'file');
+                rd.onerror = () => alert('Non riesco a leggere il file.');
+                rd.readAsText(f);
+            });
+            $('rosterPasteBtn').addEventListener('click', () => {
+                $('rosterConfirm').hidden = true;
+                $('rosterPaste').hidden = false;
+                $('rosterPasteText').value = '';
+                $('rosterPasteText').focus();
+            });
+            $('rosterPasteCancel').addEventListener('click', () => { $('rosterPaste').hidden = true; });
+            $('rosterPasteOk').addEventListener('click', () => proposeImport(parseRoster($('rosterPasteText').value), 'list'));
+
+            // ---- ROSTER: ESPORTA / CONDIVIDI ----
+            // CSV con ";" e BOM: si riapre nell'app e anche in Excel italiano.
+            function rosterCsv() {
+                const q = (v) => /[;"\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v;
+                return '﻿' + ['Numero;Nome;Ruolo'].concat(roster.filter(p => p.name.trim())
+                    .map(p => [p.num.trim(), p.name.trim(), p.role.trim()].map(q).join(';'))).join('\r\n') + '\r\n';
+            }
+            function rosterFile() {
+                const date = new Date().toISOString().slice(0, 10);
+                return new File([rosterCsv()], `roster_${date}.csv`, { type: 'text/csv' });
+            }
+            $('rosterExportBtn').addEventListener('click', () => {
+                if (!roster.some(p => p.name.trim())) { alert('Il roster è vuoto.'); return; }
+                const f = rosterFile();
+                const url = URL.createObjectURL(f);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = f.name;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                setTimeout(() => URL.revokeObjectURL(url), 2000);
+                showToast(`Roster salvato in Download: ${f.name}`);
+            });
+            // "Condividi" solo dove il sistema lo permette (telefoni e tablet)
+            try {
+                if (navigator.canShare && navigator.canShare({ files: [rosterFile()] })) $('rosterShareBtn').hidden = false;
+            } catch (_) {}
+            $('rosterShareBtn').addEventListener('click', () => {
+                if (!roster.some(p => p.name.trim())) { alert('Il roster è vuoto.'); return; }
+                navigator.share({ files: [rosterFile()], title: 'Roster squadra' }).catch(() => {});
+            });
+
+            // ---- EVENTI GLOBALI ----
+            opponentEl.addEventListener('input', autoSave);
+            resultEl.addEventListener('input', autoSave);
+            matchTypeEl.addEventListener('change', autoSave);
+            venueEl.addEventListener('change', autoSave);
+            generalNotesEl.addEventListener('input', autoSave);
+
+            titolarCountEl.addEventListener('change', function() {
+                updateFormationOptions();
+                const count = parseInt(this.value, 10);
+                playerCountLabel.textContent =
+                    `${TOTAL_PLAYERS} giocatori · ${count} titolari · modulo ${formationEl.value}`;
+                autoSave();
+            });
+
+            formationEl.addEventListener('change', function() {
+                if (this.value === '__add') { addCustomFormation(); return; }
+                if (this.value === '__del') { deleteCustomFormation(); return; }
+                updateFormationOptions(this.value);
+                autoSave();
+            });
+
+            clearBtn.addEventListener('click', clearFormation);
+            resetBtn.addEventListener('click', resetAll);
+            exportBtn.addEventListener('click', openPreview);
+
+            // ---- INIT ----
+            const loaded = loadState();
+            if (!loaded) {
+                titolarCountEl.value = '11';
+                updateFormationOptions();
+                playerData = Array.from({ length: TOTAL_PLAYERS }, () => ({
+                    name: '',
+                    role: 'Difensore',
+                    minutes: '',
+                    rating: 0,
+                    notes: ''
+                }));
+                renderPlayers();
+                const count = parseInt(titolarCountEl.value, 10);
+                playerCountLabel.textContent =
+                    `${TOTAL_PLAYERS} giocatori · ${count} titolari · modulo ${formationEl.value}`;
+            }
+
+            // Ctrl+Enter per esportare
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && rosterModal.classList.contains('open')) { closeRoster(); return; }
+                if (e.key === 'Escape' && previewModal.classList.contains('open')) { closePreview(); return; }
+                if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                    e.preventDefault();
+                    if (previewModal.classList.contains('open')) savePdf();
+                    else openPreview();
+                }
+            });
+
+            console.log('🏆 Match Report · Bianco Nero Granata loaded. Ctrl+Enter per PDF.');
+        })();
+    </script>
+
+
+<!-- Suite: pulsante per tornare alla pagina iniziale -->
+<a href="../index.html" id="suite-home" title="Torna alla Suite" aria-label="Torna alla Suite">
+  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg>
+</a>
+<style>
+  #suite-home{position:fixed;left:14px;bottom:14px;z-index:2147483000;width:44px;height:44px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;background:rgba(27,27,27,.82);color:#fff;
+    box-shadow:0 4px 14px rgba(0,0,0,.25);text-decoration:none;opacity:.85;transition:opacity .15s,transform .15s}
+  #suite-home:hover{opacity:1;transform:scale(1.06)}
+  @media print{#suite-home{display:none!important}}
+</style>
+</body>
+</html>
