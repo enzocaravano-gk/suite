@@ -765,6 +765,17 @@
             .actions, .actions .left { flex-direction: column; align-items: stretch; }
         }
     </style>
+<style>
+/* iPad/iPhone (Safari): il campo data ha una larghezza minima propria e sborda sul campo accanto */
+.row .field { min-width: 0; }
+.row .field input, .row .field select { max-width: 100%; min-width: 0; }
+.row .field input[type="date"] {
+  -webkit-appearance: none; appearance: none;
+  display: block; min-width: 0; max-width: 100%;
+  text-align: left; line-height: 1.3;
+}
+.row .field input[type="date"]::-webkit-date-and-time-value { text-align: left; margin: 0; }
+</style>
 </head>
 <body>
 
