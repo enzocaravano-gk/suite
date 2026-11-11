@@ -138,6 +138,16 @@
   .notes textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(var(--accent-rgb),.15);background:#fff}
   .add-ex{align-self:flex-start;border:1.5px dashed var(--accent);color:var(--accent);background:#fff;padding:12px 24px;border-radius:40px;font-weight:700;cursor:pointer;font-size:14px;font-family:inherit}
   .add-ex:hover{background:rgba(var(--accent-rgb),.06)}
+  .add-row{display:flex;gap:10px;flex-wrap:wrap}
+  /* ---- Esercizio solo testo: niente campo, descrizione a tutta larghezza ---- */
+  .notes .mat-row{display:none;margin-bottom:10px}
+  .notes .mat-row input{width:100%;border:1.5px solid #d0d0d0;border-radius:12px;background:#fafafa;padding:9px 12px;font-size:14px;font-family:inherit;color:var(--ink);margin-top:4px}
+  .notes .mat-row input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(var(--accent-rgb),.15);background:#fff}
+  .exercise.text-only .field-box{display:none}
+  .exercise.text-only .notes{width:100%;flex:1 1 auto}
+  .exercise.text-only .notes .mat-row{display:block}
+  .exercise.text-only .notes textarea{min-height:240px}
+  .text-print{display:none}
 
   /* toolbar elemento fluttuante */
   .float-el{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#fff;border:1.5px solid var(--accent);border-radius:16px;box-shadow:0 4px 16px rgba(0,0,0,.15);padding:6px;display:none;gap:6px;z-index:40}
@@ -206,7 +216,7 @@
     .exercise{box-shadow:none!important}
     /* firma dell'allenatore: piccola e grigio chiaro in fondo a ogni pagina */
     .print-sign:not(:empty){display:block!important;position:fixed;right:6mm;bottom:2mm;font-size:9px;color:#b0b0b0;letter-spacing:.3px}
-    .palette,.head-actions,.drawbar,.float-el,.add-ex,.ex-btns{display:none!important}
+    .palette,.head-actions,.drawbar,.float-el,.add-ex,.add-row,.ex-btns{display:none!important}
     main{display:block;overflow:visible}
     .content{overflow:visible;padding:0}
     header{border:none}
@@ -221,6 +231,14 @@
     .field{width:128mm!important;height:calc(128mm * var(--arh) / var(--arw))!important;aspect-ratio:auto!important;max-width:100%!important;min-width:0!important;margin:0 auto!important}
     .notes{width:100%!important;flex:none!important;margin-top:10px}
     .notes textarea{display:none!important}
+    .exercise.text-only .ex-body{padding:12px 14px!important}
+    .exercise.text-only .notes{margin-top:0}
+    .exercise.text-only .notes>label,.exercise.text-only .mat-row,.exercise.text-only .notes-print{display:none!important}
+    .exercise.text-only .text-print{display:block!important;border:1.5px solid var(--line);border-left:4px solid var(--accent);border-radius:10px;padding:12px 16px;background:#fff}
+    .text-print .tp-meta{display:flex;gap:22px;flex-wrap:wrap;font-size:12.5px;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+    .text-print .tp-meta:empty{display:none}
+    .text-print .tp-meta b{color:var(--accent);text-transform:uppercase;letter-spacing:.4px;font-size:11px;margin-right:4px}
+    .text-print .tp-txt{white-space:pre-wrap;overflow-wrap:break-word;font-size:13.5px;line-height:1.6;color:var(--ink);min-height:60px}
     .notes-print{display:block!important;white-space:pre-wrap;overflow-wrap:break-word;word-break:break-word;font-size:13px;line-height:1.5;padding:2px 0;color:var(--ink);text-align:justify;text-justify:inter-word;hyphens:auto;-webkit-hyphens:auto}
     .drop-el.sel{outline:none}
     .drop-el .handle,.drop-el .rot,.line-handle{display:none!important}
@@ -306,7 +324,10 @@
 <main>
   <aside class="palette" id="palette"></aside>
   <div class="content" id="content">
-    <button class="add-ex" id="btnAddEx">＋ Aggiungi esercitazione</button>
+    <div class="add-row" id="addRow">
+      <button class="add-ex" id="btnAddEx">＋ Aggiungi esercitazione</button>
+      <button class="add-ex" id="btnAddTxt" title="Esercizio scritto, senza disegnare sul campo">📝 Aggiungi esercizio solo testo</button>
+    </div>
   </div>
 </main>
 </div>
@@ -628,7 +649,7 @@ function addToField(field,key,xp,yp){
 }
 // campo "attivo" per il tocco: quello più visibile nella finestra
 function pickTargetField(){
-  const fields=[...document.querySelectorAll('.exercise .field')];
+  const fields=[...document.querySelectorAll('.exercise:not(.text-only) .field')];
   if(!fields.length) return null;
   const vh=window.innerHeight||document.documentElement.clientHeight;
   let best=fields[fields.length-1],bestVis=-1;
@@ -904,6 +925,7 @@ document.addEventListener('keydown',e=>{
 /* ---- Blocchi esercitazione ---- */
 const content=document.getElementById('content');
 const addBtn=document.getElementById('btnAddEx');
+const addRow=document.getElementById('addRow');
 function makeExercise(data={}){
   const ex=document.createElement('div');ex.className='exercise';
   const head=document.createElement('div');head.className='ex-head';
@@ -914,6 +936,7 @@ function makeExercise(data={}){
       <option value="intero">Campo intero</option>
       <option value="meta">Metà verticale</option>
       <option value="vuoto">Solo verde</option>
+      <option value="testo">📝 Solo testo</option>
     </select>
     <div class="ex-btns">
       <button data-a="toggle" title="Comprimi/Espandi"></button>
@@ -926,16 +949,24 @@ function makeExercise(data={}){
   const fbox=document.createElement('div');fbox.className='field-box';
   const field=makeField(data.pitch);fbox.appendChild(field);
   const pitchSel=head.querySelector('.pitch');pitchSel.value=data.pitch||'intero';
-  pitchSel.addEventListener('change',()=>{setPitch(field,pitchSel.value);selectEl(null);});
+  // "Solo testo": nasconde il campo (i disegni restano, se si torna a un campo)
+  function setTextOnly(on){ex.classList.toggle('text-only',on);ex.dataset.mode=on?'testo':'';
+    notes.querySelector(':scope>label').textContent=on?'Descrizione esercizio':'Note';
+    notes.querySelector('textarea').placeholder=on?'Svolgimento, regole, varianti, punti di attenzione...':'Descrizione, obiettivi, varianti, regole, punti di attenzione...';}
+  pitchSel.addEventListener('change',()=>{selectEl(null);
+    if(pitchSel.value==='testo'){setTextOnly(true);return;}
+    setTextOnly(false);setPitch(field,pitchSel.value);});
   const notes=document.createElement('div');notes.className='notes';
-  notes.innerHTML=`<label>Note</label><textarea placeholder="Descrizione, obiettivi, varianti, regole, punti di attenzione..."></textarea><div class="notes-print"></div>`;
+  notes.innerHTML=`<div class="mat-row"><label class="mat-lbl">Materiale</label><input class="mat" placeholder="Es. 6 coni, 10 palloni, 2 porte piccole"></div><label>Note</label><textarea placeholder="Descrizione, obiettivi, varianti, regole, punti di attenzione..."></textarea><div class="notes-print"></div><div class="text-print"><div class="tp-meta"></div><div class="tp-txt"></div></div>`;
   body.appendChild(fbox);body.appendChild(notes);
   ex.appendChild(head);ex.appendChild(body);
-  content.insertBefore(ex,addBtn);
+  content.insertBefore(ex,addRow);
 
   head.querySelector('.title').value=data.title||'';
   head.querySelector('.dur').value=data.dur||'';
   notes.querySelector('textarea').value=data.notes||'';
+  notes.querySelector('.mat').value=data.mat||'';
+  if(data.mode==='testo'){pitchSel.value='testo';setTextOnly(true);}
   (data.els||[]).forEach(o=>{
     if(o.kind==='text') addTextElement(field,o.x,o.y,{fs:o.fs,rot:o.rot,flip:o.flip,color:o.color,text:o.text});
     else if(o.kind==='shape') addShapeElement(field,o.shape,o.x,o.y,{w:o.w,rot:o.rot,flip:o.flip,color:o.color,num:o.num});
@@ -961,6 +992,8 @@ function soloExpand(ex){
 }
 function renumber(){[...content.querySelectorAll('.exercise')].forEach((ex,i)=>ex.querySelector('.ex-badge').textContent=i+1);}
 addBtn.addEventListener('click',()=>{const ex=makeExercise();soloExpand(ex);ex.scrollIntoView({behavior:'smooth',block:'center'});});
+document.getElementById('btnAddTxt').addEventListener('click',()=>{const ex=makeExercise({mode:'testo'});soloExpand(ex);
+  ex.scrollIntoView({behavior:'smooth',block:'center'});ex.querySelector('.title').focus({preventScroll:true});});
 
 /* ---- Serializzazione ---- */
 function readExercise(ex){
@@ -974,7 +1007,7 @@ function readExercise(ex){
   const draws=[...field.querySelectorAll('.draw-g')].map(g=>({
     type:g.dataset.type,color:g.dataset.color,...drawCoords(g)}));
   return {title:ex.querySelector('.title').value,dur:ex.querySelector('.dur').value,pitch:field.dataset.pitch,
-    notes:ex.querySelector('textarea').value,els,draws};
+    notes:ex.querySelector('.notes textarea').value,mat:ex.querySelector('.mat').value,mode:ex.dataset.mode||'',els,draws};
 }
 const META=['f_data','f_cat','f_num','f_dur','f_obj','f_ngioc','f_mat'];
 function collect(){
@@ -1067,6 +1100,12 @@ function syncNotesForPrint(){
   document.querySelectorAll('.exercise').forEach(ex=>{
     const ta=ex.querySelector('.notes textarea'); const np=ex.querySelector('.notes-print');
     if(ta&&np) np.textContent=ta.value;
+    const tp=ex.querySelector('.text-print');if(!tp)return;
+    const meta=tp.querySelector('.tp-meta');meta.innerHTML='';
+    [['Durata',ex.querySelector('.dur').value],['Materiale',ex.querySelector('.mat').value]].forEach(([k,v])=>{
+      v=(v||'').trim();if(!v)return;const d=document.createElement('span');const b=document.createElement('b');b.textContent=k;
+      d.appendChild(b);d.appendChild(document.createTextNode(v));meta.appendChild(d);});
+    tp.querySelector('.tp-txt').textContent=ta?ta.value:'';
   });
 }
 window.addEventListener('beforeprint',syncNotesForPrint);

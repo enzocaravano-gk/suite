@@ -78,10 +78,55 @@
   .app p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.45; }
   .go { margin-top: auto; font-weight: 600; color: var(--accent); font-size: 14px; }
 
+  /* ---- Menu ☰ (come nelle app): logo, firma allenatore, colore squadra ---- */
+  .hamburger-wrap { position: fixed; top: 14px; right: 16px; z-index: 50; }
+  .hamburger-btn { background: transparent; border: none; font-size: 28px; cursor: pointer; padding: 6px 10px; color: var(--accent); line-height: 1; }
+  .hamburger-dropdown { position: absolute; top: 100%; right: 0; background: var(--card); border: 1.5px solid var(--accent); border-radius: 14px; box-shadow: 0 8px 24px rgba(0,0,0,.15); padding: 16px 20px; min-width: 250px; display: none; margin-top: 8px; }
+  .hamburger-dropdown.open { display: block; }
+  .menu-item { padding: 8px 0; border-bottom: 1px solid var(--line); }
+  .menu-item:last-child { border-bottom: none; }
+  .menu-label { display: block; font-size: 13px; font-weight: 600; color: var(--accent); letter-spacing: .3px; margin-bottom: 6px; }
+  .logo-upload input[type="file"] { font-size: 13px; padding: 6px 8px; border: 1.5px dashed var(--accent); border-radius: 10px; background: transparent; color: var(--ink); width: 100%; }
+  .link-btn { background: none; border: none; color: var(--accent); font-size: 13px; font-weight: 600; cursor: pointer; padding: 0; font-family: inherit; }
+  .coach-name { display: block; font-size: 13px; color: var(--muted); margin-bottom: 4px; word-break: break-word; }
+  .coach-name:empty { display: none; }
+  .color-swatches { display: flex; gap: 9px; flex-wrap: wrap; }
+  .color-swatch { width: 26px; height: 26px; border: 2px solid var(--card); border-radius: 50%; box-shadow: 0 0 0 1.5px #d0d0d0; cursor: pointer; transition: .15s; padding: 0; }
+  .color-swatch:hover { transform: scale(1.12); }
+  .color-swatch.selected { box-shadow: 0 0 0 1.5px var(--card), 0 0 0 3.5px var(--accent); }
+
   footer { margin-top: 40px; color: var(--muted); font-size: 12px; text-align: center; }
 </style>
 </head>
 <body>
+  <div class="hamburger-wrap">
+    <button class="hamburger-btn" id="hamburgerBtn" aria-label="Menu">☰</button>
+    <div class="hamburger-dropdown" id="hamburgerDropdown">
+      <div class="menu-item logo-upload">
+        <label class="menu-label" for="logoUpload">⬆️ Carica logo</label>
+        <input type="file" id="logoUpload" accept="image/*">
+        <button type="button" class="link-btn" id="removeLogoBtn" style="margin-top:8px">✕ Rimuovi logo</button>
+      </div>
+      <div class="menu-item">
+        <span class="menu-label">✍️ Firma allenatore</span>
+        <span class="coach-name" id="coachNameLbl"></span>
+        <button type="button" class="link-btn" id="coachBtn">Aggiungi nome allenatore</button>
+      </div>
+      <div class="menu-item">
+        <span class="menu-label">🎨 Colore squadra</span>
+        <div class="color-swatches">
+          <button type="button" class="color-swatch" data-accent="#8B0000" data-accent-dark="#600000" data-accent-rgb="139, 0, 0" style="background:#8B0000" title="Granata"></button>
+          <button type="button" class="color-swatch" data-accent="#1652a1" data-accent-dark="#0f3b73" data-accent-rgb="22, 82, 161" style="background:#1652a1" title="Blu"></button>
+          <button type="button" class="color-swatch" data-accent="#d32f2f" data-accent-dark="#a02323" data-accent-rgb="211, 47, 47" style="background:#d32f2f" title="Rosso"></button>
+          <button type="button" class="color-swatch" data-accent="#1e8449" data-accent-dark="#14602f" data-accent-rgb="30, 132, 73" style="background:#1e8449" title="Verde"></button>
+          <button type="button" class="color-swatch" data-accent="#0288d1" data-accent-dark="#01579b" data-accent-rgb="2, 136, 209" style="background:#0288d1" title="Azzurro"></button>
+          <button type="button" class="color-swatch" data-accent="#6a3fa0" data-accent-dark="#4d2d75" data-accent-rgb="106, 63, 160" style="background:#6a3fa0" title="Viola"></button>
+          <button type="button" class="color-swatch" data-accent="#222222" data-accent-dark="#000000" data-accent-rgb="34, 34, 34" style="background:#222" title="Nero"></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <header>
     <div class="logo" id="logo">S</div>
     <h1>Suite Allenatore</h1>
@@ -129,21 +174,61 @@
   <footer>Suite Allenatore</footer>
 
 <script>
-  // Usa logo e colore del club già impostati in Report / Posizionamenti, se presenti
-  try {
-    const raw = localStorage.getItem('clubAccentColor');
-    if (raw) {
-      const v = JSON.parse(raw);
+  // Menu ☰: stesse chiavi delle app, quindi logo, firma e colore valgono per tutta la suite
+  (function () {
+    const $ = id => document.getElementById(id), dd = $('hamburgerDropdown');
+    $('hamburgerBtn').addEventListener('click', e => { e.stopPropagation(); dd.classList.toggle('open'); });
+    document.addEventListener('click', e => { if (!dd.contains(e.target) && e.target.id !== 'hamburgerBtn') dd.classList.remove('open'); });
+
+    // colore squadra
+    const sw = document.querySelectorAll('.color-swatch');
+    function applyAccent(a) {
+      document.documentElement.style.setProperty('--accent', a);
+      sw.forEach(b => b.classList.toggle('selected', b.dataset.accent.toLowerCase() === String(a).toLowerCase()));
+    }
+    let cur = '#8B0000';
+    try {
+      const v = JSON.parse(localStorage.getItem('clubAccentColor') || 'null');
       const c = typeof v === 'string' ? v : (v && (v.accent || v.color));
-      if (c) document.documentElement.style.setProperty('--accent', c);
+      if (c) cur = c;
+    } catch (e) {}
+    applyAccent(cur);
+    sw.forEach(b => b.addEventListener('click', () => {
+      applyAccent(b.dataset.accent);
+      try { localStorage.setItem('clubAccentColor', JSON.stringify({ accent: b.dataset.accent, accentDark: b.dataset.accentDark, accentRgb: b.dataset.accentRgb })); } catch (e) {}
+    }));
+
+    // logo
+    const box = $('logo');
+    function setLogo(u) {
+      if (u) { box.innerHTML = ''; const im = document.createElement('img'); im.alt = 'Logo club'; im.src = u; box.appendChild(im); }
+      else box.textContent = 'S';
     }
-  } catch (e) {}
-  try {
-    const logo = localStorage.getItem('clubLogoData');
-    if (logo && logo.startsWith('data:image')) {
-      document.getElementById('logo').innerHTML = '<img alt="Logo club" src="' + logo + '">';
-    }
-  } catch (e) {}
+    try { const l = localStorage.getItem('clubLogoData'); if (l && l.startsWith('data:image')) setLogo(l); } catch (e) {}
+    $('logoUpload').addEventListener('change', e => {
+      const f = e.target.files[0]; if (!f) return;
+      const rd = new FileReader();
+      rd.onload = ev => {
+        setLogo(ev.target.result); dd.classList.remove('open');
+        try { localStorage.setItem('clubLogoData', ev.target.result); } catch (_) { alert('Logo troppo grande per il salvataggio automatico: resta solo per questa sessione.'); }
+      };
+      rd.readAsDataURL(f); e.target.value = '';
+    });
+    $('removeLogoBtn').addEventListener('click', () => { setLogo(''); try { localStorage.removeItem('clubLogoData'); } catch (_) {} dd.classList.remove('open'); });
+
+    // firma allenatore
+    const COACH_KEY = 'posizionamentiCoach'; let coach = '';
+    try { coach = (localStorage.getItem(COACH_KEY) || '').trim(); } catch (_) {}
+    function upd() { $('coachNameLbl').textContent = coach; $('coachBtn').textContent = coach ? 'Modifica nome' : 'Aggiungi nome allenatore'; }
+    upd();
+    $('coachBtn').addEventListener('click', () => {
+      dd.classList.remove('open');
+      const v = prompt('Firma allenatore – nome e cognome (vuoto = nessuna firma):', coach); if (v === null) return;
+      coach = v.replace(/\s+/g, ' ').trim();
+      try { coach ? localStorage.setItem(COACH_KEY, coach) : localStorage.removeItem(COACH_KEY); } catch (_) {}
+      upd();
+    });
+  })();
 </script>
 </body>
 </html>
