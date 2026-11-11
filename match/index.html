@@ -1138,6 +1138,135 @@ html body .campo-header { color: var(--accent); letter-spacing: 0.6px; }
   .suite-actions .sbtn { flex: 1 1 calc(50% - 6px); justify-content: center; padding: 12px 14px; }
 }
 @media print { #suite-home, .suite-toast { display: none !important; } }
+        /* ---- HAMBURGER MENU ---- */
+        .hamburger-wrap {
+            position: relative;
+            margin-left: auto;
+        }
+        .hamburger-btn {
+            background: transparent;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            padding: 6px 10px;
+            color: var(--accent);
+            transition: 0.2s;
+            line-height: 1;
+        }
+        .hamburger-btn:hover {
+            color: var(--accent-dark);
+            transform: scale(1.05);
+        }
+        .hamburger-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: #ffffff;
+            border: 1.5px solid var(--accent);
+            border-radius: 14px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+            padding: 16px 20px;
+            min-width: 240px;
+            display: none;
+            z-index: 100;
+            margin-top: 8px;
+        }
+        .hamburger-dropdown.open {
+            display: block;
+        }
+        .hamburger-dropdown .logo-upload {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .hamburger-dropdown .logo-upload label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--accent);
+            letter-spacing: 0.3px;
+            cursor: pointer;
+        }
+        .hamburger-dropdown .logo-upload input[type="file"] {
+            font-size: 13px;
+            padding: 6px 8px;
+            border: 1.5px dashed var(--accent);
+            border-radius: 10px;
+            background: #fcfcfc;
+            cursor: pointer;
+        }
+        .hamburger-dropdown .logo-upload input[type="file"]::-webkit-file-upload-button {
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        .hamburger-dropdown .logo-upload input[type="file"]::-webkit-file-upload-button:hover {
+            background: var(--accent-dark);
+        }
+        .hamburger-dropdown .logo-upload.hidden {
+            display: none;
+        }
+        .hamburger-dropdown .menu-item {
+            padding: 6px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .hamburger-dropdown .menu-item:last-child {
+            border-bottom: none;
+        }
+        .color-picker {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .color-picker-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--accent);
+            letter-spacing: 0.3px;
+        }
+        .color-swatches {
+            display: flex;
+            gap: 9px;
+            flex-wrap: wrap;
+        }
+        .color-swatch {
+            width: 26px;
+            height: 26px;
+            padding: 0;
+            border: 2px solid #fff;
+            border-radius: 50%;
+            box-shadow: 0 0 0 1.5px #d0d0d0;
+            cursor: pointer;
+            transition: 0.15s;
+        }
+        .color-swatch:hover {
+            transform: scale(1.12);
+        }
+        .color-swatch.selected {
+            box-shadow: 0 0 0 1.5px #fff, 0 0 0 3.5px var(--accent);
+        }
+        .link-btn {
+            background: none;
+            border: none;
+            color: var(--accent);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            padding: 0;
+            font-family: inherit;
+            text-align: left;
+        }
+        .coach-name { font-size: 13px; color: #555; word-break: break-word; }
+        .coach-name:empty { display: none; }
+
+.hamburger-dropdown { font-family: 'Segoe UI', Roboto, system-ui, sans-serif; z-index: 300; }
+.suite-logo-box { display: flex; align-items: center; gap: 14px; }
+.logo-placeholder { font-size: 13px; color: #888; }
+@media (max-width: 760px) { .hamburger-dropdown { right: -6px; min-width: 220px; } }
 </style>
 <script>
 /* colore del club scelto nelle altre app della suite */
@@ -1163,13 +1292,109 @@ function analisiAvviso(msg) {
 
 <div class="suite-app">
 <header class="app-header">
-    <img class="suite-logo" id="suiteLogo" alt="Logo club">
+    <div class="suite-logo-box">
+        <img class="suite-logo" id="suiteLogo" alt="Logo società">
+        <span class="logo-placeholder" id="logoPlaceholder">(logo non caricato)</span>
+    </div>
     <div>
         <div class="suite-title">Match</div>
         <div class="suite-sub">Analisi della partita · by SPORTHUB</div>
     </div>
+            <div class="hamburger-wrap">
+                <button class="hamburger-btn" id="hamburgerBtn" aria-label="Menu">☰</button>
+                <div class="hamburger-dropdown" id="hamburgerDropdown">
+                    <div class="menu-item" id="logoUploadMenuItem">
+                        <div class="logo-upload" id="logoUploadContainer">
+                            <label for="logoUpload" id="logoUploadLabel">⬆️ Carica logo</label>
+                            <input type="file" id="logoUpload" accept="image/*" />
+                            <button type="button" class="link-btn" id="removeLogoBtn" hidden>✕ Rimuovi logo</button>
+                        </div>
+                    </div>
+                    <div class="menu-item">
+                        <div class="color-picker">
+                            <span class="color-picker-label">✍️ Firma allenatore</span>
+                            <span class="coach-name" id="coachNameLbl"></span>
+                            <button type="button" class="link-btn" id="coachBtn">Aggiungi nome allenatore</button>
+                        </div>
+                    </div>
+                    <div class="menu-item">
+                        <div class="color-picker">
+                            <span class="color-picker-label">🎨 Colore squadra</span>
+                            <div class="color-swatches" id="colorSwatches">
+                                <button type="button" class="color-swatch selected" data-accent="#8B0000" data-accent-dark="#600000" data-accent-rgb="139, 0, 0" style="background:#8B0000" title="Granata" aria-label="Granata"></button>
+                                <button type="button" class="color-swatch" data-accent="#1652a1" data-accent-dark="#0f3b73" data-accent-rgb="22, 82, 161" style="background:#1652a1" title="Blu" aria-label="Blu"></button>
+                                <button type="button" class="color-swatch" data-accent="#d32f2f" data-accent-dark="#a02323" data-accent-rgb="211, 47, 47" style="background:#d32f2f" title="Rosso" aria-label="Rosso"></button>
+                                <button type="button" class="color-swatch" data-accent="#1e8449" data-accent-dark="#14602f" data-accent-rgb="30, 132, 73" style="background:#1e8449" title="Verde" aria-label="Verde"></button>
+                                <button type="button" class="color-swatch" data-accent="#0288d1" data-accent-dark="#01579b" data-accent-rgb="2, 136, 209" style="background:#0288d1" title="Azzurro" aria-label="Azzurro"></button>
+                                <button type="button" class="color-swatch" data-accent="#6a3fa0" data-accent-dark="#4d2d75" data-accent-rgb="106, 63, 160" style="background:#6a3fa0" title="Viola" aria-label="Viola"></button>
+                                <button type="button" class="color-swatch" data-accent="#222222" data-accent-dark="#000000" data-accent-rgb="34, 34, 34" style="background:#222222" title="Nero" aria-label="Nero"></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 </header>
-<script>try{const l=localStorage.getItem('clubLogoData'); if(l && l.indexOf('data:image')===0) document.getElementById('suiteLogo').src=l;}catch(e){}</script>
+<script>
+/* Menu ☰ come nelle altre app: logo, firma allenatore, colore squadra (stesse chiavi: valgono per tutta la suite) */
+(function () {
+    const $m = id => document.getElementById(id);
+    const btn = $m('hamburgerBtn'), dd = $m('hamburgerDropdown');
+    btn.addEventListener('click', e => { e.stopPropagation(); dd.classList.toggle('open'); });
+    document.addEventListener('click', e => { if (!dd.contains(e.target) && e.target !== btn) dd.classList.remove('open'); });
+
+    const swatches = document.querySelectorAll('#colorSwatches .color-swatch');
+    function applyAccent(accent, dark, rgb) {
+        const st = document.documentElement.style;
+        st.setProperty('--accent', accent); st.setProperty('--accent-dark', dark); st.setProperty('--accent-rgb', rgb);
+        swatches.forEach(sw => sw.classList.toggle('selected', sw.dataset.accent.toLowerCase() === accent.toLowerCase()));
+    }
+    swatches.forEach(sw => sw.addEventListener('click', function () {
+        applyAccent(this.dataset.accent, this.dataset.accentDark, this.dataset.accentRgb);
+        try { localStorage.setItem('clubAccentColor', JSON.stringify({ accent: this.dataset.accent, accentDark: this.dataset.accentDark, accentRgb: this.dataset.accentRgb })); } catch (_) {}
+    }));
+    try {
+        const c = JSON.parse(localStorage.getItem('clubAccentColor') || 'null');
+        if (c && c.accent && c.accentDark && c.accentRgb) applyAccent(c.accent, c.accentDark, c.accentRgb);
+    } catch (_) {}
+
+    const img = $m('suiteLogo'), ph = $m('logoPlaceholder'), up = $m('logoUpload'), rm = $m('removeLogoBtn'), lbl = $m('logoUploadLabel');
+    function setLogo(d) {
+        if (d) { img.src = d; ph.style.display = 'none'; } else { img.removeAttribute('src'); ph.style.display = ''; }
+        rm.hidden = !d; lbl.textContent = d ? '⬆️ Cambia logo' : '⬆️ Carica logo';
+    }
+    try { const l = localStorage.getItem('clubLogoData'); if (l && l.indexOf('data:image') === 0) setLogo(l); } catch (_) {}
+    up.addEventListener('change', e => {
+        const f = e.target.files[0]; if (!f) return;
+        const fr = new FileReader();
+        fr.onload = ev => {
+            const d = ev.target.result; setLogo(d); up.value = ''; dd.classList.remove('open');
+            try { localStorage.setItem('clubLogoData', d); } catch (_) { alert('Logo troppo grande per il salvataggio automatico. Verrà mantenuto solo per questa sessione.'); }
+        };
+        fr.readAsDataURL(f);
+    });
+    rm.addEventListener('click', () => { setLogo(''); try { localStorage.removeItem('clubLogoData'); } catch (_) {} dd.classList.remove('open'); });
+
+    const COACH_KEY = 'posizionamentiCoach', cbtn = $m('coachBtn');
+    let coach = ''; try { coach = (localStorage.getItem(COACH_KEY) || '').trim(); } catch (_) {}
+    function coachUI() { $m('coachNameLbl').textContent = coach; cbtn.textContent = coach ? 'Modifica nome' : 'Aggiungi nome allenatore'; }
+    coachUI();
+    cbtn.addEventListener('click', () => {
+        dd.classList.remove('open');
+        const v = prompt('Nome e cognome dell\'allenatore (lascia vuoto per toglierlo):', coach);
+        if (v === null) return;
+        coach = v.replace(/\s+/g, ' ').trim();
+        try { coach ? localStorage.setItem(COACH_KEY, coach) : localStorage.removeItem(COACH_KEY); } catch (_) {}
+        coachUI();
+    });
+    // per il PDF del report
+    window.suiteClub = () => {
+        let logo = '', name = '';
+        try { logo = localStorage.getItem('clubLogoData') || ''; if (logo.indexOf('data:image') !== 0) logo = ''; } catch (_) {}
+        try { name = (localStorage.getItem(COACH_KEY) || '').trim(); } catch (_) {}
+        return { logo, coach: name };
+    };
+})();
+</script>
 
 <main class="app-main">
     <div class="match-info-bar">
@@ -2172,7 +2397,7 @@ function analisiAvviso(msg) {
         document.getElementById('analisiReportContent').innerHTML = reportVisuale(false);
         document.getElementById('analisiReportModal').classList.add('active');
     }
-    function analisiSalvaPDF(){ if (analisiTotaleEventi() === 0) { alert(MT('Nessun evento registrato.')); return; } const _acc=(getComputedStyle(document.documentElement).getPropertyValue('--accent')||'#8B0000').trim(); const contenuto=reportVisuale(true); const w=window.open('','_blank','width=900,height=700'); if(!w){ alert(MT('Il browser ha bloccato la finestra del PDF: consenti i popup per questo sito e riprova.')); return; } w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${MT('Report Match')}</title><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"><style>body{font-family:'Segoe UI',Arial,sans-serif;background:#fff;color:#111;padding:32px 40px;} h1.report-title{font-size:1.5rem;font-weight:900;color:${_acc};} .report-sub{font-size:0.75rem;color:#888;border-bottom:2px solid #eee;padding-bottom:12px;margin-bottom:24px;} .match-line{text-align:center;font-size:1.1rem;font-weight:700;margin-bottom:20px;} .match-line span{color:${_acc};} .analisi-report-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px;} .analisi-stat-card{background:#f5f5f5;border:1px solid #ddd;border-radius:10px;padding:16px 18px;display:flex;align-items:center;gap:12px;} .analisi-stat-val{font-size:1.7rem;font-weight:900;} .analisi-stat-lbl{font-size:0.68rem;color:#666;} .evento-bar-row{display:flex;align-items:center;gap:10px;margin-bottom:7px;} .evento-bar-label{width:130px;font-size:0.82rem;} .evento-bar-track{flex:1;height:8px;background:#ddd;border-radius:4px;overflow:hidden;} .evento-bar-fill{height:100%;border-radius:4px;} .evento-bar-count{width:28px;text-align:right;font-weight:700;} .campo-field{position:relative;background:#1a4a2e;aspect-ratio:105/68;width:100%;overflow:hidden;border-radius:6px;background-image:linear-gradient(rgba(255,255,255,0.45) 2px, transparent 2px), linear-gradient(90deg, rgba(255,255,255,0.45) 2px, transparent 2px), linear-gradient(90deg, transparent calc(50% - 1px), rgba(255,255,255,0.45) calc(50% - 1px), rgba(255,255,255,0.45) calc(50% + 1px), transparent calc(50% + 1px)); -webkit-print-color-adjust: exact; print-color-adjust: exact;} .campo-center-circle{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:18%;aspect-ratio:1;border:2px solid rgba(255,255,255,0.45);border-radius:50%;} .campo-area{position:absolute;top:50%;transform:translateY(-50%);border:2px solid rgba(255,255,255,0.45);} .campo-area.sx{left:0;width:16%;height:57%;border-left:none;} .campo-area.dx{right:0;width:16%;height:57%;border-right:none;} .campo-porta{position:absolute;top:50%;transform:translateY(-50%);border:2px solid rgba(255,255,255,0.45);} .campo-porta.sx{left:0;width:5%;height:30%;border-left:none;} .campo-porta.dx{right:0;width:5%;height:30%;border-right:none;} .campo-zones{position:absolute;inset:0;display:grid;grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(4,1fr);} .campo-zone{border:1px solid rgba(255,255,255,0.12);display:flex;align-items:center;justify-content:center;} .campo-zone-label{font-size:0.55rem;font-weight:700;color:rgba(255,255,255,0.7);text-align:center;} .campo-labels{display:flex;justify-content:space-between;font-size:0.65rem;font-weight:700;letter-spacing:2px;color:#888;padding:5px 0 0 0;} .footer{margin-top:28px;text-align:center;font-size:0.7rem;color:#bbb;border-top:1px solid #eee;padding-top:12px;} @media print{body{padding:20px 28px;}}</style></head><body><h1 class="report-title">Match <span style="font-weight:400;font-size:1rem;color:#888;">${MT('— Report Sessione')}</span></h1><div class="report-sub">by SPORTHUB · ${MT('generato il')} ${new Date().toLocaleString(MT_LANG==='en'?'en-GB':'it-IT')}</div>${contenuto}<div class="footer">Match by SPORTHUB</div></body></html>`); w.document.close(); let _st=false; const _go=()=>{ if(_st) return; _st=true; w.focus(); w.print(); }; w.onload=_go; setTimeout(_go,1200); }
+    function analisiSalvaPDF(){ if (analisiTotaleEventi() === 0) { alert(MT('Nessun evento registrato.')); return; } const _acc=(getComputedStyle(document.documentElement).getPropertyValue('--accent')||'#8B0000').trim(); const contenuto=reportVisuale(true); const _club=(window.suiteClub?window.suiteClub():{logo:'',coach:''}); const _esc=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); const w=window.open('','_blank','width=900,height=700'); if(!w){ alert(MT('Il browser ha bloccato la finestra del PDF: consenti i popup per questo sito e riprova.')); return; } w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${MT('Report Match')}</title><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"><style>body{font-family:'Segoe UI',Arial,sans-serif;background:#fff;color:#111;padding:32px 40px;} h1.report-title{font-size:1.5rem;font-weight:900;color:${_acc};} .report-sub{font-size:0.75rem;color:#888;border-bottom:2px solid #eee;padding-bottom:12px;margin-bottom:24px;} .match-line{text-align:center;font-size:1.1rem;font-weight:700;margin-bottom:20px;} .match-line span{color:${_acc};} .analisi-report-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px;} .analisi-stat-card{background:#f5f5f5;border:1px solid #ddd;border-radius:10px;padding:16px 18px;display:flex;align-items:center;gap:12px;} .analisi-stat-val{font-size:1.7rem;font-weight:900;} .analisi-stat-lbl{font-size:0.68rem;color:#666;} .evento-bar-row{display:flex;align-items:center;gap:10px;margin-bottom:7px;} .evento-bar-label{width:130px;font-size:0.82rem;} .evento-bar-track{flex:1;height:8px;background:#ddd;border-radius:4px;overflow:hidden;} .evento-bar-fill{height:100%;border-radius:4px;} .evento-bar-count{width:28px;text-align:right;font-weight:700;} .campo-field{position:relative;background:#1a4a2e;aspect-ratio:105/68;width:100%;overflow:hidden;border-radius:6px;background-image:linear-gradient(rgba(255,255,255,0.45) 2px, transparent 2px), linear-gradient(90deg, rgba(255,255,255,0.45) 2px, transparent 2px), linear-gradient(90deg, transparent calc(50% - 1px), rgba(255,255,255,0.45) calc(50% - 1px), rgba(255,255,255,0.45) calc(50% + 1px), transparent calc(50% + 1px)); -webkit-print-color-adjust: exact; print-color-adjust: exact;} .campo-center-circle{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:18%;aspect-ratio:1;border:2px solid rgba(255,255,255,0.45);border-radius:50%;} .campo-area{position:absolute;top:50%;transform:translateY(-50%);border:2px solid rgba(255,255,255,0.45);} .campo-area.sx{left:0;width:16%;height:57%;border-left:none;} .campo-area.dx{right:0;width:16%;height:57%;border-right:none;} .campo-porta{position:absolute;top:50%;transform:translateY(-50%);border:2px solid rgba(255,255,255,0.45);} .campo-porta.sx{left:0;width:5%;height:30%;border-left:none;} .campo-porta.dx{right:0;width:5%;height:30%;border-right:none;} .campo-zones{position:absolute;inset:0;display:grid;grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(4,1fr);} .campo-zone{border:1px solid rgba(255,255,255,0.12);display:flex;align-items:center;justify-content:center;} .campo-zone-label{font-size:0.55rem;font-weight:700;color:rgba(255,255,255,0.7);text-align:center;} .campo-labels{display:flex;justify-content:space-between;font-size:0.65rem;font-weight:700;letter-spacing:2px;color:#888;padding:5px 0 0 0;} .footer{margin-top:28px;text-align:center;font-size:0.7rem;color:#bbb;border-top:1px solid #eee;padding-top:12px;} @media print{body{padding:20px 28px;}}</style></head><body>${_club.logo?`<img src="${_club.logo}" alt="" style="max-height:56px;max-width:120px;object-fit:contain;float:right;">`:''}<h1 class="report-title">Match <span style="font-weight:400;font-size:1rem;color:#888;">${MT('— Report Sessione')}</span></h1><div class="report-sub">by SPORTHUB · ${MT('generato il')} ${new Date().toLocaleString(MT_LANG==='en'?'en-GB':'it-IT')}</div>${contenuto}${_club.coach?`<div style="text-align:right;margin-top:22px;font-size:.9rem;font-weight:600;">${MT('Allenatore')}: ${_esc(_club.coach)}</div>`:''}<div class="footer">Match by SPORTHUB</div></body></html>`); w.document.close(); let _st=false; const _go=()=>{ if(_st) return; _st=true; w.focus(); w.print(); }; w.onload=_go; setTimeout(_go,1200); }
 
     // ========== REVIEW MODE (con supporto a video senza sessione) ==========
     let reviewSessione = null;
