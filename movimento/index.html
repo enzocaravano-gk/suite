@@ -188,10 +188,11 @@
         <section class="card">
           <div class="bar">
             <button class="btn primary" id="movLoad">📂 Carica video o foto</button>
-            <div class="seg" id="vistaSeg" title="Da dove è ripresa la persona">
-              <button data-v="front" class="on">Di fronte</button>
-              <button data-v="back">Di spalle</button>
-              <button data-v="side">Di lato</button>
+            <div class="seg" id="partSeg" title="Quali parti del corpo misurare">
+              <button data-p="tutto">Tutto</button>
+              <button data-p="gambe">Gambe</button>
+              <button data-p="busto">Busto</button>
+              <button data-p="braccia">Braccia</button>
             </div>
             <span class="sp"></span>
             <button class="btn" id="capBtn" disabled>📸 Aggiungi al PDF</button>
@@ -217,7 +218,7 @@
           <section class="card">
             <h2>Misure del fotogramma</h2>
             <div id="movMis" class="none"></div>
-            <p class="hint">Nel movimento si mostrano solo i gradi, senza giudizio: le soglie valgono per la persona ferma in piedi.</p>
+            <p class="hint">Scegli in alto cosa misurare (Tutto, Gambe, Busto, Braccia; puoi combinarle). Solo i gradi, senza giudizio: le soglie valgono per la persona ferma in piedi.</p>
           </section>
           <section class="card">
             <h2>Fotogrammi per il PDF <span id="capCount" style="color:var(--muted)"></span></h2>
@@ -382,6 +383,35 @@
   }
 
   // Elenco delle misure del fotogramma: {name, kind, pts, deg, text, plain, level, uncertain, note}
+  // Movimento: nessuna vista da scegliere, si misurano i due lati (quelli ben visibili)
+  function computeMisureMov(lm, W, H) {
+    if (!lm) return [];
+    const out = [], g = n => pt(lm, n);
+    const add = (name, kind, ps) => {
+      if (!ps.every(Boolean)) return;
+      const pts = ps.map(p => [Math.max(0, Math.min(1, p.x)), Math.max(0, Math.min(1, p.y))]).flat();
+      const v = angleValue(kind, pts, W, H);
+      out.push({ name, kind, pts, deg: v.deg, text: v.text, plain: v.plain, level: null, uncertain: false, note: '' });
+    };
+    const mid = (a, b) => a && b ? { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 } : null;
+    if (PARTS.has('busto')) {
+      add('Tronco', 'tilt', [mid(g('anca_dx'), g('anca_sx')) || g('anca_dx') || g('anca_sx'), mid(g('spalla_dx'), g('spalla_sx')) || g('spalla_dx') || g('spalla_sx')]);
+      add('Spalle', 'tilt', [g('spalla_dx'), g('spalla_sx')]);
+      add('Bacino', 'tilt', [g('anca_dx'), g('anca_sx')]);
+    }
+    for (const [s, L] of [['dx', 'DX'], ['sx', 'SX']]) {
+      if (PARTS.has('gambe')) {
+        add('Anca ' + L, '3p', [g('spalla_' + s), g('anca_' + s), g('ginocchio_' + s)]);
+        add('Ginocchio ' + L, '3p', [g('anca_' + s), g('ginocchio_' + s), g('caviglia_' + s)]);
+        add('Caviglia ' + L, '3p', [g('ginocchio_' + s), g('caviglia_' + s), g('piede_' + s)]);
+      }
+      if (PARTS.has('braccia')) {
+        add('Spalla ' + L, '3p', [g('anca_' + s), g('spalla_' + s), g('gomito_' + s)]);
+        add('Gomito ' + L, '3p', [g('spalla_' + s), g('gomito_' + s), g('polso_' + s)]);
+      }
+    }
+    return out;
+  }
   function computeMisure(lm, W, H, vista, modo) {
     if (!lm) return [];
     const out = [];
@@ -437,7 +467,17 @@
     [27, 29], [29, 31], [27, 31], [28, 30], [30, 32], [28, 32], [15, 19], [16, 20], [0, 7], [0, 8]];
   const SIDE = i => (i === 0 ? 'c' : i % 2 ? 'sx' : 'dx');
 
+  // Parti del corpo: ossa dello scheletro di ciascuna
+  const PART_BONES = {
+    gambe: [[23, 25], [25, 27], [24, 26], [26, 28], [27, 29], [29, 31], [27, 31], [28, 30], [30, 32], [28, 32]],
+    busto: [[11, 12], [11, 23], [12, 24], [23, 24], [0, 7], [0, 8]],
+    braccia: [[11, 13], [13, 15], [12, 14], [14, 16], [15, 19], [16, 20]],
+  };
+  const PART_LBL = { gambe: 'Gambe', busto: 'Busto', braccia: 'Braccia' };
+  let PARTS = new Set(['gambe', 'busto', 'braccia']);
+  const partsLabel = ps => ps.length === 3 ? 'Tutto' : ps.map(x => PART_LBL[x]).join(' + ');
   function drawSkeleton(ctx, lm, toPx, unit) {
+    const BONES = [...PARTS].flatMap(k => PART_BONES[k]);
     ctx.save();
     ctx.lineCap = 'round'; ctx.shadowColor = 'rgba(0,0,0,.6)'; ctx.shadowBlur = 3 * unit;
     ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.lineWidth = 2.6 * unit;
@@ -447,7 +487,7 @@
       const [x1, y1] = toPx(p.x, p.y), [x2, y2] = toPx(q.x, q.y);
       ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
     }
-    const IDX = [0, 7, 8, 11, 12, 13, 14, 15, 16, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32];
+    const IDX = [...new Set(BONES.flat())];
     for (const i of IDX) {
       const p = lm[i]; if (!p || (p.visibility ?? 1) < MIN_VIS) continue;
       const [x, y] = toPx(p.x, p.y), sd = SIDE(i);
@@ -570,6 +610,7 @@
   function banner(t) { const el = $('banner'); el.textContent = t || ''; el.style.display = t ? 'block' : 'none'; }
   function fmt(t) { t = Math.max(0, t || 0); const m = Math.floor(t / 60), s = t - m * 60; return m + ':' + s.toFixed(2).padStart(5, '0'); }
   const VISTA_LBL = { front: 'Di fronte', back: 'Di spalle', side: 'Di lato' };
+  const capLbl = cp => cp.parti || VISTA_LBL[cp.vista] || 'Fotogramma';
   const tgOn = id => $(id).checked;
   const anyToggle = () => tgOn('tgSkel') || tgOn('tgAng') || tgOn('tgZoom');
 
@@ -691,7 +732,7 @@
 
     V.overlay = (ctx, rect, W, H, unit) => {
       const [nw, nh] = V.nat();
-      V.mis = V.lm ? computeMisure(V.lm, nw, nh, V.vista, V.modo) : [];
+      V.mis = V.lm ? computeMisureMov(V.lm, nw, nh) : [];
       if (!V.lm) return V.mis;
       const toPx = (u, v) => [rect.x + u * rect.w, rect.y + v * rect.h];
       if (tgOn('tgSkel')) drawSkeleton(ctx, V.lm, toPx, unit);
@@ -755,7 +796,7 @@
 
   // ═══════════════ Modalità Movimento: uno schermo ═══════════════
   const FPS = 30;
-  let movVista = 'front', curSpeed = 1;
+  let curSpeed = 1;
   const mv = makeViewer({
     stage: $('movStage'), vista: 'front', modo: 'movimento', video: true,
     emptyTitle: 'Carica un video o una foto', emptyText: 'Tocca qui oppure usa «Carica video o foto».<br>Tutto resta su questo dispositivo.',
@@ -772,8 +813,20 @@
     $('vctrl').classList.toggle('on', isVid); $('vhint').style.display = isVid ? '' : 'none';
     $('capBtn').disabled = false;
   }
-  document.querySelectorAll('#vistaSeg button').forEach(b => b.onclick = () => {
-    movVista = mv.vista = b.dataset.v; document.querySelectorAll('#vistaSeg button').forEach(x => x.classList.toggle('on', x === b)); mv.redraw();
+  // Tutto = tutte le parti; Gambe / Busto / Braccia si accendono e spengono (si possono combinare)
+  function showParts() {
+    document.querySelectorAll('#partSeg button').forEach(x => x.classList.toggle('on', x.dataset.p === 'tutto' ? PARTS.size === 3 : PARTS.size < 3 && PARTS.has(x.dataset.p)));
+  }
+  try { const sp = JSON.parse(localStorage.getItem('movimentoParti') || 'null'); if (Array.isArray(sp) && sp.length) PARTS = new Set(sp.filter(x => PART_LBL[x])); } catch (e) {}
+  if (!PARTS.size) PARTS = new Set(['gambe', 'busto', 'braccia']);
+  showParts();
+  document.querySelectorAll('#partSeg button').forEach(b => b.onclick = () => {
+    const p = b.dataset.p;
+    if (p === 'tutto') PARTS = new Set(['gambe', 'busto', 'braccia']);
+    else if (PARTS.size === 3) PARTS = new Set([p]);
+    else { PARTS.has(p) ? PARTS.delete(p) : PARTS.add(p); if (!PARTS.size) PARTS = new Set(['gambe', 'busto', 'braccia']); }
+    try { localStorage.setItem('movimentoParti', JSON.stringify([...PARTS])); } catch (e) {}
+    showParts(); mv.redraw();
   });
   const vid = mv.vid;
   $('playBtn').onclick = () => { if (mv.kind === 'video') vid.paused ? vid.play() : vid.pause(); };
@@ -805,7 +858,7 @@
     await mv.analyze();
     const c = mv.capture(); if (!c) return;
     if (!tgOn('tgAng')) c.misure = [];
-    captures.push({ ...c, t: mv.kind === 'video' ? vid.currentTime : null, vista: mv.vista, nota: '' });
+    captures.push({ ...c, t: mv.kind === 'video' ? vid.currentTime : null, parti: partsLabel([...PARTS]), nota: '' });
     renderCaps(); autosave(); toast('Fotogramma aggiunto al PDF');
   };
   function renderCaps() {
@@ -816,7 +869,7 @@
     captures.forEach((cp, i) => {
       const d = document.createElement('div'); d.className = 'cap';
       d.innerHTML = '<img alt="">' +
-        '<div><div class="meta"><span>' + (i + 1) + '. ' + VISTA_LBL[cp.vista] + (cp.t != null ? ' · ' + fmt(cp.t) : '') + '</span>' +
+        '<div><div class="meta"><span>' + (i + 1) + '. ' + capLbl(cp) + (cp.t != null ? ' · ' + fmt(cp.t) : '') + '</span>' +
         '<button class="del">Elimina</button></div>' +
         '<textarea class="txt" placeholder="Nota per questo fotogramma"></textarea></div>';
       d.querySelector('img').src = cp.img;
@@ -994,7 +1047,7 @@
         doc.addImage(cp.img, 'JPEG', M + (IMG_W - iw) / 2, y, iw, ih);
         doc.setDrawColor(220); doc.rect(M + (IMG_W - iw) / 2, y, iw, ih);
         doc.setTextColor(...AC); doc.setFont('helvetica', 'bold'); doc.setFontSize(11.5);
-        doc.text(pdfTxt((i + 1) + '. ' + VISTA_LBL[cp.vista] + (cp.t != null ? '  (' + fmt(cp.t) + ')' : '')), tx, y + 5);
+        doc.text(pdfTxt((i + 1) + '. ' + capLbl(cp) + (cp.t != null ? '  (' + fmt(cp.t) + ')' : '')), tx, y + 5);
         let ty = misList(cp.misure.map(m => ({ ...m, level: null })), tx, y + 7, tw, 10);
         if (notaLines.length) {
           ty += 3; doc.setTextColor(...AC); doc.setFont('helvetica', 'bold'); doc.setFontSize(9.5); doc.text('Nota', tx, ty); ty += 4.6;
