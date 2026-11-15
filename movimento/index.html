@@ -206,6 +206,7 @@
             </div>
             <span class="sp"></span>
             <button class="btn" id="swBtn" title="Cronometro">⏱ Cronometro</button>
+            <button class="btn" id="pngBtn" disabled title="Salva il fotogramma come immagine PNG">🖼 Foto PNG</button>
             <button class="btn" id="capBtn" disabled>📸 Aggiungi al PDF</button>
           </div>
           <div class="stage big" id="movStage"></div>
@@ -770,14 +771,16 @@
     };
 
     // Immagine di ciò che si vede nel riquadro, con i disegni accesi
-    V.capture = () => {
+    // opts: { png: true } = immagine PNG alla risoluzione piena del video (max 2400 px)
+    V.capture = (opts) => {
+      opts = opts || {};
       const [nw, nh] = V.nat(); if (!V.kind || !nw) return null;
       V.layout();
       const sr = stage.getBoundingClientRect(), R = V.rect;
       let u0 = 0, v0 = 0, u1 = 1, v1 = 1;
       if (sr.width && R.w) { u0 = Math.max(0, -R.x / R.w); v0 = Math.max(0, -R.y / R.h); u1 = Math.min(1, (sr.width - R.x) / R.w); v1 = Math.min(1, (sr.height - R.y) / R.h); }
       const cw = (u1 - u0) * nw, ch = (v1 - v0) * nh;
-      const s = Math.min(2.5, 1400 / Math.max(cw, ch));
+      const s = opts.png ? Math.min(1, 2400 / Math.max(cw, ch)) : Math.min(2.5, 1400 / Math.max(cw, ch));
       const W = Math.round(cw * s), H = Math.round(ch * s);
       const c = document.createElement('canvas'); c.width = W; c.height = H;
       const ctx = c.getContext('2d');
@@ -785,6 +788,7 @@
       let mis = [];
       if (V.lm) { const fw = nw * s, fh = nh * s; mis = V.overlay(ctx, { x: -u0 * fw, y: -v0 * fh, w: fw, h: fh }, W, H, Math.max(1, Math.min(W, H * 0.75) / 410)); }
       if (o.onCaptureDraw) o.onCaptureDraw(ctx, W, H);
+      if (opts.png) return { canvas: c };
       return { img: c.toDataURL('image/jpeg', 0.85), w: W, h: H, misure: mis.map(m => ({ name: m.name, value: m.plain, level: m.level, uncertain: m.uncertain, note: m.note })) };
     };
 
@@ -831,7 +835,7 @@
     if (isVid) { mv.setVideo(f); mv.vid.playbackRate = curSpeed; swNewVideo(); }
     else { try { mv.setImage(await fileToDataUrl(f, 1800)); } catch (err) { alert(err.message); return; } }
     $('vctrl').classList.toggle('on', isVid); $('vhint').style.display = isVid ? '' : 'none';
-    $('capBtn').disabled = false;
+    $('capBtn').disabled = false; $('pngBtn').disabled = false;
   }
   // Tutto = gambe e busto insieme; Gambe o Busto = solo quella parte
   function showParts() {
@@ -969,6 +973,19 @@
     const e = swElapsed(vid.currentTime);
     return { name: 'Cronometro', value: swFmt(e.sec), level: null, uncertain: false, note: e.frames + ' fotogrammi · ' + swFpsLbl(swFps()) };
   }
+
+  // Foto PNG del fotogramma: quello che si vede (inquadratura, scheletro, angoli,
+  // cronometro) alla risoluzione piena del video; sull'iPad si salva in Foto o File
+  $('pngBtn').onclick = async () => {
+    if (!mv.kind) return;
+    if (mv.kind === 'video' && !vid.paused) vid.pause();
+    await mv.analyze();
+    const r = mv.capture({ png: true }); if (!r) return;
+    const blob = await new Promise(res => r.canvas.toBlob(res, 'image/png'));
+    if (!blob) { alert('Non riesco a creare l\'immagine su questo dispositivo.'); return; }
+    const tt = mv.kind === 'video' ? '_' + fmt(vid.currentTime).replace(/[:.]/g, '-') : '';
+    await saveBlob(blob, fileBase() + tt + '.png', 'image/png', 'Immagine PNG');
+  };
 
   // Fotogrammi per il PDF (solo Movimento)
   let captures = [];
