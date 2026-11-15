@@ -22,8 +22,26 @@
   header.top h1 { margin: 0; font-size: 21px; }
   header.top p { margin: 2px 0 0; font-size: 13px; color: var(--muted); }
 
-  .wrap { max-width: 1280px; margin: 0 auto; padding: 16px; display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 16px; align-items: start; }
-  @media (max-width: 920px) { .wrap { grid-template-columns: 1fr; } }
+  .page { max-width: 1280px; margin: 0 auto; padding: 16px; }
+  .topcard { margin-bottom: 16px; }
+  .seg.big button { padding: 10px 16px; font-size: 15px; }
+  .athrow { display: grid; grid-template-columns: minmax(160px, 1fr) 170px auto; gap: 10px; align-items: end; }
+  .filebtns { display: flex; gap: 8px; flex-wrap: wrap; }
+  @media (max-width: 720px) { .athrow { grid-template-columns: 1fr 1fr; } .filebtns { grid-column: 1 / -1; } }
+  .views3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; align-items: start; }
+  @media (max-width: 760px) { .views3 { grid-template-columns: 1fr; } }
+  .vcard { padding: 12px; }
+  .vhead { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
+  .vhead h2 { margin: 0; }
+  .btn.sm { padding: 6px 10px; min-height: 34px; font-size: 13px; }
+  .btn.ghost { border-color: var(--line); color: var(--muted); }
+  .vmis { margin-top: 8px; }
+  .vmis table.mis { font-size: 13px; }
+  .movgrid { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 16px; align-items: start; }
+  @media (max-width: 920px) { .movgrid { grid-template-columns: 1fr; } }
+  textarea.report { min-height: 170px; font-size: 15px; line-height: 1.45; }
+  .banner { position: fixed; left: 50%; top: 14px; transform: translateX(-50%); background: rgba(0,0,0,.82); color: #fff; padding: 9px 16px; border-radius: 999px; font-size: 13px; z-index: 70; display: none; max-width: 92vw; }
+  #posLegend .chip { font-size: 10.5px; }
 
   .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 14px; }
   .card h2 { margin: 0 0 10px; font-size: 13px; text-transform: uppercase; letter-spacing: .6px; color: var(--accent); }
@@ -45,7 +63,10 @@
   .toggle input:checked + .sw { background: var(--accent); }
   .toggle input:checked + .sw::after { left: 21px; }
 
-  .stage { position: relative; background: #111; border-radius: 12px; overflow: hidden; height: min(68vh, 720px); min-height: 320px; display: grid; place-items: center; touch-action: manipulation; }
+  .stage { position: relative; background: #111; border-radius: 12px; overflow: hidden; display: grid; place-items: center; touch-action: manipulation; }
+  .stage.big { height: min(68vh, 720px); min-height: 320px; }
+  .stage.s34 { aspect-ratio: 3 / 4; width: 100%; }
+  .empty { font-size: 13px; }
   .stage video, .stage img.media { position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: fill; display: none; max-width: none; }
   .stage canvas { position: absolute; left: 0; top: 0; pointer-events: none; }
   .empty { color: #bbb; text-align: center; padding: 20px; cursor: pointer; }
@@ -134,97 +155,122 @@
       </div>
     </div>
   </div>
-
   <header class="top">
     <div class="brand-logo" id="brandLogo">P</div>
     <div>
       <h1>Postura</h1>
-      <p>Analisi posturale e del movimento da video o foto</p>
+      <p>Analisi posturale e del movimento da foto o video</p>
     </div>
   </header>
 
-  <div class="wrap">
-    <section class="card">
-      <div class="bar">
-        <button class="btn primary" id="loadBtn">📂 Carica video o foto</button>
-        <input type="file" id="mediaInput" accept="video/*,image/*" hidden>
-        <div class="seg" id="vistaSeg" title="Da dove è ripresa la persona">
-          <button data-v="front" class="on">Di fronte</button>
-          <button data-v="back">Di spalle</button>
-          <button data-v="side">Di lato</button>
+  <div class="page">
+    <section class="card topcard">
+      <div class="bar" style="margin-bottom:10px">
+        <div class="seg big" id="modeSeg">
+          <button data-mode="postura" class="on">🧍 Postura · 3 foto</button>
+          <button data-mode="movimento">🏃 Movimento · video</button>
         </div>
-        <div class="seg" id="modoSeg" title="Che cosa stai analizzando">
-          <button data-m="postura" class="on">In piedi</button>
-          <button data-m="movimento">Movimento</button>
-        </div>
-      </div>
-      <div class="bar">
+        <span class="sp"></span>
         <label class="toggle"><input type="checkbox" id="tgSkel"><span class="sw"></span>Scheletro</label>
         <label class="toggle"><input type="checkbox" id="tgAng"><span class="sw"></span>Angoli</label>
         <label class="toggle" title="Ingrandisce e segue la persona"><input type="checkbox" id="tgZoom"><span class="sw"></span>Zoom atleta</label>
-        <span class="sp"></span>
-        <button class="btn" id="capBtn" disabled>📸 Aggiungi al PDF</button>
       </div>
-
-      <div class="stage" id="stage">
-        <video id="vid" playsinline muted preload="auto"></video>
-        <img id="img" class="media" alt="">
-        <canvas id="cv"></canvas>
-        <div class="empty" id="empty">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="4.5" r="2"/><path d="M12 7v7M8 10l4-2 4 2M9 21l3-7 3 7"/></svg>
-          <b>Carica un video o una foto</b>
-          Tocca qui oppure usa «Carica video o foto».<br>Tutto resta su questo dispositivo.
-        </div>
-        <div class="msg" id="msg"></div>
-      </div>
-
-      <div class="vctrl" id="vctrl">
-        <button class="ibtn" id="backBtn" title="Fotogramma precedente">
-          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h2v14H6zM20 5v14L9 12z"/></svg></button>
-        <button class="ibtn primary" id="playBtn" title="Play / pausa">
-          <svg id="playIco" viewBox="0 0 24 24" fill="currentColor"><path d="M7 5v14l12-7z"/></svg></button>
-        <button class="ibtn" id="fwdBtn" title="Fotogramma successivo">
-          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 5h2v14h-2zM4 5v14l11-7z"/></svg></button>
-        <input type="range" id="seek" min="0" max="1000" value="0" step="1">
-        <span class="time" id="time">0:00.00</span>
-        <div class="seg" id="speedSeg" title="Velocità">
-          <button data-s="0.25">¼×</button><button data-s="0.5">½×</button><button data-s="1" class="on">1×</button>
-        </div>
-      </div>
-      <p class="hint" id="vhint" style="display:none">Fotogramma per fotogramma: metti in pausa e usa ⏮ ⏭ (oppure le frecce ← → della tastiera).</p>
-    </section>
-
-    <aside style="display:flex;flex-direction:column;gap:16px">
-      <section class="card">
-        <h2>Atleta</h2>
-        <div class="row2">
-          <div><label class="fld" for="atleta">Nome</label><input class="txt" id="atleta" placeholder="Nome e cognome"></div>
-          <div><label class="fld" for="data">Data</label><input class="txt" id="data" type="date"></div>
-        </div>
-        <label class="fld" for="note">Note generali</label>
-        <textarea class="txt" id="note" placeholder="Es. tipo di test, condizioni di ripresa…"></textarea>
-        <div class="bar" style="margin:10px 0 0">
+      <div class="athrow">
+        <div><label class="fld" for="atleta">Atleta</label><input class="txt" id="atleta" placeholder="Nome e cognome"></div>
+        <div><label class="fld" for="data">Data</label><input class="txt" id="data" type="date"></div>
+        <div class="filebtns">
           <button class="btn" id="saveBtn">💾 Salva file</button>
           <button class="btn" id="openBtn">📂 Apri file</button>
           <button class="btn primary" id="pdfBtn">📄 PDF</button>
         </div>
-      </section>
+      </div>
+    </section>
 
-      <section class="card">
-        <h2>Misure del fotogramma</h2>
-        <div id="misBox" class="none">Accendi «Angoli» per vedere le misure.</div>
-        <div class="legend" id="legend" style="display:none"></div>
-      </section>
+    <!-- ═════════ POSTURA: tre riquadri ═════════ -->
+    <div id="secPostura">
+      <div class="views3">
+        <section class="card vcard" data-vista="front">
+          <div class="vhead"><h2>Di fronte</h2><span class="sp"></span>
+            <button class="btn sm" data-act="load">📷 Foto</button><button class="btn sm ghost" data-act="clear" title="Togli la foto">🗑</button></div>
+          <div class="stage s34"></div>
+          <div class="vmis"></div>
+        </section>
+        <section class="card vcard" data-vista="back">
+          <div class="vhead"><h2>Di spalle</h2><span class="sp"></span>
+            <button class="btn sm" data-act="load">📷 Foto</button><button class="btn sm ghost" data-act="clear" title="Togli la foto">🗑</button></div>
+          <div class="stage s34"></div>
+          <div class="vmis"></div>
+        </section>
+        <section class="card vcard" data-vista="side">
+          <div class="vhead"><h2>Di lato</h2><span class="sp"></span>
+            <button class="btn sm" data-act="load">📷 Foto</button><button class="btn sm ghost" data-act="clear" title="Togli la foto">🗑</button></div>
+          <div class="stage s34"></div>
+          <div class="vmis"></div>
+        </section>
+      </div>
+      <p class="hint" id="posLegend">I colori seguono soglie degli studi per la persona ferma in piedi: <span class="chip" style="background:#1e9e55">nella norma</span> <span class="chip" style="background:#7cb342">lieve asimmetria</span> <span class="chip" style="background:#e0b400">da monitorare</span> <span class="chip" style="background:#ef7d00">asimmetria significativa</span> <span class="chip" style="background:#d32f2f">consigliato approfondimento</span>. «?» = valore vicino al confine tra due livelli. Ginocchi: scostamento dalla gamba dritta (180°). Strumento di controllo, non una diagnosi.</p>
 
-      <section class="card">
-        <h2>Fotogrammi per il PDF <span id="capCount" style="color:var(--muted)"></span></h2>
-        <div class="caps" id="caps"><div class="none">Nessuno ancora: ferma il video sul momento che ti interessa e tocca «Aggiungi al PDF».</div></div>
+      <section class="card" style="margin-top:16px">
+        <h2>Report dei risultati</h2>
+        <textarea class="txt report" id="reportPostura" placeholder="Scrivi qui le tue conclusioni: cosa hai osservato nelle tre viste, cosa consigli, esercizi, quando ricontrollare…"></textarea>
       </section>
-    </aside>
+    </div>
+
+    <!-- ═════════ MOVIMENTO: uno schermo ═════════ -->
+    <div id="secMov" style="display:none">
+      <div class="movgrid">
+        <section class="card">
+          <div class="bar">
+            <button class="btn primary" id="movLoad">📂 Carica video o foto</button>
+            <div class="seg" id="vistaSeg" title="Da dove è ripresa la persona">
+              <button data-v="front" class="on">Di fronte</button>
+              <button data-v="back">Di spalle</button>
+              <button data-v="side">Di lato</button>
+            </div>
+            <span class="sp"></span>
+            <button class="btn" id="capBtn" disabled>📸 Aggiungi al PDF</button>
+          </div>
+          <div class="stage big" id="movStage"></div>
+          <div class="vctrl" id="vctrl">
+            <button class="ibtn" id="backBtn" title="Fotogramma precedente">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h2v14H6zM20 5v14L9 12z"/></svg></button>
+            <button class="ibtn primary" id="playBtn" title="Play / pausa">
+              <svg id="playIco" viewBox="0 0 24 24" fill="currentColor"><path d="M7 5v14l12-7z"/></svg></button>
+            <button class="ibtn" id="fwdBtn" title="Fotogramma successivo">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 5h2v14h-2zM4 5v14l11-7z"/></svg></button>
+            <input type="range" id="seek" min="0" max="1000" value="0" step="1">
+            <span class="time" id="time">0:00.00</span>
+            <div class="seg" id="speedSeg" title="Velocità">
+              <button data-s="0.25">¼×</button><button data-s="0.5">½×</button><button data-s="1" class="on">1×</button>
+            </div>
+          </div>
+          <p class="hint" id="vhint" style="display:none">Fotogramma per fotogramma: metti in pausa e usa ⏮ ⏭ (oppure le frecce ← → della tastiera).</p>
+        </section>
+
+        <aside style="display:flex;flex-direction:column;gap:16px">
+          <section class="card">
+            <h2>Misure del fotogramma</h2>
+            <div id="movMis" class="none"></div>
+            <p class="hint">Nel movimento si mostrano solo i gradi, senza giudizio: le soglie valgono per la persona ferma in piedi.</p>
+          </section>
+          <section class="card">
+            <h2>Fotogrammi per il PDF <span id="capCount" style="color:var(--muted)"></span></h2>
+            <div class="caps" id="caps"></div>
+          </section>
+        </aside>
+      </div>
+      <section class="card" style="margin-top:16px">
+        <h2>Report dei risultati</h2>
+        <textarea class="txt report" id="reportMov" placeholder="Scrivi qui le tue conclusioni sul gesto: cosa hai visto, cosa correggere, esercizi…"></textarea>
+      </section>
+    </div>
   </div>
 
+  <input type="file" id="mediaInput" accept="image/*" hidden>
+  <input type="file" id="movInput" accept="video/*,image/*" hidden>
   <input type="file" id="jsonInput" accept=".json,application/json" hidden>
   <div class="toast" id="toast"></div>
+  <div class="banner" id="banner"></div>
 
   <a href="../index.html" id="suite-home" title="Torna alla Suite" aria-label="Torna alla Suite">
     <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg>
@@ -247,7 +293,7 @@
     ACCENT = a;
     document.documentElement.style.setProperty('--accent', a);
     sw.forEach(b => b.classList.toggle('selected', b.dataset.accent.toLowerCase() === String(a).toLowerCase()));
-    redraw();
+    try { allViewers().forEach(v => v.redraw()); } catch (e) {}
   }
   try {
     const v = JSON.parse(localStorage.getItem('clubAccentColor') || 'null');
@@ -290,8 +336,6 @@
   });
 
   function toast(t) { const el = $('toast'); el.textContent = t; el.style.display = 'block'; clearTimeout(toast._t); toast._t = setTimeout(() => el.style.display = 'none', 2200); }
-  function msg(t) { const el = $('msg'); el.textContent = t || ''; el.style.display = t ? 'block' : 'none'; }
-
   // ═══════════════ Soglie scientifiche (da SportHub, posturaScienza) ═══════════════
   // Cinque livelli; valgono per la persona ferma in piedi, non per il movimento.
   const LEVELS = [
@@ -333,142 +377,23 @@
     if (landmarker) return Promise.resolve(landmarker);
     if (mpLoading) return mpLoading;
     mpLoading = (async () => {
-      msg('Preparo il riconoscimento del corpo… (solo la prima volta, circa 20 MB)');
+      banner('Preparo il riconoscimento del corpo… (solo la prima volta, circa 20 MB)');
       const mod = await import(MP_BUNDLE);
       const V = mod && mod.FilesetResolver ? mod : (mod && mod.default) || mod;
       const vision = await V.FilesetResolver.forVisionTasks(MP_WASM);
       const opts = d => ({ baseOptions: { modelAssetPath: MP_MODEL, delegate: d }, runningMode: 'IMAGE', numPoses: 1, minPoseDetectionConfidence: 0.5 });
       try { landmarker = await V.PoseLandmarker.createFromOptions(vision, opts('GPU')); }
       catch (e) { landmarker = await V.PoseLandmarker.createFromOptions(vision, opts('CPU')); }
-      msg('');
+      banner('');
       return landmarker;
     })().catch(err => {
-      mpLoading = null; msg('');
+      mpLoading = null; banner('');
       console.error(err);
       alert('Non riesco a preparare il riconoscimento del corpo su questo dispositivo.\n' + (err && err.message || err));
-      $('tgSkel').checked = false; $('tgAng').checked = false; $('tgZoom').checked = false; layout();
+      $('tgSkel').checked = false; $('tgAng').checked = false; $('tgZoom').checked = false; try { allViewers().forEach(v => v.layout()); } catch (e) {}
       throw err;
     });
     return mpLoading;
-  }
-
-  // ═══════════════ Stato ═══════════════
-  const vid = $('vid'), img = $('img'), cv = $('cv'), stage = $('stage');
-  const st = {
-    kind: null,          // 'video' | 'image'
-    fileName: '',
-    vista: 'front', modo: 'postura',
-    lm: null,            // punti del fotogramma attuale (33 landmark, 0-1)
-    lmTime: -1,
-    captures: [],        // {img, w, h, t, vista, modo, misure:[{name,text,level,uncertain,ref}], nota}
-  };
-  const FPS = 30;
-
-  // ═══════════════ Caricamento media ═══════════════
-  let mediaUrl = null;
-  $('loadBtn').onclick = () => $('mediaInput').click();
-  $('empty').onclick = () => $('mediaInput').click();
-  $('mediaInput').onchange = e => { const f = e.target.files[0]; if (f) loadMedia(f); e.target.value = ''; };
-  stage.addEventListener('dragover', e => { e.preventDefault(); stage.classList.add('drag'); });
-  stage.addEventListener('dragleave', () => stage.classList.remove('drag'));
-  stage.addEventListener('drop', e => { e.preventDefault(); stage.classList.remove('drag'); const f = e.dataTransfer.files[0]; if (f) loadMedia(f); });
-
-  function loadMedia(f) {
-    const isVid = (f.type || '').startsWith('video') || /\.(mov|mp4|m4v|webm)$/i.test(f.name);
-    if (mediaUrl) URL.revokeObjectURL(mediaUrl);
-    mediaUrl = URL.createObjectURL(f);
-    st.fileName = f.name; st.lm = null; st.lmTime = -1; st.view = null;
-    vid.pause();
-    $('empty').style.display = 'none';
-    if (isVid) {
-      st.kind = 'video';
-      img.style.display = 'none'; img.removeAttribute('src');
-      vid.style.display = 'block'; vid.src = mediaUrl;
-      vid.playbackRate = curSpeed;
-      $('vctrl').classList.add('on'); $('vhint').style.display = '';
-    } else {
-      st.kind = 'image';
-      vid.style.display = 'none'; vid.removeAttribute('src'); vid.load();
-      img.style.display = 'block'; img.src = mediaUrl;
-      $('vctrl').classList.remove('on'); $('vhint').style.display = 'none';
-    }
-    $('capBtn').disabled = false;
-  }
-  img.onload = () => { layout(); analyze(); };
-  vid.addEventListener('loadeddata', () => { layout(); updTime(); analyze(); });
-  vid.addEventListener('seeked', () => { updTime(); analyze(); });
-  vid.addEventListener('play', () => { setPlayIcon(true); loop(); });
-  vid.addEventListener('pause', () => { setPlayIcon(false); analyze(); });
-  vid.addEventListener('ended', () => setPlayIcon(false));
-  vid.addEventListener('timeupdate', updTime);
-
-  // ═══════════════ Controlli video ═══════════════
-  let curSpeed = 1;
-  function setPlayIcon(p) { $('playIco').innerHTML = p ? '<path d="M6 5h4v14H6zM14 5h4v14h-4z"/>' : '<path d="M7 5v14l12-7z"/>'; }
-  $('playBtn').onclick = () => { if (st.kind !== 'video') return; vid.paused ? vid.play() : vid.pause(); };
-  function step(n) {
-    if (st.kind !== 'video') return;
-    vid.pause();
-    vid.currentTime = Math.max(0, Math.min((vid.duration || 0), vid.currentTime + n / FPS));
-  }
-  $('backBtn').onclick = () => step(-1);
-  $('fwdBtn').onclick = () => step(1);
-  $('seek').addEventListener('input', () => { if (st.kind !== 'video' || !vid.duration) return; vid.pause(); vid.currentTime = $('seek').value / 1000 * vid.duration; });
-  document.querySelectorAll('#speedSeg button').forEach(b => b.onclick = () => {
-    curSpeed = +b.dataset.s; vid.playbackRate = curSpeed;
-    document.querySelectorAll('#speedSeg button').forEach(x => x.classList.toggle('on', x === b));
-  });
-  document.addEventListener('keydown', e => {
-    if (st.kind !== 'video' || /INPUT|TEXTAREA/.test(document.activeElement.tagName)) return;
-    if (e.key === 'ArrowLeft') { e.preventDefault(); step(-1); }
-    else if (e.key === 'ArrowRight') { e.preventDefault(); step(1); }
-    else if (e.key === ' ') { e.preventDefault(); vid.paused ? vid.play() : vid.pause(); }
-  });
-  function fmt(t) { t = Math.max(0, t || 0); const m = Math.floor(t / 60), s = t - m * 60; return m + ':' + s.toFixed(2).padStart(5, '0'); }
-  function updTime() {
-    if (st.kind !== 'video') return;
-    $('time').textContent = fmt(vid.currentTime) + ' / ' + fmt(vid.duration);
-    if (vid.duration) $('seek').value = Math.round(vid.currentTime / vid.duration * 1000);
-  }
-
-  // ═══════════════ Scelte vista / modo / interruttori ═══════════════
-  document.querySelectorAll('#vistaSeg button').forEach(b => b.onclick = () => {
-    st.vista = b.dataset.v; document.querySelectorAll('#vistaSeg button').forEach(x => x.classList.toggle('on', x === b)); redraw();
-  });
-  document.querySelectorAll('#modoSeg button').forEach(b => b.onclick = () => {
-    st.modo = b.dataset.m; document.querySelectorAll('#modoSeg button').forEach(x => x.classList.toggle('on', x === b)); redraw();
-  });
-  $('tgSkel').onchange = $('tgAng').onchange = $('tgZoom').onchange = () => { st.view = null; if (wantPose()) analyze(); else layout(); };
-  const wantPose = () => $('tgSkel').checked || $('tgAng').checked || $('tgZoom').checked;
-
-  // ═══════════════ Riconoscimento ═══════════════
-  const media = () => st.kind === 'video' ? vid : st.kind === 'image' ? img : null;
-  const natSize = () => st.kind === 'video' ? [vid.videoWidth, vid.videoHeight] : st.kind === 'image' ? [img.naturalWidth, img.naturalHeight] : [0, 0];
-  let busy = false;
-  async function analyze() {
-    if (!st.kind) return;
-    if (!wantPose()) { layout(); return; }
-    const t = st.kind === 'video' ? vid.currentTime : 0;
-    if (st.lm && st.lmTime === t) { layout(); return; }
-    try { await mpInit(); } catch (e) { return; }
-    if (busy) return;
-    busy = true;
-    try {
-      const m = media(); const [w, h] = natSize();
-      if (!w || !h) return;
-      const r = landmarker.detect(m);
-      st.lm = (r && r.landmarks && r.landmarks[0]) || null;
-      st.lmTime = t;
-      if (!st.lm && (st.kind === 'image' || vid.paused)) msg('Nessuna persona trovata in questo fotogramma');
-      else msg('');
-    } catch (e) { console.error(e); }
-    finally { busy = false; }
-    layout();
-  }
-  function loop() {
-    if (st.kind !== 'video' || vid.paused || vid.ended) return;
-    analyze();
-    if (vid.requestVideoFrameCallback) vid.requestVideoFrameCallback(loop); else requestAnimationFrame(loop);
   }
 
   // ═══════════════ Misure (da SportHub, posturaMarker) ═══════════════
@@ -492,10 +417,10 @@
   }
 
   // Elenco delle misure del fotogramma: {name, kind, pts, deg, text, plain, level, uncertain, note}
-  function computeMisure(lm, W, H) {
+  function computeMisure(lm, W, H, vista, modo) {
     if (!lm) return [];
     const out = [];
-    const postura = st.modo === 'postura';
+    const postura = modo === 'postura';
     const add = (name, kind, ps, sci, transform, note) => {
       if (!ps.every(Boolean)) return;
       const pts = ps.map(p => [Math.max(0, Math.min(1, p.x)), Math.max(0, Math.min(1, p.y))]).flat();
@@ -506,7 +431,7 @@
     };
     const g = n => pt(lm, n);
     const dev180 = d => Math.abs(180 - d);
-    if (st.vista !== 'side') {
+    if (vista !== 'side') {
       add('Testa', 'tilt', [g('orecchio_dx'), g('orecchio_sx')]);
       add('Spalle', 'tilt', [g('spalla_dx'), g('spalla_sx')], 'SPALLE');
       add('Bacino', 'tilt', [g('anca_dx'), g('anca_sx')], 'ANCA');
@@ -670,18 +595,178 @@
   }
 
   // Disegna tutto ciò che è acceso su un contesto (schermo o immagine per il PDF)
-  function drawOverlay(ctx, rect, W, H, unit) {
-    if (!st.lm) return [];
-    const [nw, nh] = natSize();
-    const toPx = (u, v) => [rect.x + u * rect.w, rect.y + v * rect.h];
-    if ($('tgSkel').checked) drawSkeleton(ctx, st.lm, toPx, unit);
-    const mis = computeMisure(st.lm, nw, nh);
-    if ($('tgAng').checked) drawMisure(ctx, mis, toPx, W, H, unit);
-    return mis;
+  function chip(level, uncertain) {
+    if (level == null) return '';
+    const L = LEVELS[level];
+    return '<span class="chip" style="background:' + L.color + '">' + L.label + (uncertain ? ' ?' : '') + '</span>';
+  }
+  function esc(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]); }
+
+  function banner(t) { const el = $('banner'); el.textContent = t || ''; el.style.display = t ? 'block' : 'none'; }
+  function fmt(t) { t = Math.max(0, t || 0); const m = Math.floor(t / 60), s = t - m * 60; return m + ':' + s.toFixed(2).padStart(5, '0'); }
+  const VISTA_LBL = { front: 'Di fronte', back: 'Di spalle', side: 'Di lato' };
+  const tgOn = id => $(id).checked;
+  const anyToggle = () => tgOn('tgSkel') || tgOn('tgAng') || tgOn('tgZoom');
+
+  // Foto ridotta (max 1600 px) in base64: entra nel file salvato e nel PDF
+  function fileToDataUrl(f, max) {
+    return new Promise((res, rej) => {
+      const u = URL.createObjectURL(f), im = new Image();
+      im.onload = () => {
+        const s = Math.min(1, max / Math.max(im.naturalWidth, im.naturalHeight));
+        const c = document.createElement('canvas'); c.width = Math.round(im.naturalWidth * s); c.height = Math.round(im.naturalHeight * s);
+        c.getContext('2d').drawImage(im, 0, 0, c.width, c.height);
+        URL.revokeObjectURL(u); res(c.toDataURL('image/jpeg', 0.88));
+      };
+      im.onerror = () => { URL.revokeObjectURL(u); rej(new Error('Immagine non leggibile')); };
+      im.src = u;
+    });
+  }
+  const packLm = lm => lm ? lm.map(p => ({ x: +p.x.toFixed(4), y: +p.y.toFixed(4), visibility: +(p.visibility ?? 1).toFixed(2) })) : null;
+
+  // ═══════════════ Un riquadro di analisi (foto o video) ═══════════════
+  const EMPTY_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="4.5" r="2"/><path d="M12 7v7M8 10l4-2 4 2M9 21l3-7 3 7"/></svg>';
+  function makeViewer(o) {
+    const stage = o.stage;
+    stage.innerHTML = (o.video ? '<video playsinline muted preload="auto"></video>' : '') +
+      '<img class="media" alt=""><canvas></canvas><div class="empty">' + EMPTY_SVG + '<b>' + o.emptyTitle + '</b>' + o.emptyText + '</div>';
+    const vid = stage.querySelector('video'), img = stage.querySelector('img.media'), cv = stage.querySelector('canvas'), empty = stage.querySelector('.empty');
+    const V = { vista: o.vista, modo: o.modo, kind: null, lm: null, lmTime: -1, view: null, rect: { x: 0, y: 0, w: 0, h: 0 }, mis: [], src: null, vid, searched: false };
+    V.media = () => V.kind === 'video' ? vid : V.kind === 'image' ? img : null;
+    V.nat = () => V.kind === 'video' ? [vid.videoWidth, vid.videoHeight] : V.kind === 'image' ? [img.naturalWidth, img.naturalHeight] : [0, 0];
+    V.time = () => V.kind === 'video' ? vid.currentTime : 0;
+    V.wantPose = () => V.modo === 'postura' || anyToggle();
+
+    let objUrl = null;
+    function reset() { V.lm = null; V.lmTime = -1; V.view = null; V.searched = false; if (objUrl) { URL.revokeObjectURL(objUrl); objUrl = null; } }
+    V.setImage = (dataUrl, lm) => {
+      reset(); V.kind = 'image'; V.src = dataUrl;
+      if (lm) { V.lm = lm; V.lmTime = 0; V.searched = true; }
+      if (vid) { vid.pause(); vid.style.display = 'none'; vid.removeAttribute('src'); vid.load(); }
+      empty.style.display = 'none'; img.style.display = 'block'; img.src = dataUrl;
+    };
+    V.setVideo = file => {
+      reset(); V.kind = 'video'; V.src = null;
+      objUrl = URL.createObjectURL(file);
+      img.style.display = 'none'; img.removeAttribute('src');
+      empty.style.display = 'none'; vid.style.display = 'block'; vid.src = objUrl;
+    };
+    V.clear = () => {
+      reset(); V.kind = null; V.src = null;
+      img.style.display = 'none'; img.removeAttribute('src');
+      if (vid) { vid.pause(); vid.style.display = 'none'; vid.removeAttribute('src'); vid.load(); }
+      empty.style.display = ''; V.layout();
+    };
+    img.onload = () => { V.layout(); V.analyze(); };
+    empty.onclick = () => o.onPick && o.onPick();
+    stage.addEventListener('dragover', e => { e.preventDefault(); stage.classList.add('drag'); });
+    stage.addEventListener('dragleave', () => stage.classList.remove('drag'));
+    stage.addEventListener('drop', e => { e.preventDefault(); stage.classList.remove('drag'); const f = e.dataTransfer.files[0]; if (f && o.onFile) o.onFile(f); });
+    if (vid) {
+      vid.addEventListener('loadeddata', () => { V.layout(); V.analyze(); o.onTime && o.onTime(); });
+      vid.addEventListener('seeked', () => { o.onTime && o.onTime(); V.analyze(); });
+      vid.addEventListener('timeupdate', () => o.onTime && o.onTime());
+      vid.addEventListener('play', () => { o.onPlay && o.onPlay(true); loop(); });
+      vid.addEventListener('pause', () => { o.onPlay && o.onPlay(false); V.analyze(); });
+      vid.addEventListener('ended', () => o.onPlay && o.onPlay(false));
+    }
+    function loop() {
+      if (V.kind !== 'video' || vid.paused || vid.ended) return;
+      V.analyze();
+      if (vid.requestVideoFrameCallback) vid.requestVideoFrameCallback(loop); else requestAnimationFrame(loop);
+    }
+
+    let busy = false;
+    V.analyze = async () => {
+      if (!V.kind) { V.layout(); return; }
+      if (!V.wantPose()) { V.layout(); return; }
+      const t = V.time();
+      if (V.lmTime === t && (V.lm || V.searched)) { V.layout(); return; }
+      try { await mpInit(); } catch (e) { return; }
+      if (busy || !V.kind) return;
+      busy = true;
+      try {
+        const [w, h] = V.nat(); if (!w || !h) return;
+        const r = landmarker.detect(V.media());
+        V.lm = (r && r.landmarks && r.landmarks[0]) || null;
+        V.lmTime = t; V.searched = true;
+        if (V.kind === 'image') o.onChange && o.onChange();
+      } catch (e) { console.error(e); }
+      finally { busy = false; }
+      V.layout();
+    };
+
+    V.layout = () => {
+      const sr = stage.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
+      if (!sr.width) return;
+      cv.width = Math.round(sr.width * dpr); cv.height = Math.round(sr.height * dpr);
+      cv.style.width = sr.width + 'px'; cv.style.height = sr.height + 'px';
+      const [nw, nh] = V.nat();
+      if (V.kind && nw && nh) {
+        const s = Math.min(sr.width / nw, sr.height / nh), w = nw * s, h = nh * s;
+        let target = { z: 1, cx: 0.5, cy: 0.5 };
+        const bx = tgOn('tgZoom') && V.lm ? personBox(V.lm) : null;
+        if (bx) {
+          const z = Math.max(1, Math.min(6, Math.min(sr.width / ((bx.x1 - bx.x0) * w), sr.height / ((bx.y1 - bx.y0) * h))));
+          target = { z, cx: (bx.x0 + bx.x1) / 2, cy: (bx.y0 + bx.y1) / 2 };
+        }
+        // durante la riproduzione l'inquadratura segue la persona con dolcezza
+        const k = V.view && V.kind === 'video' && !vid.paused ? 0.25 : 1;
+        const p = V.view || target;
+        V.view = { z: p.z + (target.z - p.z) * k, cx: p.cx + (target.cx - p.cx) * k, cy: p.cy + (target.cy - p.cy) * k };
+        const W = w * V.view.z, H = h * V.view.z;
+        let x = sr.width / 2 - V.view.cx * W, y = sr.height / 2 - V.view.cy * H;
+        if (W >= sr.width) x = Math.min(0, Math.max(sr.width - W, x)); else x = (sr.width - W) / 2;
+        if (H >= sr.height) y = Math.min(0, Math.max(sr.height - H, y)); else y = (sr.height - H) / 2;
+        V.rect = { x, y, w: W, h: H };
+        Object.assign(V.media().style, { left: x + 'px', top: y + 'px', width: W + 'px', height: H + 'px' });
+      }
+      V.redraw();
+    };
+
+    V.overlay = (ctx, rect, W, H, unit) => {
+      const [nw, nh] = V.nat();
+      V.mis = V.lm ? computeMisure(V.lm, nw, nh, V.vista, V.modo) : [];
+      if (!V.lm) return V.mis;
+      const toPx = (u, v) => [rect.x + u * rect.w, rect.y + v * rect.h];
+      if (tgOn('tgSkel')) drawSkeleton(ctx, V.lm, toPx, unit);
+      if (tgOn('tgAng')) drawMisure(ctx, V.mis, toPx, W, H, unit);
+      return V.mis;
+    };
+    V.redraw = () => {
+      const ctx = cv.getContext('2d'), dpr = window.devicePixelRatio || 1;
+      ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cv.width, cv.height);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      V.mis = [];
+      if (V.kind && V.lm) {
+        const unit = Math.max(0.75, Math.min(1.8, Math.min(V.rect.w, V.rect.h * 0.75) / 410));
+        V.overlay(ctx, V.rect, cv.width / dpr, cv.height / dpr, unit);
+      }
+      o.onUpdate && o.onUpdate(V);
+    };
+
+    // Immagine di ciò che si vede nel riquadro, con i disegni accesi
+    V.capture = () => {
+      const [nw, nh] = V.nat(); if (!V.kind || !nw) return null;
+      V.layout();
+      const sr = stage.getBoundingClientRect(), R = V.rect;
+      let u0 = 0, v0 = 0, u1 = 1, v1 = 1;
+      if (sr.width && R.w) { u0 = Math.max(0, -R.x / R.w); v0 = Math.max(0, -R.y / R.h); u1 = Math.min(1, (sr.width - R.x) / R.w); v1 = Math.min(1, (sr.height - R.y) / R.h); }
+      const cw = (u1 - u0) * nw, ch = (v1 - v0) * nh;
+      const s = Math.min(2.5, 1400 / Math.max(cw, ch));
+      const W = Math.round(cw * s), H = Math.round(ch * s);
+      const c = document.createElement('canvas'); c.width = W; c.height = H;
+      const ctx = c.getContext('2d');
+      ctx.drawImage(V.media(), u0 * nw, v0 * nh, cw, ch, 0, 0, W, H);
+      let mis = [];
+      if (V.lm) { const fw = nw * s, fh = nh * s; mis = V.overlay(ctx, { x: -u0 * fw, y: -v0 * fh, w: fw, h: fh }, W, H, Math.max(1, Math.min(W, H * 0.75) / 410)); }
+      return { img: c.toDataURL('image/jpeg', 0.85), w: W, h: H, misure: mis.map(m => ({ name: m.name, value: m.plain, level: m.level, uncertain: m.uncertain, note: m.note })) };
+    };
+
+    if (window.ResizeObserver) new ResizeObserver(() => V.layout()).observe(stage);
+    return V;
   }
 
-  let mediaRect = { x: 0, y: 0, w: 0, h: 0 };
-  // Riquadro della persona (0-1) con un po' di margine
   function personBox(lm) {
     let x0 = 1, y0 = 1, x1 = 0, y1 = 0, n = 0;
     for (const p of lm) { if (!p || (p.visibility ?? 1) < 0.4) continue; n++; x0 = Math.min(x0, p.x); y0 = Math.min(y0, p.y); x1 = Math.max(x1, p.x); y1 = Math.max(y1, p.y); }
@@ -689,116 +774,103 @@
     const mx = (x1 - x0) * 0.3 + 0.02, my = (y1 - y0) * 0.18 + 0.02;
     return { x0: x0 - mx, y0: y0 - my, x1: x1 + mx, y1: y1 + my };
   }
-  function layout() {
-    const sr = stage.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
-    cv.width = Math.round(sr.width * dpr); cv.height = Math.round(sr.height * dpr);
-    cv.style.width = sr.width + 'px'; cv.style.height = sr.height + 'px';
-    const [nw, nh] = natSize();
-    if (nw && nh) {
-      const s = Math.min(sr.width / nw, sr.height / nh), w = nw * s, h = nh * s;
-      let target = { z: 1, cx: 0.5, cy: 0.5 };
-      const bx = $('tgZoom').checked && st.lm ? personBox(st.lm) : null;
-      if (bx) {
-        const z = Math.max(1, Math.min(6, Math.min(sr.width / ((bx.x1 - bx.x0) * w), sr.height / ((bx.y1 - bx.y0) * h))));
-        target = { z, cx: (bx.x0 + bx.x1) / 2, cy: (bx.y0 + bx.y1) / 2 };
-      }
-      // durante la riproduzione l'inquadratura segue la persona con dolcezza
-      const k = st.view && st.kind === 'video' && !vid.paused ? 0.25 : 1;
-      const v = st.view || target;
-      st.view = { z: v.z + (target.z - v.z) * k, cx: v.cx + (target.cx - v.cx) * k, cy: v.cy + (target.cy - v.cy) * k };
-      const W = w * st.view.z, H = h * st.view.z;
-      let x = sr.width / 2 - st.view.cx * W, y = sr.height / 2 - st.view.cy * H;
-      // niente bordi vuoti quando l'immagine è più grande del riquadro
-      if (W >= sr.width) x = Math.min(0, Math.max(sr.width - W, x)); else x = (sr.width - W) / 2;
-      if (H >= sr.height) y = Math.min(0, Math.max(sr.height - H, y)); else y = (sr.height - H) / 2;
-      mediaRect = { x, y, w: W, h: H };
-      const m = media();
-      if (m) Object.assign(m.style, { left: x + 'px', top: y + 'px', width: W + 'px', height: H + 'px' });
-    }
-    redraw();
-  }
-  window.addEventListener('resize', layout);
-  if (window.ResizeObserver) new ResizeObserver(layout).observe(stage);
 
-  function redraw() {
-    const ctx = cv.getContext('2d'); const dpr = window.devicePixelRatio || 1;
-    ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cv.width, cv.height);
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    let mis = [];
-    if (st.kind && st.lm && wantPose()) {
-      const unit = Math.max(0.85, Math.min(1.8, Math.min(mediaRect.w, mediaRect.h * 0.75) / 410));
-      mis = drawOverlay(ctx, mediaRect, cv.width / dpr, cv.height / dpr, unit);
-    }
-    renderMisure(mis);
-  }
-
-  function chip(level, uncertain) {
-    if (level == null) return '';
-    const L = LEVELS[level];
-    return '<span class="chip" style="background:' + L.color + '">' + L.label + (uncertain ? ' ?' : '') + '</span>';
-  }
-  function esc(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]); }
-  function renderMisure(mis) {
-    const box = $('misBox'), lg = $('legend');
-    if (!$('tgAng').checked) { box.className = 'none'; box.innerHTML = 'Accendi «Angoli» per vedere le misure.'; lg.style.display = 'none'; return; }
-    if (!st.kind) { box.className = 'none'; box.innerHTML = 'Carica un video o una foto.'; lg.style.display = 'none'; return; }
-    if (!st.lm) { box.className = 'none'; box.innerHTML = landmarker ? 'Nessuna persona trovata in questo fotogramma.' : 'Preparo il riconoscimento…'; lg.style.display = 'none'; return; }
-    if (!mis.length) { box.className = 'none'; box.innerHTML = 'Punti del corpo non abbastanza visibili per misurare.'; lg.style.display = 'none'; return; }
-    box.className = '';
-    box.innerHTML = '<table class="mis">' + mis.map(m =>
+  // Tabella delle misure sotto un riquadro
+  function misTable(V, emptyTxt) {
+    if (!V.kind) return '<div class="none">' + emptyTxt + '</div>';
+    if (!V.wantPose()) return '<div class="none">Accendi «Scheletro» o «Angoli» per analizzare.</div>';
+    if (!V.searched) return '<div class="none">' + (landmarker ? 'Analizzo…' : 'Preparo il riconoscimento del corpo…') + '</div>';
+    if (!V.lm) return '<div class="none">Nessuna persona trovata' + (V.kind === 'video' ? ' in questo fotogramma.' : ' in questa foto.') + '</div>';
+    if (!V.mis.length) return '<div class="none">Punti del corpo non abbastanza visibili per misurare.</div>';
+    return '<table class="mis">' + V.mis.map(m =>
       '<tr><td><b>' + esc(m.name) + '</b>' + (m.note ? ' <small style="color:var(--muted)">(' + esc(m.note) + ')</small>' : '') +
-      (m.level != null ? '<br>' + chip(m.level, m.uncertain) : '') + '</td><td class="v">' + esc(m.plain).replace(' dall', '<br><small style="font-weight:400;color:var(--muted)">dall').replace(/(<small[^>]*>dall.*)$/, '$1</small>') + '</td></tr>').join('') + '</table>';
-    if (st.modo === 'postura') {
-      lg.style.display = '';
-      lg.innerHTML = '<div>Giudizio su soglie degli studi, valido per la persona ferma in piedi. «?» = valore vicino al confine tra due livelli.</div>' +
-        '<div>Ginocchi: scostamento dalla gamba dritta (180°). Strumento di controllo, non una diagnosi.</div>';
-    } else {
-      lg.style.display = '';
-      lg.innerHTML = '<div>Modalità movimento: solo i gradi, senza giudizio (le soglie valgono per la persona in piedi).</div>';
-    }
+      (m.level != null ? '<br>' + chip(m.level, m.uncertain) : '') + '</td><td class="v">' +
+      esc(m.plain).replace(/ (dall.*)$/, '<br><small style="font-weight:400;color:var(--muted)">$1</small>') + '</td></tr>').join('') + '</table>';
   }
 
-  // ═══════════════ Fotogrammi per il PDF ═══════════════
-  $('capBtn').onclick = async () => {
-    if (!st.kind) return;
-    if (st.kind === 'video' && !vid.paused) vid.pause();
-    if (wantPose()) await analyze();
-    const [nw, nh] = natSize(); if (!nw) return;
-    layout();
-    // si salva ciò che si vede nel riquadro (con lo zoom, solo la parte inquadrata)
-    const sr = stage.getBoundingClientRect(), R = mediaRect;
-    const u0 = Math.max(0, -R.x / R.w), v0 = Math.max(0, -R.y / R.h);
-    const u1 = Math.min(1, (sr.width - R.x) / R.w), v1 = Math.min(1, (sr.height - R.y) / R.h);
-    const cw = (u1 - u0) * nw, ch = (v1 - v0) * nh;
-    const s = Math.min(2.5, 1400 / Math.max(cw, ch));
-    const W = Math.round(cw * s), H = Math.round(ch * s);
-    const c = document.createElement('canvas'); c.width = W; c.height = H;
-    const ctx = c.getContext('2d');
-    ctx.drawImage(media(), u0 * nw, v0 * nh, cw, ch, 0, 0, W, H);
-    let mis = [];
-    if (wantPose() && st.lm) {
-      const unit = Math.max(1, Math.min(W, H * 0.75) / 410);
-      const fw = nw * s, fh = nh * s;
-      mis = drawOverlay(ctx, { x: -u0 * fw, y: -v0 * fh, w: fw, h: fh }, W, H, unit);
-    }
-    const showMis = $('tgAng').checked ? mis : [];
-    st.captures.push({
-      img: c.toDataURL('image/jpeg', 0.85), w: W, h: H,
-      t: st.kind === 'video' ? vid.currentTime : null,
-      vista: st.vista, modo: st.modo,
-      misure: showMis.map(m => ({ name: m.name, value: m.plain, level: m.level, uncertain: m.uncertain, note: m.note })),
-      nota: '',
+  // ═══════════════ Modalità Postura: tre riquadri ═══════════════
+  const pv = {};
+  let pickVista = null;
+  document.querySelectorAll('.vcard').forEach(card => {
+    const vista = card.dataset.vista, misEl = card.querySelector('.vmis');
+    const V = makeViewer({
+      stage: card.querySelector('.stage'), vista, modo: 'postura', video: false,
+      emptyTitle: 'Foto ' + VISTA_LBL[vista].toLowerCase(), emptyText: 'Tocca per caricarla',
+      onPick: () => pick(vista), onFile: f => loadPosturaFile(vista, f),
+      onUpdate: V => { misEl.innerHTML = misTable(V, 'Nessuna foto.'); }, onChange: autosave,
     });
-    renderCaps(); autosave();
-    toast('Fotogramma aggiunto al PDF');
+    pv[vista] = V;
+    card.querySelector('[data-act=load]').onclick = () => pick(vista);
+    card.querySelector('[data-act=clear]').onclick = () => { if (V.kind && confirm('Togliere la foto ' + VISTA_LBL[vista].toLowerCase() + '?')) { V.clear(); autosave(); } };
+  });
+  function pick(vista) { pickVista = vista; $('mediaInput').click(); }
+  $('mediaInput').onchange = e => { const f = e.target.files[0]; e.target.value = ''; if (f && pickVista) loadPosturaFile(pickVista, f); };
+  async function loadPosturaFile(vista, f) {
+    if (!(f.type || '').startsWith('image') && !/\.(jpe?g|png|heic|webp)$/i.test(f.name)) { alert('Qui serve una foto. Per i video usa la modalità Movimento.'); return; }
+    try { pv[vista].setImage(await fileToDataUrl(f, 1600)); autosave(); } catch (err) { alert(err.message); }
+  }
+
+  // ═══════════════ Modalità Movimento: uno schermo ═══════════════
+  const FPS = 30;
+  let movVista = 'front', curSpeed = 1;
+  const mv = makeViewer({
+    stage: $('movStage'), vista: 'front', modo: 'movimento', video: true,
+    emptyTitle: 'Carica un video o una foto', emptyText: 'Tocca qui oppure usa «Carica video o foto».<br>Tutto resta su questo dispositivo.',
+    onPick: () => $('movInput').click(), onFile: f => loadMovFile(f),
+    onUpdate: V => { $('movMis').innerHTML = misTable(V, 'Carica un video o una foto.'); },
+    onTime: updTime, onPlay: p => { $('playIco').innerHTML = p ? '<path d="M6 5h4v14H6zM14 5h4v14h-4z"/>' : '<path d="M7 5v14l12-7z"/>'; },
+  });
+  $('movLoad').onclick = () => $('movInput').click();
+  $('movInput').onchange = e => { const f = e.target.files[0]; e.target.value = ''; if (f) loadMovFile(f); };
+  async function loadMovFile(f) {
+    const isVid = (f.type || '').startsWith('video') || /\.(mov|mp4|m4v|webm)$/i.test(f.name);
+    if (isVid) { mv.setVideo(f); mv.vid.playbackRate = curSpeed; }
+    else { try { mv.setImage(await fileToDataUrl(f, 1800)); } catch (err) { alert(err.message); return; } }
+    $('vctrl').classList.toggle('on', isVid); $('vhint').style.display = isVid ? '' : 'none';
+    $('capBtn').disabled = false;
+  }
+  document.querySelectorAll('#vistaSeg button').forEach(b => b.onclick = () => {
+    movVista = mv.vista = b.dataset.v; document.querySelectorAll('#vistaSeg button').forEach(x => x.classList.toggle('on', x === b)); mv.redraw();
+  });
+  const vid = mv.vid;
+  $('playBtn').onclick = () => { if (mv.kind === 'video') vid.paused ? vid.play() : vid.pause(); };
+  function step(n) { if (mv.kind !== 'video') return; vid.pause(); vid.currentTime = Math.max(0, Math.min(vid.duration || 0, vid.currentTime + n / FPS)); }
+  $('backBtn').onclick = () => step(-1);
+  $('fwdBtn').onclick = () => step(1);
+  $('seek').addEventListener('input', () => { if (mv.kind !== 'video' || !vid.duration) return; vid.pause(); vid.currentTime = $('seek').value / 1000 * vid.duration; });
+  document.querySelectorAll('#speedSeg button').forEach(b => b.onclick = () => {
+    curSpeed = +b.dataset.s; vid.playbackRate = curSpeed;
+    document.querySelectorAll('#speedSeg button').forEach(x => x.classList.toggle('on', x === b));
+  });
+  document.addEventListener('keydown', e => {
+    if (MODE !== 'movimento' || mv.kind !== 'video' || /INPUT|TEXTAREA/.test(document.activeElement.tagName)) return;
+    if (e.key === 'ArrowLeft') { e.preventDefault(); step(-1); }
+    else if (e.key === 'ArrowRight') { e.preventDefault(); step(1); }
+    else if (e.key === ' ') { e.preventDefault(); vid.paused ? vid.play() : vid.pause(); }
+  });
+  function updTime() {
+    if (mv.kind !== 'video') return;
+    $('time').textContent = fmt(vid.currentTime) + ' / ' + fmt(vid.duration);
+    if (vid.duration) $('seek').value = Math.round(vid.currentTime / vid.duration * 1000);
+  }
+
+  // Fotogrammi per il PDF (solo Movimento)
+  let captures = [];
+  $('capBtn').onclick = async () => {
+    if (!mv.kind) return;
+    if (mv.kind === 'video' && !vid.paused) vid.pause();
+    await mv.analyze();
+    const c = mv.capture(); if (!c) return;
+    if (!tgOn('tgAng')) c.misure = [];
+    captures.push({ ...c, t: mv.kind === 'video' ? vid.currentTime : null, vista: mv.vista, nota: '' });
+    renderCaps(); autosave(); toast('Fotogramma aggiunto al PDF');
   };
-  const VISTA_LBL = { front: 'Di fronte', back: 'Di spalle', side: 'Di lato' };
   function renderCaps() {
     const box = $('caps');
-    $('capCount').textContent = st.captures.length ? '(' + st.captures.length + ')' : '';
-    if (!st.captures.length) { box.innerHTML = '<div class="none">Nessuno ancora: ferma il video sul momento che ti interessa e tocca «Aggiungi al PDF».</div>'; return; }
+    $('capCount').textContent = captures.length ? '(' + captures.length + ')' : '';
+    if (!captures.length) { box.innerHTML = '<div class="none">Nessuno ancora: ferma il video sul momento che ti interessa e tocca «Aggiungi al PDF».</div>'; return; }
     box.innerHTML = '';
-    st.captures.forEach((cp, i) => {
+    captures.forEach((cp, i) => {
       const d = document.createElement('div'); d.className = 'cap';
       d.innerHTML = '<img alt="">' +
         '<div><div class="meta"><span>' + (i + 1) + '. ' + VISTA_LBL[cp.vista] + (cp.t != null ? ' · ' + fmt(cp.t) : '') + '</span>' +
@@ -807,35 +879,65 @@
       d.querySelector('img').src = cp.img;
       const ta = d.querySelector('textarea'); ta.value = cp.nota || '';
       ta.oninput = () => { cp.nota = ta.value; autosave(); };
-      d.querySelector('.del').onclick = () => { if (confirm('Togliere questo fotogramma dal PDF?')) { st.captures.splice(i, 1); renderCaps(); autosave(); } };
+      d.querySelector('.del').onclick = () => { if (confirm('Togliere questo fotogramma dal PDF?')) { captures.splice(i, 1); renderCaps(); autosave(); } };
       box.appendChild(d);
     });
   }
 
+  // ═══════════════ Modalità e interruttori ═══════════════
+  let MODE = 'postura';
+  const allViewers = () => [pv.front, pv.back, pv.side, mv];
+  function setMode(m) {
+    MODE = m;
+    document.querySelectorAll('#modeSeg button').forEach(x => x.classList.toggle('on', x.dataset.mode === m));
+    $('secPostura').style.display = m === 'postura' ? '' : 'none';
+    $('secMov').style.display = m === 'movimento' ? '' : 'none';
+    if (m === 'postura' && mv.kind === 'video') vid.pause();
+    allViewers().forEach(v => v.layout());
+  }
+  document.querySelectorAll('#modeSeg button').forEach(b => b.onclick = () => { setMode(b.dataset.mode); autosave(); });
+  ['tgSkel', 'tgAng', 'tgZoom'].forEach(id => $(id).onchange = () => {
+    try { localStorage.setItem('posturaInterruttori', JSON.stringify({ s: tgOn('tgSkel'), a: tgOn('tgAng'), z: tgOn('tgZoom') })); } catch (e) {}
+    allViewers().forEach(v => { v.view = null; v.analyze(); });
+  });
+  try { const t = JSON.parse(localStorage.getItem('posturaInterruttori') || 'null'); if (t) { $('tgSkel').checked = !!t.s; $('tgAng').checked = !!t.a; $('tgZoom').checked = !!t.z; } else { $('tgSkel').checked = $('tgAng').checked = true; } } catch (e) {}
+  window.addEventListener('resize', () => allViewers().forEach(v => v.layout()));
+
   // ═══════════════ Dati: memoria del dispositivo + Salva/Apri file ═══════════════
   const DRAFT_KEY = 'posturaBozza';
   function snapshot() {
-    return { app: 'postura', versione: 1, atleta: $('atleta').value, data: $('data').value, note: $('note').value, captures: st.captures };
+    const vv = {};
+    for (const k of ['front', 'back', 'side']) vv[k] = pv[k].kind ? { src: pv[k].src, lm: packLm(pv[k].lm) } : null;
+    return { app: 'postura', versione: 2, modo: MODE, atleta: $('atleta').value, data: $('data').value,
+      postura: { viste: vv, report: $('reportPostura').value },
+      movimento: { captures, report: $('reportMov').value } };
   }
   function restore(o) {
     if (!o || o.app !== 'postura') throw new Error('Il file non è un\'analisi di Postura.');
-    $('atleta').value = o.atleta || ''; $('data').value = o.data || ''; $('note').value = o.note || '';
-    st.captures = Array.isArray(o.captures) ? o.captures : [];
+    $('atleta').value = o.atleta || ''; $('data').value = o.data || '';
+    const P = o.postura || {}, M = o.movimento || { captures: o.captures, report: o.note };
+    for (const k of ['front', 'back', 'side']) { const x = P.viste && P.viste[k]; if (x && x.src) pv[k].setImage(x.src, x.lm); else pv[k].clear(); }
+    $('reportPostura').value = P.report || '';
+    captures = Array.isArray(M.captures) ? M.captures : [];
+    $('reportMov').value = M.report || '';
     renderCaps();
+    setMode(o.modo === 'movimento' ? 'movimento' : 'postura');
   }
   let saveT = null;
   function autosave() {
     clearTimeout(saveT);
-    saveT = setTimeout(() => { try { localStorage.setItem(DRAFT_KEY, JSON.stringify(snapshot())); } catch (e) { /* troppo grande: resta il file */ } }, 400);
+    saveT = setTimeout(() => { try { localStorage.setItem(DRAFT_KEY, JSON.stringify(snapshot())); } catch (e) { /* troppo grande: resta il file */ } }, 500);
   }
-  ['atleta', 'data', 'note'].forEach(id => $(id).addEventListener('input', autosave));
-  try { const d = localStorage.getItem(DRAFT_KEY); if (d) restore(JSON.parse(d)); } catch (e) {}
+  ['atleta', 'data', 'reportPostura', 'reportMov'].forEach(id => $(id).addEventListener('input', autosave));
+  renderCaps();
+  try { const d = localStorage.getItem(DRAFT_KEY); if (d) restore(JSON.parse(d)); } catch (e) { console.warn(e); }
   if (!$('data').value) $('data').value = new Date().toISOString().slice(0, 10);
 
   function fileBase() {
     const n = ($('atleta').value || 'analisi').trim().replace(/[^\p{L}\p{N}]+/gu, '_').replace(/^_|_$/g, '');
     return 'Postura_' + (n || 'analisi') + '_' + ($('data').value || '');
   }
+
   async function saveBlob(blob, name, mime, desc) {
     if (window.showSaveFilePicker) {
       try {
@@ -881,30 +983,43 @@
   // jsPDF con Helvetica non ha frecce e simboli speciali
   const pdfTxt = s => String(s ?? '').replace(/[↔↕]/g, '').replace(/[’‘]/g, "'").replace(/[«»“”]/g, '"').replace(/…/g, '...').replace(/[–—]/g, '-');
 
+  $('saveBtn').onclick = () => saveBlob(new Blob([JSON.stringify(snapshot())], { type: 'application/json' }), fileBase() + '.json', 'application/json', 'Analisi Postura (JSON)');
+  $('openBtn').onclick = () => $('jsonInput').click();
+  $('jsonInput').onchange = e => {
+    const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+    const busyNow = pv.front.kind || pv.back.kind || pv.side.kind || captures.length;
+    if (busyNow && !confirm('Aprire questo file? L\'analisi attuale verrà sostituita (se ti serve, salvala prima con 💾 Salva file).')) return;
+    const rd = new FileReader();
+    rd.onload = () => { try { restore(JSON.parse(rd.result)); autosave(); toast('File aperto'); } catch (err) { alert(err.message || 'File non valido.'); } };
+    rd.readAsText(f);
+  };
+
   $('pdfBtn').onclick = async () => {
-    if (!st.captures.length) { alert('Aggiungi almeno un fotogramma con «📸 Aggiungi al PDF».'); return; }
+    const pos = MODE === 'postura';
+    if (pos && !pv.front.kind && !pv.back.kind && !pv.side.kind) { alert('Carica almeno una foto in uno dei tre riquadri.'); return; }
+    if (!pos && !captures.length) { alert('Aggiungi almeno un fotogramma con «📸 Aggiungi al PDF».'); return; }
     const btn = $('pdfBtn'); btn.disabled = true; const old = btn.textContent; btn.textContent = '⏳ PDF…';
     try {
       if (!window.jspdf) await loadScript(BASE + 'jspdf-2.5.1/jspdf.umd.min.js');
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
-      const PW = 210, PH = 297, M = 14, AC = hexRgb(ACCENT);
+      const PW = 210, PH = 297, M = 14, AC = hexRgb(ACCENT), BOTTOM = PH - 22;
       const logo = LOGO ? await toPng(LOGO) : null;
-      const atleta = $('atleta').value.trim(), data = $('data').value, note = $('note').value.trim();
+      const atleta = $('atleta').value.trim(), data = $('data').value;
       const dataIt = data ? data.split('-').reverse().join('/') : '';
-      let page = 0;
+      let page = 0, y = 0;
 
       const header = () => {
         page++;
         doc.setFillColor(...AC); doc.rect(0, 0, PW, 4, 'F');
         let x = M;
-        if (logo) { const h = 14, w = h * logo.w / logo.h; doc.addImage(logo.data, 'PNG', M, 9, Math.min(w, 30), h); x = M + Math.min(w, 30) + 5; }
+        if (logo) { const h = 14, w = Math.min(30, h * logo.w / logo.h); doc.addImage(logo.data, 'PNG', M, 9, w, h); x = M + w + 5; }
         doc.setTextColor(...AC); doc.setFont('helvetica', 'bold'); doc.setFontSize(16);
-        doc.text('Analisi posturale', x, 15);
+        doc.text(pos ? 'Analisi posturale' : 'Analisi del movimento', x, 15);
         doc.setTextColor(60); doc.setFont('helvetica', 'normal'); doc.setFontSize(10.5);
         doc.text(pdfTxt([atleta || 'Atleta', dataIt].filter(Boolean).join('  ·  ')), x, 21);
         doc.setDrawColor(220); doc.line(M, 27, PW - M, 27);
-        return 32;
+        y = 33;
       };
       const footer = () => {
         doc.setFontSize(8.5); doc.setTextColor(130); doc.setFont('helvetica', 'normal');
@@ -912,68 +1027,103 @@
         doc.text(String(page), PW - M, PH - 9, { align: 'right' });
         if (COACH) { doc.setFontSize(10); doc.setTextColor(60); doc.text(pdfTxt('Allenatore: ' + COACH), PW - M, PH - 15, { align: 'right' }); }
       };
-
-      let y = header();
-      if (note) {
-        doc.setFontSize(10); doc.setTextColor(40);
-        const lines = doc.splitTextToSize(pdfTxt(note), PW - 2 * M);
-        doc.text(lines, M, y + 2); y += lines.length * 4.6 + 5;
-      }
-
-      for (let i = 0; i < st.captures.length; i++) {
-        const cp = st.captures[i];
-        const land = cp.w > cp.h * 1.1;
-        const IMG_W = land ? 104 : 80, MAX_H = 120;
-        const r = Math.min(IMG_W / cp.w, MAX_H / cp.h);
-        const iw = cp.w * r, ih = cp.h * r;
-        const tx = M + IMG_W + 7, tw = PW - M - tx;
-        // altezza del testo, per tenere insieme immagine e misure
-        doc.setFontSize(10);
-        const notaLines = cp.nota && cp.nota.trim() ? doc.splitTextToSize(pdfTxt(cp.nota.trim()), tw) : [];
-        const textH = 12 + cp.misure.reduce((t, m) => t + 6.6 + (m.level != null || m.note ? 4.6 : 0), 0) + (notaLines.length ? 9 + notaLines.length * 4.6 : 0);
-        const BLOCK_H = Math.max(ih, textH);
-        if (y + BLOCK_H > PH - 22) { footer(); doc.addPage(); y = header(); }
-        doc.addImage(cp.img, 'JPEG', M + (IMG_W - iw) / 2, y, iw, ih);
-        doc.setDrawColor(220); doc.rect(M + (IMG_W - iw) / 2, y, iw, ih);
-        let ty = y + 5;
-        doc.setTextColor(...AC); doc.setFont('helvetica', 'bold'); doc.setFontSize(11.5);
-        doc.text(pdfTxt((i + 1) + '. ' + VISTA_LBL[cp.vista] + (cp.modo === 'movimento' ? ' - movimento' : ' - in piedi') + (cp.t != null ? '  (' + fmt(cp.t) + ')' : '')), tx, ty);
-        ty += 7;
-        doc.setFont('helvetica', 'normal'); doc.setFontSize(10);
-        if (!cp.misure.length) { doc.setTextColor(120); doc.text('Nessuna misura (angoli spenti).', tx, ty); ty += 6; }
-        cp.misure.forEach(m => {
-          doc.setTextColor(30); doc.setFont('helvetica', 'bold');
-          doc.text(pdfTxt(m.name), tx, ty);
-          doc.setFont('helvetica', 'normal');
-          doc.text(pdfTxt(m.value), tx + tw, ty, { align: 'right' });
-          ty += 4.6;
-          if (m.level != null) {
-            const L = LEVELS[m.level];
-            doc.setFillColor(...hexRgb(L.color)); doc.circle(tx + 1.4, ty - 1.2, 1.4, 'F');
-            doc.setTextColor(...hexRgb(L.color)); doc.setFontSize(9);
-            doc.text(pdfTxt(L.label + (m.uncertain ? ' (vicino al confine)' : '') + (m.note ? ' - ' + m.note : '')), tx + 4.5, ty);
-            doc.setFontSize(10); ty += 4.6;
-          } else if (m.note) { doc.setTextColor(120); doc.setFontSize(9); doc.text(pdfTxt(m.note), tx, ty); doc.setFontSize(10); ty += 4.6; }
-          doc.setDrawColor(235); doc.line(tx, ty - 2.2, tx + tw, ty - 2.2); ty += 2;
-        });
-        if (notaLines.length) {
-          ty += 2; doc.setTextColor(...AC); doc.setFont('helvetica', 'bold'); doc.setFontSize(9.5); doc.text('Nota', tx, ty); ty += 4.6;
-          doc.setTextColor(40); doc.setFont('helvetica', 'normal'); doc.setFontSize(10);
-          doc.text(notaLines, tx, ty);
+      const newPage = () => { footer(); doc.addPage(); header(); };
+      const sectionTitle = t => {
+        if (y + 14 > BOTTOM) newPage();
+        doc.setTextColor(...AC); doc.setFont('helvetica', 'bold'); doc.setFontSize(12.5);
+        doc.text(t, M, y + 4); doc.setDrawColor(...AC); doc.line(M, y + 6, PW - M, y + 6); y += 12;
+      };
+      // testo lungo che va a capo e prosegue nelle pagine seguenti
+      const paragraph = (txt, size) => {
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(size || 10.5); doc.setTextColor(35);
+        const lh = (size || 10.5) * 0.47;
+        for (const par of pdfTxt(txt).split(/\n/)) {
+          const lines = par.trim() ? doc.splitTextToSize(par, PW - 2 * M) : [''];
+          for (const ln of lines) { if (y + lh > BOTTOM) { newPage(); doc.setFont('helvetica', 'normal'); doc.setFontSize(size || 10.5); doc.setTextColor(35); } doc.text(ln, M, y + lh * 0.8); y += lh; }
         }
-        y += BLOCK_H + 8;
+      };
+      // elenco misure in una colonna di larghezza w
+      const misList = (misure, x, yy, w, fs) => {
+        fs = fs || 9.5; const lh = fs * 0.46;
+        if (!misure.length) { doc.setFontSize(fs); doc.setTextColor(120); doc.setFont('helvetica', 'normal'); doc.text('Nessuna misura.', x, yy + lh); return yy + lh * 2; }
+        misure.forEach(m => {
+          yy += lh;
+          doc.setFontSize(fs); doc.setTextColor(30); doc.setFont('helvetica', 'bold'); doc.text(pdfTxt(m.name), x, yy);
+          doc.setFont('helvetica', 'normal'); doc.text(pdfTxt(m.value), x + w, yy, { align: 'right' });
+          const sub = m.level != null ? LEVELS[m.level].label + (m.uncertain ? ' (vicino al confine)' : '') + (m.note ? ' - ' + m.note : '') : m.note;
+          if (sub) {
+            const col = m.level != null ? hexRgb(LEVELS[m.level].color) : [120, 120, 120];
+            doc.setFontSize(fs - 1.3); doc.setTextColor(...col);
+            const lines = doc.splitTextToSize(pdfTxt(sub), w - (m.level != null ? 4 : 0));
+            if (m.level != null) { doc.setFillColor(...col); doc.circle(x + 1.2, yy + lh - 1.1, 1.2, 'F'); }
+            lines.forEach(l => { yy += lh * 0.95; doc.text(l, x + (m.level != null ? 3.8 : 0), yy); });
+          }
+          yy += 1.6; doc.setDrawColor(235); doc.line(x, yy - 0.4, x + w, yy - 0.4); yy += 0.8;
+        });
+        return yy;
+      };
+
+      header();
+      if (pos) {
+        // tre viste affiancate
+        const views = ['front', 'back', 'side'];
+        const caps = {};
+        for (const k of views) caps[k] = pv[k].kind ? (await pv[k].analyze(), pv[k].capture()) : null;
+        const GAP = 5, CW = (PW - 2 * M - 2 * GAP) / 3, IH = CW * 4 / 3;
+        let maxY = y;
+        views.forEach((k, i) => {
+          const x = M + i * (CW + GAP);
+          doc.setTextColor(...AC); doc.setFont('helvetica', 'bold'); doc.setFontSize(11);
+          doc.text(VISTA_LBL[k], x, y + 4);
+          const top = y + 7, cp = caps[k];
+          doc.setFillColor(242, 240, 236); doc.roundedRect(x, top, CW, IH, 1.5, 1.5, 'F');
+          if (cp) {
+            const r = Math.min(CW / cp.w, IH / cp.h), iw = cp.w * r, ih = cp.h * r;
+            doc.addImage(cp.img, 'JPEG', x + (CW - iw) / 2, top + (IH - ih) / 2, iw, ih);
+          } else { doc.setTextColor(150); doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.text('Foto non caricata', x + CW / 2, top + IH / 2, { align: 'center' }); }
+          const yy = cp ? misList(cp.misure, x, top + IH + 2, CW, 8.8) : top + IH + 2;
+          maxY = Math.max(maxY, yy);
+        });
+        y = maxY + 4;
+        doc.setFontSize(7.8); doc.setTextColor(120); doc.setFont('helvetica', 'normal');
+        const leg = doc.splitTextToSize('Livelli da soglie della letteratura per la persona ferma in piedi (nella norma, lieve asimmetria, da monitorare, asimmetria significativa, consigliato approfondimento). Ginocchi: scostamento dalla gamba dritta (180 gradi). Testa-spalla: stima dell\'angolo cranio-vertebrale.', PW - 2 * M);
+        if (y + leg.length * 3.4 > BOTTOM) newPage();
+        doc.text(leg, M, y + 3); y += leg.length * 3.4 + 5;
+        const rep = $('reportPostura').value.trim();
+        if (rep) { sectionTitle('Report dei risultati'); paragraph(rep); }
+      } else {
+        for (let i = 0; i < captures.length; i++) {
+          const cp = captures[i];
+          const IMG_W = cp.w > cp.h * 1.1 ? 104 : 80;
+          const r = Math.min(IMG_W / cp.w, 120 / cp.h), iw = cp.w * r, ih = cp.h * r;
+          const tx = M + IMG_W + 7, tw = PW - M - tx;
+          doc.setFontSize(10);
+          const notaLines = cp.nota && cp.nota.trim() ? doc.splitTextToSize(pdfTxt(cp.nota.trim()), tw) : [];
+          const textH = 12 + cp.misure.reduce((t, m) => t + 7 + (m.note ? 4.4 : 0), 0) + (notaLines.length ? 9 + notaLines.length * 4.6 : 0);
+          const BH = Math.max(ih, textH);
+          if (y + BH > BOTTOM) newPage();
+          doc.addImage(cp.img, 'JPEG', M + (IMG_W - iw) / 2, y, iw, ih);
+          doc.setDrawColor(220); doc.rect(M + (IMG_W - iw) / 2, y, iw, ih);
+          doc.setTextColor(...AC); doc.setFont('helvetica', 'bold'); doc.setFontSize(11.5);
+          doc.text(pdfTxt((i + 1) + '. ' + VISTA_LBL[cp.vista] + (cp.t != null ? '  (' + fmt(cp.t) + ')' : '')), tx, y + 5);
+          let ty = misList(cp.misure.map(m => ({ ...m, level: null })), tx, y + 7, tw, 10);
+          if (notaLines.length) {
+            ty += 3; doc.setTextColor(...AC); doc.setFont('helvetica', 'bold'); doc.setFontSize(9.5); doc.text('Nota', tx, ty); ty += 4.6;
+            doc.setTextColor(40); doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.text(notaLines, tx, ty);
+          }
+          y += BH + 8;
+        }
+        const rep = $('reportMov').value.trim();
+        if (rep) { sectionTitle('Report dei risultati'); paragraph(rep); }
       }
       footer();
-      const blob = doc.output('blob');
-      await saveBlob(blob, fileBase() + '.pdf', 'application/pdf', 'PDF');
+      await saveBlob(doc.output('blob'), fileBase() + (pos ? '' : '_movimento') + '.pdf', 'application/pdf', 'PDF');
     } catch (e) { console.error(e); alert('Errore nella creazione del PDF: ' + (e.message || e)); }
     finally { btn.disabled = false; btn.textContent = old; }
   };
 
   applyAccent(ACCENT);
-  layout();
-  // per le prove
-  window.__postura = { st, analyze, computeMisure };
+  window.__postura = { pv, mv, get captures() { return captures; }, setMode };
 })();
 </script>
 </body>
