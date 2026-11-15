@@ -88,6 +88,8 @@
 
   .vctrl { display: none; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 10px; }
   .vctrl.on { display: flex; }
+  .fbtn { min-height: 44px; padding: 8px 12px; user-select: none; -webkit-user-select: none; touch-action: manipulation; }
+  .frameno { font-variant-numeric: tabular-nums; font-size: 13px; font-weight: 700; color: var(--accent); white-space: nowrap; }
   .ibtn { width: 44px; height: 44px; border-radius: 12px; border: 1.5px solid var(--accent); background: var(--card); color: var(--accent); font-size: 18px; cursor: pointer; display: grid; place-items: center; }
   .ibtn.primary { background: var(--accent); color: #fff; }
   .ibtn svg { width: 20px; height: 20px; }
@@ -212,14 +214,13 @@
           </div>
           <div class="stage big" id="movStage"></div>
           <div class="vctrl" id="vctrl">
-            <button class="ibtn" id="backBtn" title="Fotogramma precedente">
-              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h2v14H6zM20 5v14L9 12z"/></svg></button>
+            <button class="btn fbtn" id="backBtn" title="Indietro di un fotogramma (tieni premuto per continuare)">◀ −1 fotogramma</button>
             <button class="ibtn primary" id="playBtn" title="Play / pausa">
               <svg id="playIco" viewBox="0 0 24 24" fill="currentColor"><path d="M7 5v14l12-7z"/></svg></button>
-            <button class="ibtn" id="fwdBtn" title="Fotogramma successivo">
-              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 5h2v14h-2zM4 5v14l11-7z"/></svg></button>
+            <button class="btn fbtn" id="fwdBtn" title="Avanti di un fotogramma (tieni premuto per continuare)">+1 fotogramma ▶</button>
             <input type="range" id="seek" min="0" max="1000" value="0" step="1">
             <span class="time" id="time">0:00.00</span>
+            <span class="frameno" id="frameNo"></span>
             <div class="seg" id="speedSeg" title="Velocità">
               <button data-s="0.25">¼×</button><button data-s="0.5">½×</button><button data-s="1" class="on">1×</button>
             </div>
@@ -232,7 +233,7 @@
             <label class="fld" for="swFps" style="margin:0">Fotogrammi al secondo</label>
             <select id="swFps"></select>
           </div>
-          <p class="hint" id="vhint" style="display:none">Fotogramma per fotogramma: metti in pausa e usa ⏮ ⏭ (oppure le frecce ← → della tastiera).</p>
+          <p class="hint" id="vhint" style="display:none">Fotogramma per fotogramma: usa «−1 fotogramma» e «+1 fotogramma» (tieni premuto per scorrere lentamente) oppure le frecce ← → della tastiera.</p>
         </section>
 
         <aside style="display:flex;flex-direction:column;gap:16px">
@@ -854,9 +855,26 @@
   });
   const vid = mv.vid;
   $('playBtn').onclick = () => { if (mv.kind === 'video') vid.paused ? vid.play() : vid.pause(); };
-  function step(n) { if (mv.kind !== 'video') return; vid.pause(); vid.currentTime = Math.max(0, Math.min(vid.duration || 0, vid.currentTime + n / swFps())); }
-  $('backBtn').onclick = () => step(-1);
-  $('fwdBtn').onclick = () => step(1);
+  // Avanzamento per fotogramma: si va sempre su un fotogramma intero (fps reali del video)
+  function step(n) {
+    if (mv.kind !== 'video') return;
+    vid.pause();
+    const f = swFps(), last = Math.max(0, Math.floor((vid.duration || 0) * f) - 1);
+    const k = Math.max(0, Math.min(last, Math.round(vid.currentTime * f) + n));
+    vid.currentTime = k / f + 0.001;
+  }
+  // un tocco = un fotogramma; tenendo premuto continua (aspetta che ogni fotogramma sia mostrato)
+  function holdStep(btn, n) {
+    let timer = null, holding = false;
+    const go = () => { if (!holding) return; step(n); vid.addEventListener('seeked', () => { if (holding) timer = setTimeout(go, 60); }, { once: true }); };
+    const start = e => { e.preventDefault(); if (mv.kind !== 'video') return; holding = true; step(n); timer = setTimeout(() => { if (holding) go(); }, 450); };
+    const stop = () => { holding = false; clearTimeout(timer); };
+    btn.addEventListener('pointerdown', start);
+    ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => btn.addEventListener(ev, stop));
+    btn.addEventListener('contextmenu', e => e.preventDefault());
+  }
+  holdStep($('backBtn'), -1);
+  holdStep($('fwdBtn'), 1);
   $('seek').addEventListener('input', () => { if (mv.kind !== 'video' || !vid.duration) return; vid.pause(); vid.currentTime = $('seek').value / 1000 * vid.duration; });
   document.querySelectorAll('#speedSeg button').forEach(b => b.onclick = () => {
     curSpeed = +b.dataset.s; vid.playbackRate = curSpeed;
@@ -871,6 +889,8 @@
   function updTime() {
     if (mv.kind !== 'video') return;
     $('time').textContent = fmt(vid.currentTime) + ' / ' + fmt(vid.duration);
+    const f = swFps();
+    $('frameNo').textContent = 'Fotogramma ' + (Math.round(vid.currentTime * f) + 1) + ' / ' + Math.max(1, Math.floor((vid.duration || 0) * f)) + ' · ' + (Math.round(f * 100) / 100) + ' fps';
     if (vid.duration) $('seek').value = Math.round(vid.currentTime / vid.duration * 1000);
   }
 
