@@ -1,0 +1,980 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Postura – Suite Allenatore</title>
+<style>
+  :root {
+    --bg: #f4f2ee; --card: #ffffff; --ink: #1b1b1b; --muted: #6b6b6b; --line: #e2ded6;
+    --accent: #8B0000;
+    --l0: #1e9e55; --l1: #7cb342; --l2: #e0b400; --l3: #ef7d00; --l4: #d32f2f;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body { background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    -webkit-tap-highlight-color: transparent; padding-bottom: 80px; }
+  button, input, textarea, select { font-family: inherit; }
+
+  header.top { display: flex; align-items: center; gap: 14px; padding: 14px 70px 14px 18px; background: var(--card); border-bottom: 1px solid var(--line); }
+  .brand-logo { width: 42px; height: 42px; border-radius: 50%; background: var(--accent); color: #fff; display: grid; place-items: center; font-weight: 700; overflow: hidden; flex: none; }
+  .brand-logo img { width: 100%; height: 100%; object-fit: contain; background: #fff; }
+  header.top h1 { margin: 0; font-size: 21px; }
+  header.top p { margin: 2px 0 0; font-size: 13px; color: var(--muted); }
+
+  .wrap { max-width: 1280px; margin: 0 auto; padding: 16px; display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 16px; align-items: start; }
+  @media (max-width: 920px) { .wrap { grid-template-columns: 1fr; } }
+
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 14px; }
+  .card h2 { margin: 0 0 10px; font-size: 13px; text-transform: uppercase; letter-spacing: .6px; color: var(--accent); }
+
+  .bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px; }
+  .btn { border: 1.5px solid var(--accent); background: var(--card); color: var(--accent); border-radius: 10px; padding: 9px 13px; font-size: 14px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; min-height: 40px; }
+  .btn.primary { background: var(--accent); color: #fff; }
+  .btn:disabled { opacity: .4; cursor: default; }
+  .seg { display: inline-flex; border: 1.5px solid var(--accent); border-radius: 10px; overflow: hidden; }
+  .seg button { border: 0; background: var(--card); color: var(--accent); padding: 9px 12px; font-size: 14px; font-weight: 600; cursor: pointer; min-height: 37px; }
+  .seg button + button { border-left: 1.5px solid var(--accent); }
+  .seg button.on { background: var(--accent); color: #fff; }
+  .sp { flex: 1; }
+
+  .toggle { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; cursor: pointer; user-select: none; padding: 4px 2px; }
+  .toggle input { display: none; }
+  .toggle .sw { width: 44px; height: 26px; border-radius: 13px; background: #cfcac1; position: relative; transition: .15s; flex: none; }
+  .toggle .sw::after { content: ""; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; transition: .15s; box-shadow: 0 1px 3px rgba(0,0,0,.25); }
+  .toggle input:checked + .sw { background: var(--accent); }
+  .toggle input:checked + .sw::after { left: 21px; }
+
+  .stage { position: relative; background: #111; border-radius: 12px; overflow: hidden; height: min(68vh, 720px); min-height: 320px; display: grid; place-items: center; touch-action: manipulation; }
+  .stage video, .stage img.media { position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: fill; display: none; max-width: none; }
+  .stage canvas { position: absolute; left: 0; top: 0; pointer-events: none; }
+  .empty { color: #bbb; text-align: center; padding: 20px; cursor: pointer; }
+  .empty b { display: block; color: #fff; font-size: 18px; margin: 10px 0 4px; }
+  .empty svg { width: 54px; height: 54px; opacity: .8; }
+  .stage.drag { outline: 3px dashed var(--accent); outline-offset: -6px; }
+  .msg { position: absolute; left: 50%; top: 14px; transform: translateX(-50%); background: rgba(0,0,0,.75); color: #fff; padding: 8px 14px; border-radius: 999px; font-size: 13px; display: none; white-space: nowrap; max-width: 92%; overflow: hidden; text-overflow: ellipsis; }
+
+  .vctrl { display: none; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 10px; }
+  .vctrl.on { display: flex; }
+  .ibtn { width: 44px; height: 44px; border-radius: 12px; border: 1.5px solid var(--accent); background: var(--card); color: var(--accent); font-size: 18px; cursor: pointer; display: grid; place-items: center; }
+  .ibtn.primary { background: var(--accent); color: #fff; }
+  .ibtn svg { width: 20px; height: 20px; }
+  input[type=range] { flex: 1; min-width: 160px; accent-color: var(--accent); height: 30px; }
+  .time { font-variant-numeric: tabular-nums; font-size: 14px; color: var(--muted); min-width: 120px; text-align: right; }
+
+  label.fld { display: block; font-size: 12px; font-weight: 600; color: var(--muted); margin: 0 0 4px; }
+  input.txt, textarea.txt { width: 100%; border: 1.5px solid var(--line); border-radius: 10px; padding: 9px 10px; font-size: 15px; background: #fff; color: var(--ink); }
+  textarea.txt { resize: vertical; min-height: 54px; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+
+  table.mis { width: 100%; border-collapse: collapse; font-size: 14px; }
+  table.mis td { padding: 7px 4px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  table.mis td.v { text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; white-space: nowrap; }
+  .chip { display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; color: #fff; white-space: nowrap; }
+  .hint { font-size: 12.5px; color: var(--muted); line-height: 1.45; margin: 8px 0 0; }
+  .legend { display: flex; flex-direction: column; gap: 4px; margin-top: 8px; font-size: 12px; color: var(--muted); }
+  .legend span.dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; }
+
+  .caps { display: flex; flex-direction: column; gap: 10px; }
+  .cap { display: grid; grid-template-columns: 96px 1fr; gap: 10px; border: 1px solid var(--line); border-radius: 12px; padding: 8px; }
+  .cap img { width: 96px; height: 120px; object-fit: contain; background: #111; border-radius: 8px; }
+  .cap .meta { font-size: 12px; color: var(--muted); display: flex; justify-content: space-between; gap: 6px; margin-bottom: 4px; }
+  .cap textarea { min-height: 70px; font-size: 13px; }
+  .cap .del { background: none; border: 0; color: var(--l4); font-weight: 700; cursor: pointer; font-size: 13px; padding: 0; }
+  .none { font-size: 13px; color: var(--muted); }
+
+  /* Menu ☰ (come nelle altre app) */
+  .hamburger-wrap { position: fixed; top: 14px; right: 16px; z-index: 50; }
+  .hamburger-btn { background: transparent; border: none; font-size: 28px; cursor: pointer; padding: 6px 10px; color: var(--accent); line-height: 1; }
+  .hamburger-dropdown { position: absolute; top: 100%; right: 0; background: var(--card); border: 1.5px solid var(--accent); border-radius: 14px; box-shadow: 0 8px 24px rgba(0,0,0,.15); padding: 16px 20px; min-width: 250px; display: none; margin-top: 8px; }
+  .hamburger-dropdown.open { display: block; }
+  .menu-item { padding: 8px 0; border-bottom: 1px solid var(--line); }
+  .menu-item:last-child { border-bottom: none; }
+  .menu-label { display: block; font-size: 13px; font-weight: 600; color: var(--accent); letter-spacing: .3px; margin-bottom: 6px; }
+  .logo-upload input[type="file"] { font-size: 13px; padding: 6px 8px; border: 1.5px dashed var(--accent); border-radius: 10px; background: transparent; color: var(--ink); width: 100%; }
+  .link-btn { background: none; border: none; color: var(--accent); font-size: 13px; font-weight: 600; cursor: pointer; padding: 0; }
+  .coach-name { display: block; font-size: 13px; color: var(--muted); margin-bottom: 4px; word-break: break-word; }
+  .coach-name:empty { display: none; }
+  .color-swatches { display: flex; gap: 9px; flex-wrap: wrap; }
+  .color-swatch { width: 26px; height: 26px; border: 2px solid var(--card); border-radius: 50%; box-shadow: 0 0 0 1.5px #d0d0d0; cursor: pointer; padding: 0; }
+  .color-swatch.selected { box-shadow: 0 0 0 1.5px var(--card), 0 0 0 3.5px var(--accent); }
+
+  #suite-home { position: fixed; left: 14px; bottom: 14px; z-index: 2147483000; display: flex; align-items: center; gap: 7px;
+    padding: 10px 16px 10px 13px; border-radius: 999px; background: var(--accent); color: #fff;
+    font: 600 15px/1 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; text-decoration: none;
+    box-shadow: 0 4px 16px rgba(0,0,0,.28); border: 2px solid #fff; }
+  .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: #222; color: #fff; padding: 10px 16px; border-radius: 999px; font-size: 14px; z-index: 60; display: none; }
+</style>
+</head>
+<body>
+  <div class="hamburger-wrap">
+    <button class="hamburger-btn" id="hamburgerBtn" aria-label="Menu">☰</button>
+    <div class="hamburger-dropdown" id="hamburgerDropdown">
+      <div class="menu-item logo-upload">
+        <label class="menu-label" for="logoUpload">⬆️ Carica logo</label>
+        <input type="file" id="logoUpload" accept="image/*">
+        <button type="button" class="link-btn" id="removeLogoBtn" style="margin-top:8px">✕ Rimuovi logo</button>
+      </div>
+      <div class="menu-item">
+        <span class="menu-label">✍️ Firma allenatore</span>
+        <span class="coach-name" id="coachNameLbl"></span>
+        <button type="button" class="link-btn" id="coachBtn">Aggiungi nome allenatore</button>
+      </div>
+      <div class="menu-item">
+        <span class="menu-label">🎨 Colore squadra</span>
+        <div class="color-swatches">
+          <button type="button" class="color-swatch" data-accent="#8B0000" data-accent-dark="#600000" data-accent-rgb="139, 0, 0" style="background:#8B0000" title="Granata"></button>
+          <button type="button" class="color-swatch" data-accent="#1652a1" data-accent-dark="#0f3b73" data-accent-rgb="22, 82, 161" style="background:#1652a1" title="Blu"></button>
+          <button type="button" class="color-swatch" data-accent="#d32f2f" data-accent-dark="#a02323" data-accent-rgb="211, 47, 47" style="background:#d32f2f" title="Rosso"></button>
+          <button type="button" class="color-swatch" data-accent="#1e8449" data-accent-dark="#14602f" data-accent-rgb="30, 132, 73" style="background:#1e8449" title="Verde"></button>
+          <button type="button" class="color-swatch" data-accent="#0288d1" data-accent-dark="#01579b" data-accent-rgb="2, 136, 209" style="background:#0288d1" title="Azzurro"></button>
+          <button type="button" class="color-swatch" data-accent="#6a3fa0" data-accent-dark="#4d2d75" data-accent-rgb="106, 63, 160" style="background:#6a3fa0" title="Viola"></button>
+          <button type="button" class="color-swatch" data-accent="#222222" data-accent-dark="#000000" data-accent-rgb="34, 34, 34" style="background:#222" title="Nero"></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <header class="top">
+    <div class="brand-logo" id="brandLogo">P</div>
+    <div>
+      <h1>Postura</h1>
+      <p>Analisi posturale e del movimento da video o foto</p>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <section class="card">
+      <div class="bar">
+        <button class="btn primary" id="loadBtn">📂 Carica video o foto</button>
+        <input type="file" id="mediaInput" accept="video/*,image/*" hidden>
+        <div class="seg" id="vistaSeg" title="Da dove è ripresa la persona">
+          <button data-v="front" class="on">Di fronte</button>
+          <button data-v="back">Di spalle</button>
+          <button data-v="side">Di lato</button>
+        </div>
+        <div class="seg" id="modoSeg" title="Che cosa stai analizzando">
+          <button data-m="postura" class="on">In piedi</button>
+          <button data-m="movimento">Movimento</button>
+        </div>
+      </div>
+      <div class="bar">
+        <label class="toggle"><input type="checkbox" id="tgSkel"><span class="sw"></span>Scheletro</label>
+        <label class="toggle"><input type="checkbox" id="tgAng"><span class="sw"></span>Angoli</label>
+        <label class="toggle" title="Ingrandisce e segue la persona"><input type="checkbox" id="tgZoom"><span class="sw"></span>Zoom atleta</label>
+        <span class="sp"></span>
+        <button class="btn" id="capBtn" disabled>📸 Aggiungi al PDF</button>
+      </div>
+
+      <div class="stage" id="stage">
+        <video id="vid" playsinline muted preload="auto"></video>
+        <img id="img" class="media" alt="">
+        <canvas id="cv"></canvas>
+        <div class="empty" id="empty">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="4.5" r="2"/><path d="M12 7v7M8 10l4-2 4 2M9 21l3-7 3 7"/></svg>
+          <b>Carica un video o una foto</b>
+          Tocca qui oppure usa «Carica video o foto».<br>Tutto resta su questo dispositivo.
+        </div>
+        <div class="msg" id="msg"></div>
+      </div>
+
+      <div class="vctrl" id="vctrl">
+        <button class="ibtn" id="backBtn" title="Fotogramma precedente">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h2v14H6zM20 5v14L9 12z"/></svg></button>
+        <button class="ibtn primary" id="playBtn" title="Play / pausa">
+          <svg id="playIco" viewBox="0 0 24 24" fill="currentColor"><path d="M7 5v14l12-7z"/></svg></button>
+        <button class="ibtn" id="fwdBtn" title="Fotogramma successivo">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 5h2v14h-2zM4 5v14l11-7z"/></svg></button>
+        <input type="range" id="seek" min="0" max="1000" value="0" step="1">
+        <span class="time" id="time">0:00.00</span>
+        <div class="seg" id="speedSeg" title="Velocità">
+          <button data-s="0.25">¼×</button><button data-s="0.5">½×</button><button data-s="1" class="on">1×</button>
+        </div>
+      </div>
+      <p class="hint" id="vhint" style="display:none">Fotogramma per fotogramma: metti in pausa e usa ⏮ ⏭ (oppure le frecce ← → della tastiera).</p>
+    </section>
+
+    <aside style="display:flex;flex-direction:column;gap:16px">
+      <section class="card">
+        <h2>Atleta</h2>
+        <div class="row2">
+          <div><label class="fld" for="atleta">Nome</label><input class="txt" id="atleta" placeholder="Nome e cognome"></div>
+          <div><label class="fld" for="data">Data</label><input class="txt" id="data" type="date"></div>
+        </div>
+        <label class="fld" for="note">Note generali</label>
+        <textarea class="txt" id="note" placeholder="Es. tipo di test, condizioni di ripresa…"></textarea>
+        <div class="bar" style="margin:10px 0 0">
+          <button class="btn" id="saveBtn">💾 Salva file</button>
+          <button class="btn" id="openBtn">📂 Apri file</button>
+          <button class="btn primary" id="pdfBtn">📄 PDF</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Misure del fotogramma</h2>
+        <div id="misBox" class="none">Accendi «Angoli» per vedere le misure.</div>
+        <div class="legend" id="legend" style="display:none"></div>
+      </section>
+
+      <section class="card">
+        <h2>Fotogrammi per il PDF <span id="capCount" style="color:var(--muted)"></span></h2>
+        <div class="caps" id="caps"><div class="none">Nessuno ancora: ferma il video sul momento che ti interessa e tocca «Aggiungi al PDF».</div></div>
+      </section>
+    </aside>
+  </div>
+
+  <input type="file" id="jsonInput" accept=".json,application/json" hidden>
+  <div class="toast" id="toast"></div>
+
+  <a href="../index.html" id="suite-home" title="Torna alla Suite" aria-label="Torna alla Suite">
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg>
+    <span>Home</span>
+  </a>
+
+<script>
+(function () {
+  'use strict';
+  const $ = id => document.getElementById(id);
+
+  // ═══════════════ Menu ☰: logo, firma, colore condivisi con la suite ═══════════════
+  const dd = $('hamburgerDropdown');
+  $('hamburgerBtn').addEventListener('click', e => { e.stopPropagation(); dd.classList.toggle('open'); });
+  document.addEventListener('click', e => { if (!dd.contains(e.target) && e.target.id !== 'hamburgerBtn') dd.classList.remove('open'); });
+
+  let ACCENT = '#8B0000';
+  const sw = document.querySelectorAll('.color-swatch');
+  function applyAccent(a) {
+    ACCENT = a;
+    document.documentElement.style.setProperty('--accent', a);
+    sw.forEach(b => b.classList.toggle('selected', b.dataset.accent.toLowerCase() === String(a).toLowerCase()));
+    redraw();
+  }
+  try {
+    const v = JSON.parse(localStorage.getItem('clubAccentColor') || 'null');
+    const c = typeof v === 'string' ? v : (v && (v.accent || v.color));
+    if (c) ACCENT = c;
+  } catch (e) {}
+  sw.forEach(b => b.addEventListener('click', () => {
+    applyAccent(b.dataset.accent);
+    try { localStorage.setItem('clubAccentColor', JSON.stringify({ accent: b.dataset.accent, accentDark: b.dataset.accentDark, accentRgb: b.dataset.accentRgb })); } catch (e) {}
+  }));
+
+  let LOGO = '';
+  function setLogo(u) {
+    LOGO = u || ''; const box = $('brandLogo');
+    if (u) { box.innerHTML = ''; const im = document.createElement('img'); im.alt = 'Logo club'; im.src = u; box.appendChild(im); }
+    else box.textContent = 'P';
+  }
+  try { const l = localStorage.getItem('clubLogoData'); if (l && l.startsWith('data:image')) setLogo(l); } catch (e) {}
+  $('logoUpload').addEventListener('change', e => {
+    const f = e.target.files[0]; if (!f) return;
+    const rd = new FileReader();
+    rd.onload = ev => {
+      setLogo(ev.target.result); dd.classList.remove('open');
+      try { localStorage.setItem('clubLogoData', ev.target.result); } catch (_) { alert('Logo troppo grande per il salvataggio automatico: resta solo per questa sessione.'); }
+    };
+    rd.readAsDataURL(f); e.target.value = '';
+  });
+  $('removeLogoBtn').addEventListener('click', () => { setLogo(''); try { localStorage.removeItem('clubLogoData'); } catch (_) {} dd.classList.remove('open'); });
+
+  const COACH_KEY = 'posizionamentiCoach'; let COACH = '';
+  try { COACH = (localStorage.getItem(COACH_KEY) || '').trim(); } catch (_) {}
+  function updCoach() { $('coachNameLbl').textContent = COACH; $('coachBtn').textContent = COACH ? 'Modifica nome' : 'Aggiungi nome allenatore'; }
+  updCoach();
+  $('coachBtn').addEventListener('click', () => {
+    dd.classList.remove('open');
+    const v = prompt('Firma allenatore – nome e cognome (vuoto = nessuna firma):', COACH); if (v === null) return;
+    COACH = v.replace(/\s+/g, ' ').trim();
+    try { COACH ? localStorage.setItem(COACH_KEY, COACH) : localStorage.removeItem(COACH_KEY); } catch (_) {}
+    updCoach();
+  });
+
+  function toast(t) { const el = $('toast'); el.textContent = t; el.style.display = 'block'; clearTimeout(toast._t); toast._t = setTimeout(() => el.style.display = 'none', 2200); }
+  function msg(t) { const el = $('msg'); el.textContent = t || ''; el.style.display = t ? 'block' : 'none'; }
+
+  // ═══════════════ Soglie scientifiche (da SportHub, posturaScienza) ═══════════════
+  // Cinque livelli; valgono per la persona ferma in piedi, non per il movimento.
+  const LEVELS = [
+    { l: 0, label: 'nella norma', color: '#1e9e55' },
+    { l: 1, label: 'lieve asimmetria', color: '#7cb342' },
+    { l: 2, label: 'da monitorare', color: '#e0b400' },
+    { l: 3, label: 'asimmetria significativa', color: '#ef7d00' },
+    { l: 4, label: 'consigliato approfondimento', color: '#d32f2f' },
+  ];
+  const SCI = {
+    CVA:       { dir: 'basso', mdc: 2.84, bande: [{ l: 0, min: 53, max: null }, { l: 1, min: 50, max: 52.9 }, { l: 2, min: 45, max: 49.9 }, { l: 3, min: 40, max: 44.9 }, { l: 4, min: null, max: 39.9 }] },
+    SPALLE:    { dir: 'alto', mdc: 1.3, bande: [{ l: 0, min: 0, max: 1.5 }, { l: 1, min: 1.6, max: 3 }, { l: 2, min: 3.1, max: 5 }, { l: 3, min: 5.1, max: 7 }, { l: 4, min: 7.1, max: null }] },
+    ANCA:      { dir: 'alto', mdc: 1.12, bande: [{ l: 0, min: 0, max: 0.9 }, { l: 1, min: 1, max: 3 }, { l: 2, min: 3.1, max: 6 }, { l: 3, min: 6.1, max: null }] },
+    GINOCCHIO: { dir: 'alto', mdc: 2.85, bande: [{ l: 0, min: 0, max: 3 }, { l: 1, min: 3.1, max: 5 }, { l: 2, min: 5.1, max: 8 }, { l: 3, min: 8.1, max: 11 }, { l: 4, min: 11.1, max: null }] },
+  };
+  function sciLevel(v, key) {
+    const p = SCI[key]; if (!p || v == null || !isFinite(v)) return null;
+    for (const b of p.bande) if (p.dir === 'alto' ? (b.max == null || v <= b.max) : (b.min == null || v >= b.min)) return b.l;
+    return p.bande[p.bande.length - 1].l;
+  }
+  function sciUncertain(v, key) {
+    const p = SCI[key]; if (!p || p.mdc == null || v == null) return false;
+    for (let i = 0; i < p.bande.length - 1; i++) {
+      const a = p.bande[i], b = p.bande[i + 1];
+      const edge = p.dir === 'alto' ? ((a.max ?? 0) + (b.min ?? 0)) / 2 : ((a.min ?? 0) + (b.max ?? 0)) / 2;
+      if (Math.abs(v - edge) < p.mdc / 2) return true;
+    }
+    return false;
+  }
+
+  // ═══════════════ MediaPipe: caricato solo quando serve ═══════════════
+  const BASE = new URL('./vendor/', location.href).href;
+  const MP_BUNDLE = BASE + 'mediapipe-0.10.14/vision_bundle.mjs';
+  const MP_WASM = BASE + 'mediapipe-0.10.14/wasm';
+  const MP_MODEL = BASE + 'mediapipe-models/pose_landmarker_full.task';
+  const MIN_VIS = 0.55;
+  let landmarker = null, mpLoading = null;
+  function mpInit() {
+    if (landmarker) return Promise.resolve(landmarker);
+    if (mpLoading) return mpLoading;
+    mpLoading = (async () => {
+      msg('Preparo il riconoscimento del corpo… (solo la prima volta, circa 20 MB)');
+      const mod = await import(MP_BUNDLE);
+      const V = mod && mod.FilesetResolver ? mod : (mod && mod.default) || mod;
+      const vision = await V.FilesetResolver.forVisionTasks(MP_WASM);
+      const opts = d => ({ baseOptions: { modelAssetPath: MP_MODEL, delegate: d }, runningMode: 'IMAGE', numPoses: 1, minPoseDetectionConfidence: 0.5 });
+      try { landmarker = await V.PoseLandmarker.createFromOptions(vision, opts('GPU')); }
+      catch (e) { landmarker = await V.PoseLandmarker.createFromOptions(vision, opts('CPU')); }
+      msg('');
+      return landmarker;
+    })().catch(err => {
+      mpLoading = null; msg('');
+      console.error(err);
+      alert('Non riesco a preparare il riconoscimento del corpo su questo dispositivo.\n' + (err && err.message || err));
+      $('tgSkel').checked = false; $('tgAng').checked = false; $('tgZoom').checked = false; layout();
+      throw err;
+    });
+    return mpLoading;
+  }
+
+  // ═══════════════ Stato ═══════════════
+  const vid = $('vid'), img = $('img'), cv = $('cv'), stage = $('stage');
+  const st = {
+    kind: null,          // 'video' | 'image'
+    fileName: '',
+    vista: 'front', modo: 'postura',
+    lm: null,            // punti del fotogramma attuale (33 landmark, 0-1)
+    lmTime: -1,
+    captures: [],        // {img, w, h, t, vista, modo, misure:[{name,text,level,uncertain,ref}], nota}
+  };
+  const FPS = 30;
+
+  // ═══════════════ Caricamento media ═══════════════
+  let mediaUrl = null;
+  $('loadBtn').onclick = () => $('mediaInput').click();
+  $('empty').onclick = () => $('mediaInput').click();
+  $('mediaInput').onchange = e => { const f = e.target.files[0]; if (f) loadMedia(f); e.target.value = ''; };
+  stage.addEventListener('dragover', e => { e.preventDefault(); stage.classList.add('drag'); });
+  stage.addEventListener('dragleave', () => stage.classList.remove('drag'));
+  stage.addEventListener('drop', e => { e.preventDefault(); stage.classList.remove('drag'); const f = e.dataTransfer.files[0]; if (f) loadMedia(f); });
+
+  function loadMedia(f) {
+    const isVid = (f.type || '').startsWith('video') || /\.(mov|mp4|m4v|webm)$/i.test(f.name);
+    if (mediaUrl) URL.revokeObjectURL(mediaUrl);
+    mediaUrl = URL.createObjectURL(f);
+    st.fileName = f.name; st.lm = null; st.lmTime = -1; st.view = null;
+    vid.pause();
+    $('empty').style.display = 'none';
+    if (isVid) {
+      st.kind = 'video';
+      img.style.display = 'none'; img.removeAttribute('src');
+      vid.style.display = 'block'; vid.src = mediaUrl;
+      vid.playbackRate = curSpeed;
+      $('vctrl').classList.add('on'); $('vhint').style.display = '';
+    } else {
+      st.kind = 'image';
+      vid.style.display = 'none'; vid.removeAttribute('src'); vid.load();
+      img.style.display = 'block'; img.src = mediaUrl;
+      $('vctrl').classList.remove('on'); $('vhint').style.display = 'none';
+    }
+    $('capBtn').disabled = false;
+  }
+  img.onload = () => { layout(); analyze(); };
+  vid.addEventListener('loadeddata', () => { layout(); updTime(); analyze(); });
+  vid.addEventListener('seeked', () => { updTime(); analyze(); });
+  vid.addEventListener('play', () => { setPlayIcon(true); loop(); });
+  vid.addEventListener('pause', () => { setPlayIcon(false); analyze(); });
+  vid.addEventListener('ended', () => setPlayIcon(false));
+  vid.addEventListener('timeupdate', updTime);
+
+  // ═══════════════ Controlli video ═══════════════
+  let curSpeed = 1;
+  function setPlayIcon(p) { $('playIco').innerHTML = p ? '<path d="M6 5h4v14H6zM14 5h4v14h-4z"/>' : '<path d="M7 5v14l12-7z"/>'; }
+  $('playBtn').onclick = () => { if (st.kind !== 'video') return; vid.paused ? vid.play() : vid.pause(); };
+  function step(n) {
+    if (st.kind !== 'video') return;
+    vid.pause();
+    vid.currentTime = Math.max(0, Math.min((vid.duration || 0), vid.currentTime + n / FPS));
+  }
+  $('backBtn').onclick = () => step(-1);
+  $('fwdBtn').onclick = () => step(1);
+  $('seek').addEventListener('input', () => { if (st.kind !== 'video' || !vid.duration) return; vid.pause(); vid.currentTime = $('seek').value / 1000 * vid.duration; });
+  document.querySelectorAll('#speedSeg button').forEach(b => b.onclick = () => {
+    curSpeed = +b.dataset.s; vid.playbackRate = curSpeed;
+    document.querySelectorAll('#speedSeg button').forEach(x => x.classList.toggle('on', x === b));
+  });
+  document.addEventListener('keydown', e => {
+    if (st.kind !== 'video' || /INPUT|TEXTAREA/.test(document.activeElement.tagName)) return;
+    if (e.key === 'ArrowLeft') { e.preventDefault(); step(-1); }
+    else if (e.key === 'ArrowRight') { e.preventDefault(); step(1); }
+    else if (e.key === ' ') { e.preventDefault(); vid.paused ? vid.play() : vid.pause(); }
+  });
+  function fmt(t) { t = Math.max(0, t || 0); const m = Math.floor(t / 60), s = t - m * 60; return m + ':' + s.toFixed(2).padStart(5, '0'); }
+  function updTime() {
+    if (st.kind !== 'video') return;
+    $('time').textContent = fmt(vid.currentTime) + ' / ' + fmt(vid.duration);
+    if (vid.duration) $('seek').value = Math.round(vid.currentTime / vid.duration * 1000);
+  }
+
+  // ═══════════════ Scelte vista / modo / interruttori ═══════════════
+  document.querySelectorAll('#vistaSeg button').forEach(b => b.onclick = () => {
+    st.vista = b.dataset.v; document.querySelectorAll('#vistaSeg button').forEach(x => x.classList.toggle('on', x === b)); redraw();
+  });
+  document.querySelectorAll('#modoSeg button').forEach(b => b.onclick = () => {
+    st.modo = b.dataset.m; document.querySelectorAll('#modoSeg button').forEach(x => x.classList.toggle('on', x === b)); redraw();
+  });
+  $('tgSkel').onchange = $('tgAng').onchange = $('tgZoom').onchange = () => { st.view = null; if (wantPose()) analyze(); else layout(); };
+  const wantPose = () => $('tgSkel').checked || $('tgAng').checked || $('tgZoom').checked;
+
+  // ═══════════════ Riconoscimento ═══════════════
+  const media = () => st.kind === 'video' ? vid : st.kind === 'image' ? img : null;
+  const natSize = () => st.kind === 'video' ? [vid.videoWidth, vid.videoHeight] : st.kind === 'image' ? [img.naturalWidth, img.naturalHeight] : [0, 0];
+  let busy = false;
+  async function analyze() {
+    if (!st.kind) return;
+    if (!wantPose()) { layout(); return; }
+    const t = st.kind === 'video' ? vid.currentTime : 0;
+    if (st.lm && st.lmTime === t) { layout(); return; }
+    try { await mpInit(); } catch (e) { return; }
+    if (busy) return;
+    busy = true;
+    try {
+      const m = media(); const [w, h] = natSize();
+      if (!w || !h) return;
+      const r = landmarker.detect(m);
+      st.lm = (r && r.landmarks && r.landmarks[0]) || null;
+      st.lmTime = t;
+      if (!st.lm && (st.kind === 'image' || vid.paused)) msg('Nessuna persona trovata in questo fotogramma');
+      else msg('');
+    } catch (e) { console.error(e); }
+    finally { busy = false; }
+    layout();
+  }
+  function loop() {
+    if (st.kind !== 'video' || vid.paused || vid.ended) return;
+    analyze();
+    if (vid.requestVideoFrameCallback) vid.requestVideoFrameCallback(loop); else requestAnimationFrame(loop);
+  }
+
+  // ═══════════════ Misure (da SportHub, posturaMarker) ═══════════════
+  const LM = { naso: 0, orecchio_sx: 7, orecchio_dx: 8, spalla_sx: 11, spalla_dx: 12, gomito_sx: 13, gomito_dx: 14, polso_sx: 15, polso_dx: 16,
+    anca_sx: 23, anca_dx: 24, ginocchio_sx: 25, ginocchio_dx: 26, caviglia_sx: 27, caviglia_dx: 28, tallone_sx: 29, tallone_dx: 30, piede_sx: 31, piede_dx: 32 };
+  const pt = (lm, n) => { const p = lm[LM[n]]; return p && (p.visibility ?? 1) >= MIN_VIS ? p : null; };
+
+  function angleValue(kind, pts, W, H) {
+    const P = i => [pts[i * 2] * W, pts[i * 2 + 1] * H];
+    if (kind === 'tilt') {
+      const [ax, ay] = P(0), [bx, by] = P(1);
+      const fromH = Math.atan2(Math.abs(by - ay), Math.abs(bx - ax)) * 180 / Math.PI;
+      return fromH <= 45 ? { deg: fromH, ref: 'orizzontale', text: '↔ ' + fromH.toFixed(1) + '°', plain: fromH.toFixed(1) + '° dall\'orizzontale' }
+                         : { deg: 90 - fromH, ref: 'verticale', text: '↕ ' + (90 - fromH).toFixed(1) + '°', plain: (90 - fromH).toFixed(1) + '° dalla verticale' };
+    }
+    const [ax, ay] = P(0), [bx, by] = P(1), [cx, cy] = P(2);
+    const v1 = [ax - bx, ay - by], v2 = [cx - bx, cy - by];
+    const n = Math.hypot(v1[0], v1[1]) * Math.hypot(v2[0], v2[1]);
+    const deg = n ? Math.acos(Math.max(-1, Math.min(1, (v1[0] * v2[0] + v1[1] * v2[1]) / n))) * 180 / Math.PI : 0;
+    return { deg, ref: null, text: deg.toFixed(1) + '°', plain: deg.toFixed(1) + '°' };
+  }
+
+  // Elenco delle misure del fotogramma: {name, kind, pts, deg, text, plain, level, uncertain, note}
+  function computeMisure(lm, W, H) {
+    if (!lm) return [];
+    const out = [];
+    const postura = st.modo === 'postura';
+    const add = (name, kind, ps, sci, transform, note) => {
+      if (!ps.every(Boolean)) return;
+      const pts = ps.map(p => [Math.max(0, Math.min(1, p.x)), Math.max(0, Math.min(1, p.y))]).flat();
+      const v = angleValue(kind, pts, W, H);
+      let level = null, uncertain = false;
+      if (postura && sci) { const x = transform ? transform(v.deg) : v.deg; level = sciLevel(x, sci); uncertain = sciUncertain(x, sci); }
+      out.push({ name, kind, pts, deg: v.deg, text: v.text, plain: v.plain, level, uncertain, note: note || '' });
+    };
+    const g = n => pt(lm, n);
+    const dev180 = d => Math.abs(180 - d);
+    if (st.vista !== 'side') {
+      add('Testa', 'tilt', [g('orecchio_dx'), g('orecchio_sx')]);
+      add('Spalle', 'tilt', [g('spalla_dx'), g('spalla_sx')], 'SPALLE');
+      add('Bacino', 'tilt', [g('anca_dx'), g('anca_sx')], 'ANCA');
+      add('Ginocchio DX', '3p', [g('anca_dx'), g('ginocchio_dx'), g('caviglia_dx')], 'GINOCCHIO', dev180);
+      add('Ginocchio SX', '3p', [g('anca_sx'), g('ginocchio_sx'), g('caviglia_sx')], 'GINOCCHIO', dev180);
+      if (!postura) {
+        add('Anca DX', '3p', [g('spalla_dx'), g('anca_dx'), g('ginocchio_dx')]);
+        add('Anca SX', '3p', [g('spalla_sx'), g('anca_sx'), g('ginocchio_sx')]);
+        add('Gomito DX', '3p', [g('spalla_dx'), g('gomito_dx'), g('polso_dx')]);
+        add('Gomito SX', '3p', [g('spalla_sx'), g('gomito_sx'), g('polso_sx')]);
+      }
+      return out;
+    }
+    // Di lato: lato rivolto verso la camera (quello visto meglio)
+    const visSum = s => ['orecchio', 'spalla', 'anca', 'ginocchio', 'caviglia'].reduce((t, n) => { const p = lm[LM[n + '_' + s]]; return t + (p ? (p.visibility ?? 0) : 0); }, 0);
+    const s = visSum('dx') >= visSum('sx') ? 'dx' : 'sx';
+    const ear = g('orecchio_' + s), sh = g('spalla_' + s), hip = g('anca_' + s), knee = g('ginocchio_' + s), ank = g('caviglia_' + s);
+    const lato = s === 'dx' ? ' (DX)' : ' (SX)';
+    if (ear && sh) {
+      const nose = lm[LM.naso];
+      const dir = Math.sign((nose ? nose.x : ear.x) - ear.x) || 1;
+      const ref = { x: Math.max(0, Math.min(1, sh.x + dir * 0.08)), y: sh.y };
+      add('Testa-spalla' + lato, '3p', [ref, sh, ear], 'CVA', null, 'stima dalla spalla');
+    }
+    add('Tronco' + lato, 'tilt', [hip, sh]);
+    add('Anca' + lato, '3p', [sh, hip, knee]);
+    add('Ginocchio' + lato, '3p', [hip, knee, ank]);
+    if (!postura) {
+      add('Caviglia' + lato, '3p', [knee, ank, g('piede_' + s)]);
+      add('Gomito' + lato, '3p', [sh, g('gomito_' + s), g('polso_' + s)]);
+    }
+    return out;
+  }
+
+  // ═══════════════ Disegno ═══════════════
+  const ANGLE_COLOR = '#ffd600';
+  const BONES = [[11, 12], [11, 13], [13, 15], [12, 14], [14, 16], [11, 23], [12, 24], [23, 24], [23, 25], [25, 27], [24, 26], [26, 28],
+    [27, 29], [29, 31], [27, 31], [28, 30], [30, 32], [28, 32], [15, 19], [16, 20], [0, 7], [0, 8]];
+  const SIDE = i => (i === 0 ? 'c' : i % 2 ? 'sx' : 'dx');
+
+  function drawSkeleton(ctx, lm, toPx, unit) {
+    ctx.save();
+    ctx.lineCap = 'round'; ctx.shadowColor = 'rgba(0,0,0,.6)'; ctx.shadowBlur = 3 * unit;
+    ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.lineWidth = 2.6 * unit;
+    for (const [a, b] of BONES) {
+      const p = lm[a], q = lm[b];
+      if (!p || !q || (p.visibility ?? 1) < MIN_VIS || (q.visibility ?? 1) < MIN_VIS) continue;
+      const [x1, y1] = toPx(p.x, p.y), [x2, y2] = toPx(q.x, q.y);
+      ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+    }
+    const IDX = [0, 7, 8, 11, 12, 13, 14, 15, 16, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32];
+    for (const i of IDX) {
+      const p = lm[i]; if (!p || (p.visibility ?? 1) < MIN_VIS) continue;
+      const [x, y] = toPx(p.x, p.y), sd = SIDE(i);
+      ctx.fillStyle = sd === 'dx' ? '#ff8f00' : sd === 'sx' ? '#29b6f6' : '#ffffff';
+      ctx.beginPath(); ctx.arc(x, y, 4.2 * unit, 0, Math.PI * 2); ctx.fill();
+      ctx.lineWidth = 1.4 * unit; ctx.strokeStyle = '#fff'; ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function drawAngle(ctx, a, toPx, unit) {
+    const px = []; for (let i = 0; i < a.pts.length; i += 2) px.push(toPx(a.pts[i], a.pts[i + 1]));
+    ctx.save();
+    ctx.strokeStyle = ANGLE_COLOR; ctx.fillStyle = ANGLE_COLOR;
+    ctx.lineWidth = 2.2 * unit; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    ctx.shadowColor = 'rgba(0,0,0,0.7)'; ctx.shadowBlur = 3 * unit;
+    ctx.beginPath(); px.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.stroke();
+    ctx.setLineDash([5 * unit, 4 * unit]); ctx.lineWidth = 1.4 * unit;
+    if (a.kind === 'tilt') {
+      const [p0, p1] = px;
+      const horiz = a.text.startsWith('↔');
+      ctx.beginPath(); ctx.moveTo(p0[0], p0[1]); ctx.lineTo(horiz ? p1[0] : p0[0], horiz ? p0[1] : p1[1]); ctx.stroke();
+    } else {
+      const [p0, b, p2] = px;
+      const a1 = Math.atan2(p0[1] - b[1], p0[0] - b[0]), a2 = Math.atan2(p2[1] - b[1], p2[0] - b[0]);
+      let diff = a2 - a1; while (diff > Math.PI) diff -= 2 * Math.PI; while (diff < -Math.PI) diff += 2 * Math.PI;
+      const r = Math.min(28 * unit, 0.45 * Math.min(Math.hypot(p0[0] - b[0], p0[1] - b[1]), Math.hypot(p2[0] - b[0], p2[1] - b[1])));
+      ctx.setLineDash([]); ctx.beginPath(); ctx.arc(b[0], b[1], r, a1, a1 + diff, diff < 0); ctx.stroke();
+    }
+    ctx.setLineDash([]);
+    px.forEach(p => { ctx.beginPath(); ctx.arc(p[0], p[1], 3.2 * unit, 0, 2 * Math.PI); ctx.fill(); });
+    ctx.restore();
+    return px;
+  }
+
+  function labelCandidates(kind, px, unit) {
+    const out = [];
+    if (kind === 'tilt') {
+      const [a, b] = px; const len = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1;
+      let nx = -(b[1] - a[1]) / len, ny = (b[0] - a[0]) / len; if (ny > 0) { nx = -nx; ny = -ny; }
+      for (const t of [0.5, 0.3, 0.7, 0.15, 0.85]) for (const side of [1, -1]) for (const d of [16, 26, 38, 52, 68]) {
+        const mx = a[0] + (b[0] - a[0]) * t, my = a[1] + (b[1] - a[1]) * t;
+        out.push([mx + nx * side * d * unit, my + ny * side * d * unit]);
+      }
+      return out;
+    }
+    const [a, b, c] = px;
+    const u = p => { const d = Math.hypot(p[0] - b[0], p[1] - b[1]) || 1; return [(p[0] - b[0]) / d, (p[1] - b[1]) / d]; };
+    const ua = u(a), uc = u(c);
+    let ox = -(ua[0] + uc[0]), oy = -(ua[1] + uc[1]); const ol = Math.hypot(ox, oy);
+    if (ol < 0.01) { ox = -ua[1]; oy = ua[0]; } else { ox /= ol; oy /= ol; }
+    for (const rot of [0, 35, -35, 70, -70, 110, -110, 180]) for (const d of [26, 38, 54, 72, 92]) {
+      const r = rot * Math.PI / 180, cs = Math.cos(r), sn = Math.sin(r);
+      out.push([b[0] + (ox * cs - oy * sn) * d * unit, b[1] + (ox * sn + oy * cs) * d * unit]);
+    }
+    return out;
+  }
+  function placeLabels(items, obstacles, W, H) {
+    const placed = [];
+    return items.map(it => {
+      let best = null, bestScore = Infinity;
+      it.candidates.forEach(([x, y], i) => {
+        const r = { l: x - it.w / 2, t: y - it.h / 2, r: x + it.w / 2, b: y + it.h / 2 };
+        let score = i * 0.2;
+        for (const [ox, oy, or, w] of obstacles) {
+          const dx = Math.max(r.l - ox, 0, ox - r.r), dy = Math.max(r.t - oy, 0, oy - r.b);
+          if (dx * dx + dy * dy < or * or) score += w;
+        }
+        for (const p of placed) if (r.l < p.r + 3 && r.r > p.l - 3 && r.t < p.b + 3 && r.b > p.t - 3) score += 150;
+        if (r.l < 2 || r.t < 2 || r.r > W - 2 || r.b > H - 2) score += 60;
+        if (score < bestScore) { bestScore = score; best = [x, y, r]; }
+      });
+      placed.push(best[2]); return [best[0], best[1]];
+    });
+  }
+  const labelFont = unit => 'bold ' + (10.5 * unit) + 'px -apple-system, Helvetica, Arial, sans-serif';
+
+  function drawMisure(ctx, misure, toPx, W, H, unit) {
+    const allPx = [], items = [];
+    misure.forEach(a => {
+      const px = drawAngle(ctx, a, toPx, unit);
+      allPx.push(px);
+      const text = a.name + '  ' + a.text;
+      ctx.save(); ctx.font = labelFont(unit); const w = ctx.measureText(text).width + (a.level != null ? 18 : 8) * unit; ctx.restore();
+      items.push({ text, level: a.level, w, h: 16 * unit, candidates: labelCandidates(a.kind, px, unit) });
+    });
+    const obs = [];
+    allPx.forEach(px => {
+      px.forEach(p => obs.push([p[0], p[1], 7 * unit, 200]));
+      for (let i = 0; i < px.length - 1; i++) for (let t = 0.1; t < 1; t += 0.1)
+        obs.push([px[i][0] + (px[i + 1][0] - px[i][0]) * t, px[i][1] + (px[i + 1][1] - px[i][1]) * t, 3 * unit, 6]);
+    });
+    placeLabels(items, obs, W, H).forEach(([x, y], i) => {
+      const it = items[i];
+      ctx.save(); ctx.font = labelFont(unit);
+      const l = x - it.w / 2, t = y - it.h / 2;
+      ctx.fillStyle = 'rgba(7,9,15,0.84)'; ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(l, t, it.w, it.h, 3 * unit); else ctx.rect(l, t, it.w, it.h);
+      ctx.fill();
+      let tx = l + 4 * unit;
+      if (it.level != null) {
+        ctx.fillStyle = LEVELS[it.level].color;
+        ctx.beginPath(); ctx.arc(l + 8 * unit, y, 4 * unit, 0, Math.PI * 2); ctx.fill();
+        tx = l + 14 * unit;
+      }
+      ctx.fillStyle = ANGLE_COLOR; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+      ctx.fillText(it.text, tx, y + 0.5 * unit);
+      ctx.restore();
+    });
+  }
+
+  // Disegna tutto ciò che è acceso su un contesto (schermo o immagine per il PDF)
+  function drawOverlay(ctx, rect, W, H, unit) {
+    if (!st.lm) return [];
+    const [nw, nh] = natSize();
+    const toPx = (u, v) => [rect.x + u * rect.w, rect.y + v * rect.h];
+    if ($('tgSkel').checked) drawSkeleton(ctx, st.lm, toPx, unit);
+    const mis = computeMisure(st.lm, nw, nh);
+    if ($('tgAng').checked) drawMisure(ctx, mis, toPx, W, H, unit);
+    return mis;
+  }
+
+  let mediaRect = { x: 0, y: 0, w: 0, h: 0 };
+  // Riquadro della persona (0-1) con un po' di margine
+  function personBox(lm) {
+    let x0 = 1, y0 = 1, x1 = 0, y1 = 0, n = 0;
+    for (const p of lm) { if (!p || (p.visibility ?? 1) < 0.4) continue; n++; x0 = Math.min(x0, p.x); y0 = Math.min(y0, p.y); x1 = Math.max(x1, p.x); y1 = Math.max(y1, p.y); }
+    if (n < 6) return null;
+    const mx = (x1 - x0) * 0.3 + 0.02, my = (y1 - y0) * 0.18 + 0.02;
+    return { x0: x0 - mx, y0: y0 - my, x1: x1 + mx, y1: y1 + my };
+  }
+  function layout() {
+    const sr = stage.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
+    cv.width = Math.round(sr.width * dpr); cv.height = Math.round(sr.height * dpr);
+    cv.style.width = sr.width + 'px'; cv.style.height = sr.height + 'px';
+    const [nw, nh] = natSize();
+    if (nw && nh) {
+      const s = Math.min(sr.width / nw, sr.height / nh), w = nw * s, h = nh * s;
+      let target = { z: 1, cx: 0.5, cy: 0.5 };
+      const bx = $('tgZoom').checked && st.lm ? personBox(st.lm) : null;
+      if (bx) {
+        const z = Math.max(1, Math.min(6, Math.min(sr.width / ((bx.x1 - bx.x0) * w), sr.height / ((bx.y1 - bx.y0) * h))));
+        target = { z, cx: (bx.x0 + bx.x1) / 2, cy: (bx.y0 + bx.y1) / 2 };
+      }
+      // durante la riproduzione l'inquadratura segue la persona con dolcezza
+      const k = st.view && st.kind === 'video' && !vid.paused ? 0.25 : 1;
+      const v = st.view || target;
+      st.view = { z: v.z + (target.z - v.z) * k, cx: v.cx + (target.cx - v.cx) * k, cy: v.cy + (target.cy - v.cy) * k };
+      const W = w * st.view.z, H = h * st.view.z;
+      let x = sr.width / 2 - st.view.cx * W, y = sr.height / 2 - st.view.cy * H;
+      // niente bordi vuoti quando l'immagine è più grande del riquadro
+      if (W >= sr.width) x = Math.min(0, Math.max(sr.width - W, x)); else x = (sr.width - W) / 2;
+      if (H >= sr.height) y = Math.min(0, Math.max(sr.height - H, y)); else y = (sr.height - H) / 2;
+      mediaRect = { x, y, w: W, h: H };
+      const m = media();
+      if (m) Object.assign(m.style, { left: x + 'px', top: y + 'px', width: W + 'px', height: H + 'px' });
+    }
+    redraw();
+  }
+  window.addEventListener('resize', layout);
+  if (window.ResizeObserver) new ResizeObserver(layout).observe(stage);
+
+  function redraw() {
+    const ctx = cv.getContext('2d'); const dpr = window.devicePixelRatio || 1;
+    ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cv.width, cv.height);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    let mis = [];
+    if (st.kind && st.lm && wantPose()) {
+      const unit = Math.max(0.85, Math.min(1.8, Math.min(mediaRect.w, mediaRect.h * 0.75) / 410));
+      mis = drawOverlay(ctx, mediaRect, cv.width / dpr, cv.height / dpr, unit);
+    }
+    renderMisure(mis);
+  }
+
+  function chip(level, uncertain) {
+    if (level == null) return '';
+    const L = LEVELS[level];
+    return '<span class="chip" style="background:' + L.color + '">' + L.label + (uncertain ? ' ?' : '') + '</span>';
+  }
+  function esc(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]); }
+  function renderMisure(mis) {
+    const box = $('misBox'), lg = $('legend');
+    if (!$('tgAng').checked) { box.className = 'none'; box.innerHTML = 'Accendi «Angoli» per vedere le misure.'; lg.style.display = 'none'; return; }
+    if (!st.kind) { box.className = 'none'; box.innerHTML = 'Carica un video o una foto.'; lg.style.display = 'none'; return; }
+    if (!st.lm) { box.className = 'none'; box.innerHTML = landmarker ? 'Nessuna persona trovata in questo fotogramma.' : 'Preparo il riconoscimento…'; lg.style.display = 'none'; return; }
+    if (!mis.length) { box.className = 'none'; box.innerHTML = 'Punti del corpo non abbastanza visibili per misurare.'; lg.style.display = 'none'; return; }
+    box.className = '';
+    box.innerHTML = '<table class="mis">' + mis.map(m =>
+      '<tr><td><b>' + esc(m.name) + '</b>' + (m.note ? ' <small style="color:var(--muted)">(' + esc(m.note) + ')</small>' : '') +
+      (m.level != null ? '<br>' + chip(m.level, m.uncertain) : '') + '</td><td class="v">' + esc(m.plain).replace(' dall', '<br><small style="font-weight:400;color:var(--muted)">dall').replace(/(<small[^>]*>dall.*)$/, '$1</small>') + '</td></tr>').join('') + '</table>';
+    if (st.modo === 'postura') {
+      lg.style.display = '';
+      lg.innerHTML = '<div>Giudizio su soglie degli studi, valido per la persona ferma in piedi. «?» = valore vicino al confine tra due livelli.</div>' +
+        '<div>Ginocchi: scostamento dalla gamba dritta (180°). Strumento di controllo, non una diagnosi.</div>';
+    } else {
+      lg.style.display = '';
+      lg.innerHTML = '<div>Modalità movimento: solo i gradi, senza giudizio (le soglie valgono per la persona in piedi).</div>';
+    }
+  }
+
+  // ═══════════════ Fotogrammi per il PDF ═══════════════
+  $('capBtn').onclick = async () => {
+    if (!st.kind) return;
+    if (st.kind === 'video' && !vid.paused) vid.pause();
+    if (wantPose()) await analyze();
+    const [nw, nh] = natSize(); if (!nw) return;
+    layout();
+    // si salva ciò che si vede nel riquadro (con lo zoom, solo la parte inquadrata)
+    const sr = stage.getBoundingClientRect(), R = mediaRect;
+    const u0 = Math.max(0, -R.x / R.w), v0 = Math.max(0, -R.y / R.h);
+    const u1 = Math.min(1, (sr.width - R.x) / R.w), v1 = Math.min(1, (sr.height - R.y) / R.h);
+    const cw = (u1 - u0) * nw, ch = (v1 - v0) * nh;
+    const s = Math.min(2.5, 1400 / Math.max(cw, ch));
+    const W = Math.round(cw * s), H = Math.round(ch * s);
+    const c = document.createElement('canvas'); c.width = W; c.height = H;
+    const ctx = c.getContext('2d');
+    ctx.drawImage(media(), u0 * nw, v0 * nh, cw, ch, 0, 0, W, H);
+    let mis = [];
+    if (wantPose() && st.lm) {
+      const unit = Math.max(1, Math.min(W, H * 0.75) / 410);
+      const fw = nw * s, fh = nh * s;
+      mis = drawOverlay(ctx, { x: -u0 * fw, y: -v0 * fh, w: fw, h: fh }, W, H, unit);
+    }
+    const showMis = $('tgAng').checked ? mis : [];
+    st.captures.push({
+      img: c.toDataURL('image/jpeg', 0.85), w: W, h: H,
+      t: st.kind === 'video' ? vid.currentTime : null,
+      vista: st.vista, modo: st.modo,
+      misure: showMis.map(m => ({ name: m.name, value: m.plain, level: m.level, uncertain: m.uncertain, note: m.note })),
+      nota: '',
+    });
+    renderCaps(); autosave();
+    toast('Fotogramma aggiunto al PDF');
+  };
+  const VISTA_LBL = { front: 'Di fronte', back: 'Di spalle', side: 'Di lato' };
+  function renderCaps() {
+    const box = $('caps');
+    $('capCount').textContent = st.captures.length ? '(' + st.captures.length + ')' : '';
+    if (!st.captures.length) { box.innerHTML = '<div class="none">Nessuno ancora: ferma il video sul momento che ti interessa e tocca «Aggiungi al PDF».</div>'; return; }
+    box.innerHTML = '';
+    st.captures.forEach((cp, i) => {
+      const d = document.createElement('div'); d.className = 'cap';
+      d.innerHTML = '<img alt="">' +
+        '<div><div class="meta"><span>' + (i + 1) + '. ' + VISTA_LBL[cp.vista] + (cp.t != null ? ' · ' + fmt(cp.t) : '') + '</span>' +
+        '<button class="del">Elimina</button></div>' +
+        '<textarea class="txt" placeholder="Nota per questo fotogramma"></textarea></div>';
+      d.querySelector('img').src = cp.img;
+      const ta = d.querySelector('textarea'); ta.value = cp.nota || '';
+      ta.oninput = () => { cp.nota = ta.value; autosave(); };
+      d.querySelector('.del').onclick = () => { if (confirm('Togliere questo fotogramma dal PDF?')) { st.captures.splice(i, 1); renderCaps(); autosave(); } };
+      box.appendChild(d);
+    });
+  }
+
+  // ═══════════════ Dati: memoria del dispositivo + Salva/Apri file ═══════════════
+  const DRAFT_KEY = 'posturaBozza';
+  function snapshot() {
+    return { app: 'postura', versione: 1, atleta: $('atleta').value, data: $('data').value, note: $('note').value, captures: st.captures };
+  }
+  function restore(o) {
+    if (!o || o.app !== 'postura') throw new Error('Il file non è un\'analisi di Postura.');
+    $('atleta').value = o.atleta || ''; $('data').value = o.data || ''; $('note').value = o.note || '';
+    st.captures = Array.isArray(o.captures) ? o.captures : [];
+    renderCaps();
+  }
+  let saveT = null;
+  function autosave() {
+    clearTimeout(saveT);
+    saveT = setTimeout(() => { try { localStorage.setItem(DRAFT_KEY, JSON.stringify(snapshot())); } catch (e) { /* troppo grande: resta il file */ } }, 400);
+  }
+  ['atleta', 'data', 'note'].forEach(id => $(id).addEventListener('input', autosave));
+  try { const d = localStorage.getItem(DRAFT_KEY); if (d) restore(JSON.parse(d)); } catch (e) {}
+  if (!$('data').value) $('data').value = new Date().toISOString().slice(0, 10);
+
+  function fileBase() {
+    const n = ($('atleta').value || 'analisi').trim().replace(/[^\p{L}\p{N}]+/gu, '_').replace(/^_|_$/g, '');
+    return 'Postura_' + (n || 'analisi') + '_' + ($('data').value || '');
+  }
+  async function saveBlob(blob, name, mime, desc) {
+    if (window.showSaveFilePicker) {
+      try {
+        const ext = '.' + name.split('.').pop();
+        const h = await window.showSaveFilePicker({ suggestedName: name, types: [{ description: desc, accept: { [mime]: [ext] } }] });
+        const w = await h.createWritable(); await w.write(blob); await w.close(); toast('File salvato'); return;
+      } catch (e) { if (e && e.name === 'AbortError') return; }
+    }
+    try {
+      const file = new File([blob], name, { type: mime });
+      if (navigator.canShare && navigator.canShare({ files: [file] }) && /iPad|iPhone|Macintosh/.test(navigator.userAgent) && 'ontouchend' in document) {
+        await navigator.share({ files: [file], title: name }); toast('File salvato'); return;
+      }
+    } catch (e) { if (e && e.name === 'AbortError') return; }
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = name; a.rel = 'noopener';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+    toast('File scaricato');
+  }
+  $('saveBtn').onclick = () => saveBlob(new Blob([JSON.stringify(snapshot())], { type: 'application/json' }), fileBase() + '.json', 'application/json', 'Analisi Postura (JSON)');
+  $('openBtn').onclick = () => $('jsonInput').click();
+  $('jsonInput').onchange = e => {
+    const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+    if (st.captures.length && !confirm('Aprire questo file? L\'analisi attuale verrà sostituita (se ti serve, salvala prima con 💾 Salva file).')) return;
+    const rd = new FileReader();
+    rd.onload = () => { try { restore(JSON.parse(rd.result)); autosave(); toast('File aperto'); } catch (err) { alert(err.message || 'File non valido.'); } };
+    rd.readAsText(f);
+  };
+
+  // ═══════════════ PDF (jsPDF, caricato solo qui) ═══════════════
+  function loadScript(src) {
+    return new Promise((res, rej) => { const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = () => rej(new Error('Impossibile caricare ' + src)); document.head.appendChild(s); });
+  }
+  const hexRgb = h => { h = String(h).replace('#', ''); if (h.length === 3) h = h.split('').map(c => c + c).join(''); const n = parseInt(h, 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; };
+  function toPng(src) {
+    return new Promise(res => {
+      const im = new Image();
+      im.onload = () => { const c = document.createElement('canvas'); const s = Math.min(1, 400 / Math.max(im.width, im.height)); c.width = Math.max(1, im.width * s); c.height = Math.max(1, im.height * s); c.getContext('2d').drawImage(im, 0, 0, c.width, c.height); res({ data: c.toDataURL('image/png'), w: c.width, h: c.height }); };
+      im.onerror = () => res(null); im.src = src;
+    });
+  }
+  // jsPDF con Helvetica non ha frecce e simboli speciali
+  const pdfTxt = s => String(s ?? '').replace(/[↔↕]/g, '').replace(/[’‘]/g, "'").replace(/[«»“”]/g, '"').replace(/…/g, '...').replace(/[–—]/g, '-');
+
+  $('pdfBtn').onclick = async () => {
+    if (!st.captures.length) { alert('Aggiungi almeno un fotogramma con «📸 Aggiungi al PDF».'); return; }
+    const btn = $('pdfBtn'); btn.disabled = true; const old = btn.textContent; btn.textContent = '⏳ PDF…';
+    try {
+      if (!window.jspdf) await loadScript(BASE + 'jspdf-2.5.1/jspdf.umd.min.js');
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
+      const PW = 210, PH = 297, M = 14, AC = hexRgb(ACCENT);
+      const logo = LOGO ? await toPng(LOGO) : null;
+      const atleta = $('atleta').value.trim(), data = $('data').value, note = $('note').value.trim();
+      const dataIt = data ? data.split('-').reverse().join('/') : '';
+      let page = 0;
+
+      const header = () => {
+        page++;
+        doc.setFillColor(...AC); doc.rect(0, 0, PW, 4, 'F');
+        let x = M;
+        if (logo) { const h = 14, w = h * logo.w / logo.h; doc.addImage(logo.data, 'PNG', M, 9, Math.min(w, 30), h); x = M + Math.min(w, 30) + 5; }
+        doc.setTextColor(...AC); doc.setFont('helvetica', 'bold'); doc.setFontSize(16);
+        doc.text('Analisi posturale', x, 15);
+        doc.setTextColor(60); doc.setFont('helvetica', 'normal'); doc.setFontSize(10.5);
+        doc.text(pdfTxt([atleta || 'Atleta', dataIt].filter(Boolean).join('  ·  ')), x, 21);
+        doc.setDrawColor(220); doc.line(M, 27, PW - M, 27);
+        return 32;
+      };
+      const footer = () => {
+        doc.setFontSize(8.5); doc.setTextColor(130); doc.setFont('helvetica', 'normal');
+        doc.text('Strumento di controllo e monitoraggio, non una diagnosi. Misure stimate dalla posizione dei punti del corpo nell\'immagine.', M, PH - 9);
+        doc.text(String(page), PW - M, PH - 9, { align: 'right' });
+        if (COACH) { doc.setFontSize(10); doc.setTextColor(60); doc.text(pdfTxt('Allenatore: ' + COACH), PW - M, PH - 15, { align: 'right' }); }
+      };
+
+      let y = header();
+      if (note) {
+        doc.setFontSize(10); doc.setTextColor(40);
+        const lines = doc.splitTextToSize(pdfTxt(note), PW - 2 * M);
+        doc.text(lines, M, y + 2); y += lines.length * 4.6 + 5;
+      }
+
+      for (let i = 0; i < st.captures.length; i++) {
+        const cp = st.captures[i];
+        const land = cp.w > cp.h * 1.1;
+        const IMG_W = land ? 104 : 80, MAX_H = 120;
+        const r = Math.min(IMG_W / cp.w, MAX_H / cp.h);
+        const iw = cp.w * r, ih = cp.h * r;
+        const tx = M + IMG_W + 7, tw = PW - M - tx;
+        // altezza del testo, per tenere insieme immagine e misure
+        doc.setFontSize(10);
+        const notaLines = cp.nota && cp.nota.trim() ? doc.splitTextToSize(pdfTxt(cp.nota.trim()), tw) : [];
+        const textH = 12 + cp.misure.reduce((t, m) => t + 6.6 + (m.level != null || m.note ? 4.6 : 0), 0) + (notaLines.length ? 9 + notaLines.length * 4.6 : 0);
+        const BLOCK_H = Math.max(ih, textH);
+        if (y + BLOCK_H > PH - 22) { footer(); doc.addPage(); y = header(); }
+        doc.addImage(cp.img, 'JPEG', M + (IMG_W - iw) / 2, y, iw, ih);
+        doc.setDrawColor(220); doc.rect(M + (IMG_W - iw) / 2, y, iw, ih);
+        let ty = y + 5;
+        doc.setTextColor(...AC); doc.setFont('helvetica', 'bold'); doc.setFontSize(11.5);
+        doc.text(pdfTxt((i + 1) + '. ' + VISTA_LBL[cp.vista] + (cp.modo === 'movimento' ? ' - movimento' : ' - in piedi') + (cp.t != null ? '  (' + fmt(cp.t) + ')' : '')), tx, ty);
+        ty += 7;
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(10);
+        if (!cp.misure.length) { doc.setTextColor(120); doc.text('Nessuna misura (angoli spenti).', tx, ty); ty += 6; }
+        cp.misure.forEach(m => {
+          doc.setTextColor(30); doc.setFont('helvetica', 'bold');
+          doc.text(pdfTxt(m.name), tx, ty);
+          doc.setFont('helvetica', 'normal');
+          doc.text(pdfTxt(m.value), tx + tw, ty, { align: 'right' });
+          ty += 4.6;
+          if (m.level != null) {
+            const L = LEVELS[m.level];
+            doc.setFillColor(...hexRgb(L.color)); doc.circle(tx + 1.4, ty - 1.2, 1.4, 'F');
+            doc.setTextColor(...hexRgb(L.color)); doc.setFontSize(9);
+            doc.text(pdfTxt(L.label + (m.uncertain ? ' (vicino al confine)' : '') + (m.note ? ' - ' + m.note : '')), tx + 4.5, ty);
+            doc.setFontSize(10); ty += 4.6;
+          } else if (m.note) { doc.setTextColor(120); doc.setFontSize(9); doc.text(pdfTxt(m.note), tx, ty); doc.setFontSize(10); ty += 4.6; }
+          doc.setDrawColor(235); doc.line(tx, ty - 2.2, tx + tw, ty - 2.2); ty += 2;
+        });
+        if (notaLines.length) {
+          ty += 2; doc.setTextColor(...AC); doc.setFont('helvetica', 'bold'); doc.setFontSize(9.5); doc.text('Nota', tx, ty); ty += 4.6;
+          doc.setTextColor(40); doc.setFont('helvetica', 'normal'); doc.setFontSize(10);
+          doc.text(notaLines, tx, ty);
+        }
+        y += BLOCK_H + 8;
+      }
+      footer();
+      const blob = doc.output('blob');
+      await saveBlob(blob, fileBase() + '.pdf', 'application/pdf', 'PDF');
+    } catch (e) { console.error(e); alert('Errore nella creazione del PDF: ' + (e.message || e)); }
+    finally { btn.disabled = false; btn.textContent = old; }
+  };
+
+  applyAccent(ACCENT);
+  layout();
+  // per le prove
+  window.__postura = { st, analyze, computeMisure };
+})();
+</script>
+</body>
+</html>
