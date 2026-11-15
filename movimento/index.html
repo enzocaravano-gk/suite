@@ -42,6 +42,17 @@
   textarea.report { min-height: 170px; font-size: 15px; line-height: 1.45; }
   .banner { position: fixed; left: 50%; top: 14px; transform: translateX(-50%); background: rgba(0,0,0,.82); color: #fff; padding: 9px 16px; border-radius: 999px; font-size: 13px; z-index: 70; display: none; max-width: 92vw; }
   #posLegend .chip { font-size: 10.5px; }
+  /* cronometro: conta il tempo DEL VIDEO a fotogrammi interi */
+  .sw-box { position: absolute; left: 10px; bottom: 10px; z-index: 5; display: none; background: rgba(0,0,0,.8); color: #fff; border: 2px solid #22d3ee;
+    border-radius: 12px; padding: 6px 12px 5px; text-align: center; cursor: pointer; user-select: none; -webkit-user-select: none; }
+  .sw-box.on { display: block; }
+  .sw-box.run { border-color: #22c55e; }
+  .sw-box .sw-time { font: 800 clamp(22px, 3.4vw, 36px)/1.05 ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-variant-numeric: tabular-nums; }
+  .sw-box .sw-sub { font-size: 11px; opacity: .78; margin-top: 2px; white-space: nowrap; }
+  .swbar { display: none; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 10px; padding: 8px 10px; border: 1.5px solid #22d3ee; border-radius: 12px; }
+  .swbar.on { display: flex; }
+  .swbar select { border: 1.5px solid var(--line); border-radius: 10px; padding: 8px; font-size: 14px; background: #fff; color: var(--ink); }
+  .swbar .lbl { font-weight: 700; font-size: 14px; }
 
   .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 14px; }
   .card h2 { margin: 0 0 10px; font-size: 13px; text-transform: uppercase; letter-spacing: .6px; color: var(--accent); }
@@ -194,6 +205,7 @@
               <button data-p="busto">Busto</button>
             </div>
             <span class="sp"></span>
+            <button class="btn" id="swBtn" title="Cronometro">⏱ Cronometro</button>
             <button class="btn" id="capBtn" disabled>📸 Aggiungi al PDF</button>
           </div>
           <div class="stage big" id="movStage"></div>
@@ -209,6 +221,14 @@
             <div class="seg" id="speedSeg" title="Velocità">
               <button data-s="0.25">¼×</button><button data-s="0.5">½×</button><button data-s="1" class="on">1×</button>
             </div>
+          </div>
+          <div class="swbar" id="swBar">
+            <span class="lbl">⏱ Cronometro</span>
+            <button class="btn primary" id="swGoBtn">▶ Avvia</button>
+            <button class="btn" id="swResetBtn">⟲ Azzera</button>
+            <span class="sp"></span>
+            <label class="fld" for="swFps" style="margin:0">Fotogrammi al secondo</label>
+            <select id="swFps"></select>
           </div>
           <p class="hint" id="vhint" style="display:none">Fotogramma per fotogramma: metti in pausa e usa ⏮ ⏭ (oppure le frecce ← → della tastiera).</p>
         </section>
@@ -764,6 +784,7 @@
       ctx.drawImage(V.media(), u0 * nw, v0 * nh, cw, ch, 0, 0, W, H);
       let mis = [];
       if (V.lm) { const fw = nw * s, fh = nh * s; mis = V.overlay(ctx, { x: -u0 * fw, y: -v0 * fh, w: fw, h: fh }, W, H, Math.max(1, Math.min(W, H * 0.75) / 410)); }
+      if (o.onCaptureDraw) o.onCaptureDraw(ctx, W, H);
       return { img: c.toDataURL('image/jpeg', 0.85), w: W, h: H, misure: mis.map(m => ({ name: m.name, value: m.plain, level: m.level, uncertain: m.uncertain, note: m.note })) };
     };
 
@@ -793,20 +814,21 @@
   }
 
   // ═══════════════ Modalità Movimento: uno schermo ═══════════════
-  const FPS = 30;
+  const FPS_DEFAULT = 30;
   let curSpeed = 1;
   const mv = makeViewer({
     stage: $('movStage'), vista: 'front', modo: 'movimento', video: true,
     emptyTitle: 'Carica un video o una foto', emptyText: 'Tocca qui oppure usa «Carica video o foto».<br>Tutto resta su questo dispositivo.',
     onPick: () => $('movInput').click(), onFile: f => loadMovFile(f),
     onUpdate: V => { $('movMis').innerHTML = misTable(V, 'Carica un video o una foto.'); },
+    onCaptureDraw: (ctx, W, H) => swDrawOnCanvas(ctx, W, H),
     onTime: updTime, onPlay: p => { $('playIco').innerHTML = p ? '<path d="M6 5h4v14H6zM14 5h4v14h-4z"/>' : '<path d="M7 5v14l12-7z"/>'; },
   });
   $('movLoad').onclick = () => $('movInput').click();
   $('movInput').onchange = e => { const f = e.target.files[0]; e.target.value = ''; if (f) loadMovFile(f); };
   async function loadMovFile(f) {
     const isVid = (f.type || '').startsWith('video') || /\.(mov|mp4|m4v|webm)$/i.test(f.name);
-    if (isVid) { mv.setVideo(f); mv.vid.playbackRate = curSpeed; }
+    if (isVid) { mv.setVideo(f); mv.vid.playbackRate = curSpeed; swNewVideo(); }
     else { try { mv.setImage(await fileToDataUrl(f, 1800)); } catch (err) { alert(err.message); return; } }
     $('vctrl').classList.toggle('on', isVid); $('vhint').style.display = isVid ? '' : 'none';
     $('capBtn').disabled = false;
@@ -828,7 +850,7 @@
   });
   const vid = mv.vid;
   $('playBtn').onclick = () => { if (mv.kind === 'video') vid.paused ? vid.play() : vid.pause(); };
-  function step(n) { if (mv.kind !== 'video') return; vid.pause(); vid.currentTime = Math.max(0, Math.min(vid.duration || 0, vid.currentTime + n / FPS)); }
+  function step(n) { if (mv.kind !== 'video') return; vid.pause(); vid.currentTime = Math.max(0, Math.min(vid.duration || 0, vid.currentTime + n / swFps())); }
   $('backBtn').onclick = () => step(-1);
   $('fwdBtn').onclick = () => step(1);
   $('seek').addEventListener('input', () => { if (mv.kind !== 'video' || !vid.duration) return; vid.pause(); vid.currentTime = $('seek').value / 1000 * vid.duration; });
@@ -848,6 +870,106 @@
     if (vid.duration) $('seek').value = Math.round(vid.currentTime / vid.duration * 1000);
   }
 
+  // ═══════════════ Cronometro ═══════════════
+  // Conta il tempo DEL VIDEO, non dell'orologio: funziona a qualsiasi velocità,
+  // in pausa e fotogramma per fotogramma. Il tempo è sempre un numero intero di
+  // fotogrammi diviso gli fps reali del video (rilevati mentre il video scorre).
+  const SW_FPS_LIST = [23.976, 24, 25, 29.97, 30, 48, 50, 59.94, 60, 100, 119.88, 120, 240];
+  const crono = { on: false, start: null, end: null, fpsAuto: null, fpsManual: null, samples: [], last: null, gen: 0, raf: 0 };
+  function swFps() { return crono.fpsManual || crono.fpsAuto || FPS_DEFAULT; }
+  const swFrame = t => Math.round(t * swFps() + 1e-6);
+  const swFpsLbl = f => (Math.round(f * 100) / 100) + ' fps';
+  function swFmt(sec) {
+    const ms = Math.max(0, Math.round(sec * 1000));
+    const m = Math.floor(ms / 60000), s = Math.floor(ms / 1000) % 60, r = ms % 1000;
+    return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0') + '.' + String(r).padStart(3, '0');
+  }
+  const swBox = document.createElement('div');
+  swBox.className = 'sw-box'; swBox.title = 'Tocca per avviare / fermare';
+  swBox.innerHTML = '<div class="sw-time">00:00.000</div><div class="sw-sub">tocca per avviare</div>';
+  $('movStage').appendChild(swBox);
+  function swFillFps() {
+    $('swFps').innerHTML = '<option value="auto">' + (crono.fpsAuto ? 'Automatico · ' + swFpsLbl(crono.fpsAuto) : 'Automatico · fai partire il video') + '</option>' +
+      SW_FPS_LIST.map(f => '<option value="' + f + '">' + swFpsLbl(f) + '</option>').join('');
+    $('swFps').value = crono.fpsManual ? String(crono.fpsManual) : 'auto';
+  }
+  $('swFps').onchange = () => { const v = $('swFps').value; crono.fpsManual = v === 'auto' ? null : Number(v); swRender(); };
+  // fps reali: durata del singolo fotogramma letta mentre il video scorre
+  function swWatch() {
+    if (!vid.requestVideoFrameCallback) return;
+    const gen = ++crono.gen;
+    const cb = (now, md) => {
+      if (gen !== crono.gen) return;
+      if (crono.last && md.presentedFrames - crono.last.n === 1) {
+        const d = md.mediaTime - crono.last.t;
+        if (d > 0.002 && d < 0.2) crono.samples.push(d);
+        if (crono.samples.length >= 12) {
+          const sorted = crono.samples.slice().sort((a, b) => a - b);
+          const raw = 1 / sorted[Math.floor(sorted.length * 0.2)];
+          const near = SW_FPS_LIST.reduce((a, b) => Math.abs(b - raw) < Math.abs(a - raw) ? b : a);
+          const f = Math.abs(near - raw) / raw < 0.03 ? near : Math.round(raw * 100) / 100;
+          if (f !== crono.fpsAuto) { crono.fpsAuto = f; swFillFps(); swRender(); }
+          if (crono.samples.length > 120) crono.samples = crono.samples.slice(-60);
+        }
+      }
+      crono.last = { n: md.presentedFrames, t: md.mediaTime };
+      vid.requestVideoFrameCallback(cb);
+    };
+    vid.requestVideoFrameCallback(cb);
+  }
+  function swNewVideo() { crono.fpsAuto = null; crono.samples = []; crono.last = null; crono.start = crono.end = null; swFillFps(); swRender(); swWatch(); }
+  function swElapsed(t) {
+    if (crono.start == null) return { sec: 0, frames: 0 };
+    const frames = Math.max(0, swFrame(crono.end != null ? crono.end : t) - swFrame(crono.start));
+    return { sec: frames / swFps(), frames };
+  }
+  function swRender() {
+    if (!crono.on) return;
+    const e = swElapsed(mv.kind === 'video' ? vid.currentTime : 0), running = crono.start != null && crono.end == null;
+    swBox.querySelector('.sw-time').textContent = swFmt(e.sec);
+    swBox.querySelector('.sw-sub').textContent = crono.start == null ? 'tocca per avviare'
+      : e.frames + ' fotogrammi · ' + swFpsLbl(swFps()) + (running ? '' : ' · fermo');
+    swBox.classList.toggle('run', running);
+    $('swGoBtn').textContent = running ? '⏹ Ferma' : '▶ Avvia';
+  }
+  function swLoop() { swRender(); if (crono.on) crono.raf = requestAnimationFrame(swLoop); }
+  $('swBtn').onclick = () => {
+    crono.on = !crono.on;
+    swBox.classList.toggle('on', crono.on); $('swBar').classList.toggle('on', crono.on);
+    $('swBtn').classList.toggle('primary', crono.on);
+    cancelAnimationFrame(crono.raf);
+    if (crono.on) { swFillFps(); swLoop(); }
+  };
+  // Avvia dal fotogramma attuale; Ferma sul fotogramma attuale; un nuovo Avvia riparte da zero
+  function swGo() {
+    if (mv.kind !== 'video') { alert('Il cronometro serve con un video: caricane uno.'); return; }
+    const t = swFrame(vid.currentTime) / swFps();
+    if (crono.start == null || crono.end != null) { crono.start = t; crono.end = null; }
+    else crono.end = Math.max(crono.start, t);
+    swRender();
+  }
+  swBox.onclick = swGo;
+  $('swGoBtn').onclick = swGo;
+  $('swResetBtn').onclick = () => { crono.start = crono.end = null; swRender(); };
+  // nei fotogrammi per il PDF il cronometro compare com'è sullo schermo
+  function swDrawOnCanvas(ctx, W, H) {
+    if (!crono.on || crono.start == null || mv.kind !== 'video') return;
+    const e = swElapsed(vid.currentTime), txt = swFmt(e.sec), fs = Math.max(16, W * 0.045);
+    ctx.save();
+    ctx.font = '800 ' + fs + 'px Menlo, Consolas, monospace'; ctx.textBaseline = 'middle';
+    const w = ctx.measureText(txt).width, pad = fs * 0.45, bw = w + pad * 2, bh = fs * 1.5;
+    const x = W * 0.02, y = H - H * 0.025 - bh;
+    ctx.fillStyle = 'rgba(0,0,0,.8)'; ctx.strokeStyle = crono.end == null ? '#22c55e' : '#22d3ee'; ctx.lineWidth = Math.max(2, fs * 0.08);
+    ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(x, y, bw, bh, fs * 0.35); else ctx.rect(x, y, bw, bh); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#fff'; ctx.fillText(txt, x + pad, y + bh / 2);
+    ctx.restore();
+  }
+  function swCaptureInfo() {
+    if (!crono.on || crono.start == null || mv.kind !== 'video') return null;
+    const e = swElapsed(vid.currentTime);
+    return { name: 'Cronometro', value: swFmt(e.sec), level: null, uncertain: false, note: e.frames + ' fotogrammi · ' + swFpsLbl(swFps()) };
+  }
+
   // Fotogrammi per il PDF (solo Movimento)
   let captures = [];
   $('capBtn').onclick = async () => {
@@ -856,6 +978,7 @@
     await mv.analyze();
     const c = mv.capture(); if (!c) return;
     if (!tgOn('tgAng')) c.misure = [];
+    const cr = swCaptureInfo(); if (cr) c.misure.unshift(cr);
     captures.push({ ...c, t: mv.kind === 'video' ? vid.currentTime : null, parti: partsLabel([...PARTS]), nota: '' });
     renderCaps(); autosave(); toast('Fotogramma aggiunto al PDF');
   };
