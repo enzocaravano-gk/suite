@@ -581,6 +581,10 @@
         .sp-tools .sp-act { min-height: 30px; padding: 4px 12px; font-size: 12.5px; }
         .sp-tools .sp-act.on { background: var(--accent); border-color: var(--accent); color: #fff; }
         .sp-tools .sel-only { display: none; }
+        /* grandezza delle pedine (− / +) per ogni campo */
+        .ped-size { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+        .ped-size .sp-act, .ped-size .btn { min-width: 34px; justify-content: center; font-weight: 700; padding-left: 8px; padding-right: 8px; }
+        .ped-size .ped-lbl { font-size: 12.5px; color: #555; min-width: 82px; text-align: center; }
         .sp-card.selecting .sp-tools .sel-only, .sp-card.has-sel .sp-tools .sel-only { display: inline-flex; }
         .sp-card .sp-tools .sel-hint { display: none; }
         .sp-card.selecting .sp-tools .sel-hint { display: inline; }
@@ -986,6 +990,11 @@ window.SuiteFile = (function () {
                 <button type="button" class="btn btn-outline" data-arrow="solid" data-area="pitch">➝ Freccia</button>
                 <button type="button" class="btn btn-outline" data-arrow="dash" data-area="pitch">⇢ Tratteggiata</button>
             </span>
+            <span class="ped-size" title="Grandezza delle pedine">
+                <button type="button" class="btn btn-outline" id="pedMinus" aria-label="Pedine più piccole">−</button>
+                <span class="ped-lbl" id="pedLbl">Pedine 100%</span>
+                <button type="button" class="btn btn-outline" id="pedPlus" aria-label="Pedine più grandi">+</button>
+            </span>
             <button type="button" class="btn btn-outline" id="resetPitchBtn">↺ Ripristina posizioni</button>
         </div>
         <div class="pitch-wrap" id="pitchWrap"></div>
@@ -1196,6 +1205,7 @@ window.SuiteFile = (function () {
         'copia,': 'copy,', 'incolla ·': 'paste ·', 'svuota la selezione': 'clears the selection',
         'CAMPO': 'PITCH', 'Tocca un giocatore per cambiare numero e nome · trascinalo per spostarlo': 'Tap a player to change number and name · drag to move',
         '➝ Freccia': '➝ Arrow', '⇢ Tratteggiata': '⇢ Dashed', '↺ Ripristina posizioni': '↺ Reset positions',
+        'Pedine': 'Pieces', 'Grandezza delle pedine': 'Piece size', 'Pedine più piccole': 'Smaller pieces', 'Pedine più grandi': 'Larger pieces',
         'PALLE INATTIVE': 'SET PIECES', 'I nomi arrivano dalle tabelle · tocca per modificare · trascina per spostare': 'Names come from the tables · tap to edit · drag to move',
         '📄 Salva PDF': '📄 Save PDF', '➕ Nuovo schema': '➕ New diagram', '🧹 Pulisci posizionamenti': '🧹 Clear positioning', '⟲ Reset completo': '⟲ Full reset',
         'Anteprima · A4 orizzontale': 'Preview · A4 landscape', 'Riduci': 'Zoom out', 'Adatta': 'Fit', 'Ingrandisci': 'Zoom in',
@@ -1549,6 +1559,18 @@ window.SuiteFile = (function () {
     }
 
     const cur = () => state.data[state.mode];
+
+    // Grandezza delle pedine per ogni campo ('form' = campo della formazione,
+    // altrimenti il tipo di schema): 1 = normale, da 0.6 a 1.8. Vale anche nel PDF.
+    const PED_MIN = 0.6, PED_MAX = 1.8;
+    function pedScale(key) { const v = Number((cur().pedScale || {})[key]); return v > 0 ? v : 1; }
+    function setPedScale(key, delta) {
+        const c = cur();
+        c.pedScale = c.pedScale || {};
+        c.pedScale[key] = Math.round(Math.min(PED_MAX, Math.max(PED_MIN, pedScale(key) + delta)) * 10) / 10;
+        save();
+    }
+    const pedLabel = (key) => t('Pedine') + ' ' + Math.round(pedScale(key) * 100) + '%';
 
     function getPath(obj, path) {
         return path.split('.').reduce((o, k) => (o == null ? o : o[k]), obj);
@@ -2880,13 +2902,14 @@ window.SuiteFile = (function () {
         const vb = vertical ? '-4 -4 76 113' : '-4 -4 113 76';
         const linesTransform = vertical ? ' transform="translate(0,105) rotate(-90)"' : '';
         // sul telefono (campo verticale) pallini più grandi, comodi al tocco
-        const markerScale = vertical ? ' scale(1.3)' : '';
+        const ps = pedScale('form');
+        const markerScale = ` scale(${((vertical ? 1.3 : 1) * ps).toFixed(2)})`;
         const players = getSlots().map((slot, i) => {
             const p = toXY(slot, vertical);
             const name = slotName(slot);
             const num = esc(slot.num);
             if (print) {
-                return `<g transform="translate(${p.x.toFixed(2)},${p.y.toFixed(2)})">
+                return `<g transform="translate(${p.x.toFixed(2)},${p.y.toFixed(2)}) scale(${ps.toFixed(2)})">
                     <circle r="2.5" fill="#fff" stroke="#111" stroke-width="0.3"/>
                     <text y="0.95" text-anchor="middle" font-size="2.6" font-weight="700" fill="#111">${num}</text>
                     <text y="5.3" text-anchor="middle" font-size="2.3" font-weight="700" fill="#111" stroke="#fff" stroke-width="0.7" paint-order="stroke" stroke-linejoin="round">${esc(name)}</text>
@@ -2903,7 +2926,7 @@ window.SuiteFile = (function () {
         const U = print ? 113 / 834 : (vertical ? 76 : 113) / (pitchWrap.clientWidth || 600);
         const PB = { x: -4, y: -4, w: vertical ? 76 : 113, h: vertical ? 113 : 76 };
         const logoL = logoPlace(PB, U, print ? 40 : 30,
-            getSlots().map(sl => { const q = toXY(sl, vertical); return { x: q.x, y: q.y, r: 3 }; }));
+            getSlots().map(sl => { const q = toXY(sl, vertical); return { x: q.x, y: q.y, r: 3 * ps }; }));
         const arrows = arrowsSVG((cur().pitchArrows[cur().formation] || []).map((a, i) => {
             const p1 = toXY(a.a, vertical), p2 = toXY(a.b, vertical), pc = a.c ? toXY(a.c, vertical) : null;
             return { x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y, cx: pc ? pc.x : null, cy: pc ? pc.y : null, dash: a.dash, i };
@@ -2939,6 +2962,8 @@ window.SuiteFile = (function () {
         pitchVertical = pitchWrap.parentElement.clientWidth < 620;
         pitchWrap.classList.toggle('vertical', pitchVertical);
         pitchWrap.innerHTML = pitchSVG({ vertical: pitchVertical });
+        $('pedLbl').textContent = pedLabel('form');
+        $('pedMinus').disabled = pedScale('form') <= PED_MIN; $('pedPlus').disabled = pedScale('form') >= PED_MAX;
         const rows = benchRows().filter(r => r.name);
         $('benchChips').innerHTML = rows.length
             ? `<span class="lbl">${t('PANCHINA')}</span>` + rows.map(r => `<span class="chip"><b>${esc(r.num)}</b>${esc(r.name)}</span>`).join('')
@@ -3357,6 +3382,9 @@ window.SuiteFile = (function () {
             const t = Math.max(0, Math.min(1, (appWidth - 340) / 560));
             markerPx = 14 + 4 * t; namePx = 11 + 3 * t;
         }
+        // grandezza scelta dal mister; i nomi crescono un po' meno delle pedine
+        const ps = pedScale(kind);
+        markerPx *= ps; namePx *= 1 + (ps - 1) * 0.6;
         return { ...V, w, h, scale, kc: markerPx / (1.9 * scale), fn: namePx / scale, px: (n) => n / scale };
     }
 
@@ -3621,6 +3649,11 @@ window.SuiteFile = (function () {
                 <button type="button" class="sp-act" data-act="addnote" data-kind="${k.kind}">${t('📝 Nota')}</button>
                 <button type="button" class="sp-act" data-arrow="solid" data-area="sp" data-kind="${k.kind}">${t('➝ Freccia')}</button>
                 <button type="button" class="sp-act" data-arrow="dash" data-area="sp" data-kind="${k.kind}">${t('⇢ Tratteggiata')}</button>
+                <span class="ped-size" title="${t('Grandezza delle pedine')}">
+                    <button type="button" class="sp-act" data-ped="-0.1" data-kind="${k.kind}" aria-label="${t('Pedine più piccole')}">−</button>
+                    <span class="ped-lbl">${pedLabel(k.kind)}</span>
+                    <button type="button" class="sp-act" data-ped="0.1" data-kind="${k.kind}" aria-label="${t('Pedine più grandi')}">+</button>
+                </span>
                 <span class="sel-hint">${t('Tocca le pedine o trascina un riquadro · poi trascinane una o usa le frecce')}</span>
             </div>`;
             return `<div class="sp-card">${head}${tools}<div class="sp-scroll" data-kind="${k.kind}"><div style="width:${w}px;max-width:100%;min-width:${Math.min(w, minW || w)}px;margin:0 auto">${spSVG(k.kind, false, w)}</div></div></div>`;
@@ -4144,11 +4177,16 @@ window.SuiteFile = (function () {
     $('chooserCancel').addEventListener('click', closeChooser);
     chooser.addEventListener('click', (e) => { if (e.target === chooser) closeChooser(); });
     spGrid.addEventListener('click', (e) => {
+        const pb = e.target.closest('[data-ped]');
+        if (pb) { setPedScale(pb.dataset.kind, Number(pb.dataset.ped)); renderSetPieces(); return; }
         const b = e.target.closest('.sp-act');
         if (!b) return;
         if (b.dataset.act === 'rename') renameCustomScheme(b.dataset.kind);
         if (b.dataset.act === 'delete') deleteCustomScheme(b.dataset.kind);
     });
+
+    $('pedMinus').addEventListener('click', () => { setPedScale('form', -0.1); renderPitch(); });
+    $('pedPlus').addEventListener('click', () => { setPedScale('form', 0.1); renderPitch(); });
 
     $('resetSpBtn').addEventListener('click', () => {
         cur().setPos = {};
