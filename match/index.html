@@ -487,6 +487,17 @@
             display: block;
             cursor: crosshair;
         }
+        /* zoom stabile del player di analisi */
+        #reviewVideo { transform-origin: 0 0; transition: transform .25s ease; }
+        #reviewVideo.panning { transition: none; }
+        .review-video-container.zoom-on { cursor: zoom-in; touch-action: none; }
+        .review-zoom-bar { display: none; position: absolute; top: 10px; right: 10px; z-index: 11; gap: 2px; align-items: center;
+            background: rgba(0,0,0,.75); border: 1px solid var(--blue); border-radius: 20px; padding: 3px; }
+        .review-zoom-bar.on { display: flex; }
+        .review-zoom-bar button { width: 32px; height: 30px; border: 0; border-radius: 15px; background: transparent; color: #fff;
+            font-weight: 700; font-size: 16px; line-height: 1; cursor: pointer; padding: 0; }
+        .review-zoom-bar button:hover { background: rgba(255,255,255,.16); }
+        .review-zoom-bar span { color: #fff; font-size: .78rem; font-weight: 700; min-width: 38px; text-align: center; }
         .review-laser-orb {
             position: absolute;
             width: 60px;
@@ -873,7 +884,7 @@
     "Inserisci un nome per questa sessione":"Enter a name for this session","Inserisci un nome.":"Enter a name.",
     "Inverti":"Invert","LIVE IN TRIBUNA":"LIVE FROM THE STANDS",
     "Laser: orb rosso per indicare":"Laser: red orb to point",
-    "Lente: zoom 2× sul punto del cursore":"Lens: 2× zoom at cursor point","MODALITÀ VIDEO":"VIDEO MODE",
+    "Zoom: tocca un punto per ingrandire, trascina per spostarti":"Zoom: tap a point to zoom in, drag to move around","Riduci":"Zoom out","Ingrandisci":"Zoom in","Immagine intera":"Full picture","MODALITÀ VIDEO":"VIDEO MODE",
     "Media per Partita":"Average per Match","Menu sessione":"Session menu","NOME FILE":"FILE NAME",
     "Nessun evento associato. Puoi comunque creare clip e usare gli strumenti.":"No associated event. You can still create clips and use the tools.",
     "Nessun evento corrisponde ai filtri":"No event matches the filters",
@@ -1592,6 +1603,12 @@ function analisiAvviso(msg) {
                             <video id="reviewVideo" style="display:none;width:100%;display:block;cursor:crosshair;"></video>
                             <div id="reviewLaserOrb" class="review-laser-orb"></div>
                             <div id="reviewToolBadge" class="review-tool-badge"></div>
+                            <div class="review-zoom-bar" id="reviewZoomBar">
+                                <button type="button" onclick="reviewZoomStep(-1)" title="Riduci" aria-label="Riduci">−</button>
+                                <span id="reviewZoomLvl">1×</span>
+                                <button type="button" onclick="reviewZoomStep(1)" title="Ingrandisci" aria-label="Ingrandisci">+</button>
+                                <button type="button" onclick="reviewZoomReset()" title="Immagine intera" aria-label="Immagine intera">⟲</button>
+                            </div>
                         </div>
                         <div id="reviewVideoControls" style="padding:10px 14px;background:rgba(0,0,0,0.7);">
                             <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
@@ -1621,7 +1638,7 @@ function analisiAvviso(msg) {
                         </div>
                     </div>
                     <div style="display:flex;gap:10px;margin-top:10px;font-size:0.75rem;color:var(--text-3);flex-wrap:wrap;">
-                        <span><i class="fas fa-search-plus" style="color:var(--blue);margin-right:4px;"></i>Lente: zoom 2× sul punto del cursore</span>
+                        <span><i class="fas fa-search-plus" style="color:var(--blue);margin-right:4px;"></i>Zoom: tocca un punto per ingrandire, trascina per spostarti</span>
                         <span><i class="fas fa-dot-circle" style="color:var(--red);margin-right:4px;"></i>Laser: orb rosso per indicare</span>
                         <span><i class="fas fa-step-forward" style="color:var(--orange);margin-right:4px;"></i>Frame: avanzamento 1/30s</span>
                     </div>
@@ -2583,12 +2600,13 @@ function analisiAvviso(msg) {
                 document.getElementById('reviewResetFiltriBtn').style.display = 'none';
             }
         };
-        vid.ontimeupdate = () => { if (vid.duration) document.getElementById('reviewProgressFill').style.width = (vid.currentTime / vid.duration) * 100 + '%'; document.getElementById('reviewVidTime').textContent = formatAnalisiTime(vid.currentTime); if (reviewZoomActive) reviewDrawZoom(); };
+        vid.ontimeupdate = () => { if (vid.duration) document.getElementById('reviewProgressFill').style.width = (vid.currentTime / vid.duration) * 100 + '%'; document.getElementById('reviewVidTime').textContent = formatAnalisiTime(vid.currentTime); };
         vid.onended = () => { document.getElementById('reviewPlayBtn').innerHTML = '<i class="fas fa-play"></i>'; };
         const progressEl = document.getElementById('reviewProgressContainer');
         progressEl.onclick = (ev) => { const rect = progressEl.getBoundingClientRect(); const pct = (ev.clientX - rect.left) / rect.width; if (vid.duration) vid.currentTime = pct * vid.duration; };
         const wrap = document.getElementById('reviewVideoWrap');
         wrap.addEventListener('mousemove', reviewHandleMouseMove);
+        reviewZoomReset();
         wrap.addEventListener('mouseleave', () => { document.getElementById('reviewLaserOrb').style.display = 'none'; });
         e.target.value = '';
     }
@@ -2611,7 +2629,13 @@ function analisiAvviso(msg) {
         });
     }
     function reviewToggleLaser() { reviewLaserActive = !reviewLaserActive; if (reviewLaserActive) reviewZoomActive = false; reviewUpdateToolUI(); }
-    function reviewToggleZoom() { reviewZoomActive = !reviewZoomActive; if (reviewZoomActive) reviewLaserActive = false; if (!reviewZoomActive && document.getElementById('reviewZoomCanvas')) document.getElementById('reviewZoomCanvas').style.display = 'none'; reviewUpdateToolUI(); }
+    function reviewToggleZoom() {
+        reviewZoomActive = !reviewZoomActive;
+        if (reviewZoomActive) reviewLaserActive = false; else reviewZoomReset();
+        document.getElementById('reviewZoomBar').classList.toggle('on', reviewZoomActive);
+        document.getElementById('reviewVideoWrap').classList.toggle('zoom-on', reviewZoomActive);
+        reviewUpdateToolUI();
+    }
     function reviewUpdateToolUI() {
         const laserBtn = document.getElementById('reviewLaserBtn'), zoomBtn = document.getElementById('reviewZoomBtn'), badge = document.getElementById('reviewToolBadge');
         if (laserBtn) { laserBtn.style.borderColor = reviewLaserActive ? 'var(--red)' : 'var(--border)'; laserBtn.style.color = reviewLaserActive ? 'var(--red)' : 'var(--text-2)'; }
@@ -2626,48 +2650,72 @@ function analisiAvviso(msg) {
         const x = e.clientX - rect.left, y = e.clientY - rect.top;
         const pctX = x / rect.width, pctY = y / rect.height;
         if (reviewLaserActive) { const orb = document.getElementById('reviewLaserOrb'); orb.style.display = 'block'; orb.style.left = pctX * 100 + '%'; orb.style.top = pctY * 100 + '%'; } else { document.getElementById('reviewLaserOrb').style.display = 'none'; }
-        if (reviewZoomActive) { reviewZoomMouseX = pctX; reviewZoomMouseY = pctY; reviewDrawZoom(); }
     }
-    function reviewDrawZoom() {
-        const vid = document.getElementById('reviewVideo'); let canvas = document.getElementById('reviewZoomCanvas');
-        if (!vid || !vid.videoWidth) return;
-        const wrap = document.getElementById('reviewVideoWrap'); const rect = wrap.getBoundingClientRect();
-        if (!canvas) { canvas = document.createElement('canvas'); canvas.id = 'reviewZoomCanvas'; canvas.style.position = 'absolute'; canvas.style.inset = '0'; canvas.style.width = '100%'; canvas.style.height = '100%'; canvas.style.pointerEvents = 'none'; wrap.appendChild(canvas); }
-        canvas.width = rect.width; canvas.height = rect.height; canvas.style.display = 'block';
-        const ctx = canvas.getContext('2d'); const scale = 2.2; const magW = rect.width * 0.42, magH = rect.height * 0.42;
-        const srcCX = reviewZoomMouseX * vid.videoWidth, srcCY = reviewZoomMouseY * vid.videoHeight;
-        const srcW = vid.videoWidth / scale, srcH = vid.videoHeight / scale;
-        const srcX = Math.max(0, Math.min(vid.videoWidth - srcW, srcCX - srcW / 2));
-        const srcY = Math.max(0, Math.min(vid.videoHeight - srcH, srcCY - srcH / 2));
-        let destX = reviewZoomMouseX > 0.5 ? 10 : rect.width - magW - 10;
-        let destY = reviewZoomMouseY > 0.5 ? 10 : rect.height - magH - 10;
-        ctx.clearRect(0, 0, canvas.width, canvas.height); ctx.save();
-        ctx.shadowColor = 'rgba(0,0,0,0.7)'; ctx.shadowBlur = 18; ctx.strokeStyle = 'rgba(41,121,255,0.85)'; ctx.lineWidth = 2.5;
-        const rad = 10;
-        ctx.beginPath(); ctx.moveTo(destX + rad, destY); ctx.lineTo(destX + magW - rad, destY);
-        ctx.quadraticCurveTo(destX + magW, destY, destX + magW, destY + rad);
-        ctx.lineTo(destX + magW, destY + magH - rad);
-        ctx.quadraticCurveTo(destX + magW, destY + magH, destX + magW - rad, destY + magH);
-        ctx.lineTo(destX + rad, destY + magH);
-        ctx.quadraticCurveTo(destX, destY + magH, destX, destY + magH - rad);
-        ctx.lineTo(destX, destY + rad);
-        ctx.quadraticCurveTo(destX, destY, destX + rad, destY);
-        ctx.closePath(); ctx.clip();
-        ctx.drawImage(vid, srcX, srcY, srcW, srcH, destX, destY, magW, magH);
-        ctx.restore(); ctx.save();
-        ctx.strokeStyle = 'rgba(41,121,255,0.85)'; ctx.lineWidth = 2.5; ctx.shadowColor = 'rgba(41,121,255,0.6)'; ctx.shadowBlur = 8;
-        ctx.beginPath(); ctx.moveTo(destX + rad, destY); ctx.lineTo(destX + magW - rad, destY);
-        ctx.quadraticCurveTo(destX + magW, destY, destX + magW, destY + rad);
-        ctx.lineTo(destX + magW, destY + magH - rad);
-        ctx.quadraticCurveTo(destX + magW, destY + magH, destX + magW - rad, destY + magH);
-        ctx.lineTo(destX + rad, destY + magH);
-        ctx.quadraticCurveTo(destX, destY + magH, destX, destY + magH - rad);
-        ctx.lineTo(destX, destY + rad);
-        ctx.quadraticCurveTo(destX, destY, destX + rad, destY);
-        ctx.closePath(); ctx.stroke();
-        ctx.fillStyle = 'rgba(41,121,255,0.9)'; ctx.font = 'bold 11px Inter, sans-serif'; ctx.fillText('×' + scale.toFixed(1), destX + magW - 34, destY + 16);
-        ctx.restore();
+    // ZOOM STABILE: l'inquadratura resta ferma dove l'hai scelta (non segue il mouse).
+    // Tocca/clicca un punto per ingrandire lì, trascina per spostarti, + / − per il livello.
+    let reviewZoom = { z: 1, cx: 0.5, cy: 0.5 };
+    const REVIEW_ZOOM_LEVELS = [1, 1.5, 2, 3, 4];
+    function reviewZoomApply() {
+        const vid = document.getElementById('reviewVideo'); if (!vid) return;
+        const z = reviewZoom.z;
+        // il punto scelto va al centro del riquadro, senza mai mostrare bordi neri
+        const tx = Math.min(0, Math.max(1 - z, 0.5 - reviewZoom.cx * z));
+        const ty = Math.min(0, Math.max(1 - z, 0.5 - reviewZoom.cy * z));
+        reviewZoom.cx = (0.5 - tx) / z; reviewZoom.cy = (0.5 - ty) / z;
+        vid.style.transform = z > 1 ? `translate(${tx * 100}%, ${ty * 100}%) scale(${z})` : '';
+        const lvl = document.getElementById('reviewZoomLvl');
+        if (lvl) lvl.textContent = String(Math.round(z * 10) / 10).replace('.', ',') + '×';
     }
+    function reviewZoomStep(dir) {
+        let i = REVIEW_ZOOM_LEVELS.findIndex(v => v >= reviewZoom.z - 0.01);
+        i = Math.max(0, Math.min(REVIEW_ZOOM_LEVELS.length - 1, i + dir));
+        reviewZoom.z = REVIEW_ZOOM_LEVELS[i];
+        reviewZoomApply();
+    }
+    function reviewZoomReset() { reviewZoom = { z: 1, cx: 0.5, cy: 0.5 }; reviewZoomApply(); }
+    (function () {
+        const wrap = document.getElementById('reviewVideoWrap'); if (!wrap) return;
+        let start = null, lastWheel = 0;
+        wrap.addEventListener('pointerdown', (e) => {
+            if (!reviewZoomActive || e.target.closest('.review-zoom-bar') || (e.pointerType === 'mouse' && e.button !== 0)) return;
+            start = { x: e.clientX, y: e.clientY, cx: reviewZoom.cx, cy: reviewZoom.cy, moved: false };
+            try { wrap.setPointerCapture(e.pointerId); } catch (_) {}
+        });
+        wrap.addEventListener('pointermove', (e) => {
+            if (!start) return;
+            const dx = e.clientX - start.x, dy = e.clientY - start.y;
+            if (!start.moved && Math.hypot(dx, dy) < 6) return;
+            start.moved = true;
+            if (reviewZoom.z <= 1) return;
+            const r = wrap.getBoundingClientRect();
+            document.getElementById('reviewVideo').classList.add('panning');
+            reviewZoom.cx = start.cx - dx / r.width / reviewZoom.z;
+            reviewZoom.cy = start.cy - dy / r.height / reviewZoom.z;
+            reviewZoomApply();
+        });
+        const finish = (e, tap) => {
+            if (!start) return;
+            document.getElementById('reviewVideo').classList.remove('panning');
+            if (tap && !start.moved) {
+                // tocco: ingrandisce (o ricentra) sul punto toccato
+                const r = wrap.getBoundingClientRect(), z = reviewZoom.z;
+                const px = (e.clientX - r.left) / r.width, py = (e.clientY - r.top) / r.height;
+                const vx = (px - (0.5 - reviewZoom.cx * z)) / z, vy = (py - (0.5 - reviewZoom.cy * z)) / z;
+                if (reviewZoom.z <= 1) reviewZoom.z = 2;
+                reviewZoom.cx = vx; reviewZoom.cy = vy;
+                reviewZoomApply();
+            }
+            start = null;
+        };
+        wrap.addEventListener('pointerup', (e) => finish(e, true));
+        wrap.addEventListener('pointercancel', (e) => finish(e, false));
+        wrap.addEventListener('wheel', (e) => {
+            if (!reviewZoomActive) return;
+            e.preventDefault();
+            const now = Date.now(); if (now - lastWheel < 180) return; lastWheel = now;
+            reviewZoomStep(e.deltaY < 0 ? 1 : -1);
+        }, { passive: false });
+    })();
 
     // ========== CLIP FUNCTIONS ==========
     let clipCurrentTime = 0, clipCurrentLabel = '', clipIsRecording = false;
