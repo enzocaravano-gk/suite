@@ -490,9 +490,14 @@
         /* zoom stabile del player di analisi */
         #reviewVideo { transform-origin: 0 0; transition: transform .25s ease; }
         #reviewVideo.panning { transition: none; }
-        .review-video-container.zoom-on { cursor: zoom-in; touch-action: none; }
-        .review-zoom-bar { display: none; position: absolute; top: 10px; right: 10px; z-index: 11; gap: 2px; align-items: center;
+        .review-video-container.zoom-on, .review-video-container.laser-on { touch-action: none; }
+        .review-video-container.zoom-on { cursor: zoom-in; }
+        .review-bars { position: absolute; top: 10px; right: 10px; z-index: 11; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+        .review-zoom-bar { display: none; gap: 2px; align-items: center;
             background: rgba(0,0,0,.75); border: 1px solid var(--blue); border-radius: 20px; padding: 3px; }
+        #reviewLaserBar { border-color: var(--red); }
+        #reviewLaserBar button:disabled { opacity: .35; cursor: default; }
+        .review-laser-dot { display: inline-block; border-radius: 50%; background: rgba(255,30,50,.85); box-shadow: 0 0 6px 1px rgba(255,60,70,.8); vertical-align: middle; }
         .review-zoom-bar.on { display: flex; }
         .review-zoom-bar button { width: 32px; height: 30px; border: 0; border-radius: 15px; background: transparent; color: #fff;
             font-weight: 700; font-size: 16px; line-height: 1; cursor: pointer; padding: 0; }
@@ -884,7 +889,7 @@
     "Inserisci un nome per questa sessione":"Enter a name for this session","Inserisci un nome.":"Enter a name.",
     "Inverti":"Invert","LIVE IN TRIBUNA":"LIVE FROM THE STANDS",
     "Laser: orb rosso per indicare":"Laser: red orb to point",
-    "Zoom: tocca un punto per ingrandire, trascina per spostarti":"Zoom: tap a point to zoom in, drag to move around","Riduci":"Zoom out","Ingrandisci":"Zoom in","Immagine intera":"Full picture","MODALITÀ VIDEO":"VIDEO MODE",
+    "Zoom: tocca un punto per ingrandire, trascina per spostarti":"Zoom: tap a point to zoom in, drag to move around","Riduci":"Zoom out","Puntatore più piccolo":"Smaller pointer","Puntatore più grande":"Larger pointer","Ingrandisci":"Zoom in","Immagine intera":"Full picture","MODALITÀ VIDEO":"VIDEO MODE",
     "Media per Partita":"Average per Match","Menu sessione":"Session menu","NOME FILE":"FILE NAME",
     "Nessun evento associato. Puoi comunque creare clip e usare gli strumenti.":"No associated event. You can still create clips and use the tools.",
     "Nessun evento corrisponde ai filtri":"No event matches the filters",
@@ -1603,11 +1608,18 @@ function analisiAvviso(msg) {
                             <video id="reviewVideo" style="display:none;width:100%;display:block;cursor:crosshair;"></video>
                             <div id="reviewLaserOrb" class="review-laser-orb"></div>
                             <div id="reviewToolBadge" class="review-tool-badge"></div>
+                            <div class="review-bars">
                             <div class="review-zoom-bar" id="reviewZoomBar">
                                 <button type="button" onclick="reviewZoomStep(-1)" title="Riduci" aria-label="Riduci">−</button>
                                 <span id="reviewZoomLvl">1×</span>
                                 <button type="button" onclick="reviewZoomStep(1)" title="Ingrandisci" aria-label="Ingrandisci">+</button>
                                 <button type="button" onclick="reviewZoomReset()" title="Immagine intera" aria-label="Immagine intera">⟲</button>
+                            </div>
+                            <div class="review-zoom-bar" id="reviewLaserBar">
+                                <button type="button" id="reviewLaserMinus" onclick="reviewLaserStep(-1)" title="Puntatore più piccolo" aria-label="Puntatore più piccolo">−</button>
+                                <span><i class="review-laser-dot" id="reviewLaserDot"></i></span>
+                                <button type="button" id="reviewLaserPlus" onclick="reviewLaserStep(1)" title="Puntatore più grande" aria-label="Puntatore più grande">+</button>
+                            </div>
                             </div>
                         </div>
                         <div id="reviewVideoControls" style="padding:10px 14px;background:rgba(0,0,0,0.7);">
@@ -2628,12 +2640,28 @@ function analisiAvviso(msg) {
             container.appendChild(m);
         });
     }
-    function reviewToggleLaser() { reviewLaserActive = !reviewLaserActive; if (reviewLaserActive) reviewZoomActive = false; reviewUpdateToolUI(); }
+    // Laser: con lo zoom attivo l'immagine ingrandita resta (si può indicare sul dettaglio)
+    function reviewToggleLaser() {
+        reviewLaserActive = !reviewLaserActive;
+        const wrap = document.getElementById('reviewVideoWrap');
+        if (reviewLaserActive) { reviewZoomActive = false; wrap.classList.remove('zoom-on'); }
+        else document.getElementById('reviewLaserOrb').style.display = 'none';
+        wrap.classList.toggle('laser-on', reviewLaserActive);
+        document.getElementById('reviewLaserBar').classList.toggle('on', reviewLaserActive);
+        reviewZoomApply();
+        reviewUpdateToolUI();
+    }
     function reviewToggleZoom() {
         reviewZoomActive = !reviewZoomActive;
-        if (reviewZoomActive) reviewLaserActive = false; else reviewZoomReset();
-        document.getElementById('reviewZoomBar').classList.toggle('on', reviewZoomActive);
-        document.getElementById('reviewVideoWrap').classList.toggle('zoom-on', reviewZoomActive);
+        const wrap = document.getElementById('reviewVideoWrap');
+        if (reviewZoomActive) {
+            reviewLaserActive = false;
+            wrap.classList.remove('laser-on');
+            document.getElementById('reviewLaserBar').classList.remove('on');
+            document.getElementById('reviewLaserOrb').style.display = 'none';
+        } else reviewZoomReset();
+        wrap.classList.toggle('zoom-on', reviewZoomActive);
+        reviewZoomApply();
         reviewUpdateToolUI();
     }
     function reviewUpdateToolUI() {
@@ -2649,6 +2677,7 @@ function analisiAvviso(msg) {
         const wrap = document.getElementById('reviewVideoWrap'); const rect = wrap.getBoundingClientRect();
         const x = e.clientX - rect.left, y = e.clientY - rect.top;
         const pctX = x / rect.width, pctY = y / rect.height;
+        if (reviewLaserActive && e.target.closest && e.target.closest('.review-bars')) { document.getElementById('reviewLaserOrb').style.display = 'none'; return; }
         if (reviewLaserActive) { const orb = document.getElementById('reviewLaserOrb'); orb.style.display = 'block'; orb.style.left = pctX * 100 + '%'; orb.style.top = pctY * 100 + '%'; } else { document.getElementById('reviewLaserOrb').style.display = 'none'; }
     }
     // ZOOM STABILE: l'inquadratura resta ferma dove l'hai scelta (non segue il mouse).
@@ -2663,6 +2692,8 @@ function analisiAvviso(msg) {
         const ty = Math.min(0, Math.max(1 - z, 0.5 - reviewZoom.cy * z));
         reviewZoom.cx = (0.5 - tx) / z; reviewZoom.cy = (0.5 - ty) / z;
         vid.style.transform = z > 1 ? `translate(${tx * 100}%, ${ty * 100}%) scale(${z})` : '';
+        const bar = document.getElementById('reviewZoomBar');
+        if (bar) bar.classList.toggle('on', reviewZoomActive || z > 1);
         const lvl = document.getElementById('reviewZoomLvl');
         if (lvl) lvl.textContent = String(Math.round(z * 10) / 10).replace('.', ',') + '×';
     }
@@ -2673,6 +2704,42 @@ function analisiAvviso(msg) {
         reviewZoomApply();
     }
     function reviewZoomReset() { reviewZoom = { z: 1, cx: 0.5, cy: 0.5 }; reviewZoomApply(); }
+    // grandezza del puntatore laser (si ricorda su questo dispositivo)
+    const LASER_SIZES = [24, 40, 60, 85, 120];
+    let reviewLaserIdx = 2;
+    try { const v = parseInt(localStorage.getItem('matchLaserSize'), 10); if (v >= 0 && v < LASER_SIZES.length) reviewLaserIdx = v; } catch (_) {}
+    function reviewLaserApply() {
+        const px = LASER_SIZES[reviewLaserIdx];
+        const orb = document.getElementById('reviewLaserOrb');
+        if (orb) {
+            orb.style.width = orb.style.height = px + 'px';
+            orb.style.boxShadow = `0 0 ${Math.round(px * 0.47)}px ${Math.round(px * 0.2)}px rgba(255,30,50,0.32), 0 0 6px 2px rgba(255,80,80,0.7)`;
+        }
+        const dot = document.getElementById('reviewLaserDot');
+        if (dot) dot.style.width = dot.style.height = (6 + reviewLaserIdx * 3.5) + 'px';
+        const minus = document.getElementById('reviewLaserMinus'), plus = document.getElementById('reviewLaserPlus');
+        if (minus) minus.disabled = reviewLaserIdx === 0;
+        if (plus) plus.disabled = reviewLaserIdx === LASER_SIZES.length - 1;
+    }
+    function reviewLaserStep(dir) {
+        reviewLaserIdx = Math.max(0, Math.min(LASER_SIZES.length - 1, reviewLaserIdx + dir));
+        try { localStorage.setItem('matchLaserSize', String(reviewLaserIdx)); } catch (_) {}
+        reviewLaserApply();
+    }
+    reviewLaserApply();
+    (function () {
+        // laser col dito (iPad/telefono): il pallino segue il dito sul video
+        const wrap = document.getElementById('reviewVideoWrap'); if (!wrap) return;
+        const move = (e) => {
+            if (!reviewLaserActive || e.pointerType === 'mouse' || (e.target.closest && e.target.closest('.review-bars'))) return;
+            const r = wrap.getBoundingClientRect(), orb = document.getElementById('reviewLaserOrb');
+            orb.style.display = 'block';
+            orb.style.left = ((e.clientX - r.left) / r.width * 100) + '%';
+            orb.style.top = ((e.clientY - r.top) / r.height * 100) + '%';
+        };
+        wrap.addEventListener('pointerdown', move);
+        wrap.addEventListener('pointermove', move);
+    })();
     (function () {
         const wrap = document.getElementById('reviewVideoWrap'); if (!wrap) return;
         let start = null, lastWheel = 0;
