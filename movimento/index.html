@@ -137,6 +137,22 @@
     padding: 10px 16px 10px 13px; border-radius: 999px; background: var(--accent); color: #fff;
     font: 600 15px/1 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; text-decoration: none;
     box-shadow: 0 4px 16px rgba(0,0,0,.28); border: 2px solid #fff; }
+  /* foto PNG scattate: anteprima accanto al player */
+  .shots { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .shot { position: relative; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: #111; }
+  .shot img { display: block; width: 100%; aspect-ratio: 16 / 10; object-fit: contain; cursor: zoom-in; }
+  .shot .acts { display: flex; gap: 4px; padding: 6px; background: var(--card); }
+  .shot .acts button { flex: 1; min-height: 34px; font-size: 12.5px; padding: 4px 6px; justify-content: center; white-space: nowrap; }
+  .shot .acts button[data-a=del] { flex: 0 0 38px; }
+  .shot .when { position: absolute; left: 6px; top: 6px; background: rgba(0,0,0,.7); color: #fff; font-size: 11px; padding: 2px 7px; border-radius: 999px; }
+  .shot.new { outline: 3px solid var(--accent); outline-offset: -3px; }
+  /* finestra di anteprima (foto e PDF) */
+  .pv { position: fixed; inset: 0; z-index: 80; background: rgba(20,18,16,.96); display: flex; flex-direction: column; }
+  .pv-bar { display: flex; align-items: center; gap: 8px; padding: 12px 16px; background: var(--card); border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+  .pv-bar .t { flex: 1; min-width: 140px; font-weight: 700; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pv-body { flex: 1; overflow: auto; -webkit-overflow-scrolling: touch; padding: 18px 16px 90px; display: flex; flex-direction: column; align-items: center; gap: 16px; }
+  .pv-body img { max-width: min(100%, 900px); height: auto; background: #fff; box-shadow: 0 6px 24px rgba(0,0,0,.45); border-radius: 2px; }
+  .pv-body .pg { color: #ddd; font-size: 12px; margin-top: -10px; }
   .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: #222; color: #fff; padding: 10px 16px; border-radius: 999px; font-size: 14px; z-index: 60; display: none; }
 </style>
 </head>
@@ -237,6 +253,11 @@
         </section>
 
         <aside style="display:flex;flex-direction:column;gap:16px">
+          <section class="card" id="shotsCard" style="display:none">
+            <h2>Foto PNG <span id="shotCount" style="color:var(--muted)"></span></h2>
+            <div class="shots" id="shots"></div>
+            <p class="hint">Tocca una foto per vederla grande. Le foto restano qui finché non chiudi la pagina: salvale con 💾.</p>
+          </section>
           <section class="card">
             <h2>Misure del fotogramma</h2>
             <div id="movMis" class="none"></div>
@@ -834,7 +855,7 @@
   $('movInput').onchange = e => { const f = e.target.files[0]; e.target.value = ''; if (f) loadMovFile(f); };
   async function loadMovFile(f) {
     const isVid = (f.type || '').startsWith('video') || /\.(mov|mp4|m4v|webm)$/i.test(f.name);
-    if (isVid) { mv.setVideo(f); mv.vid.playbackRate = curSpeed; swNewVideo(); }
+    if (isVid) { mv.setVideo(f); mv.vid.playbackRate = curSpeed; swNewVideo(f); }
     else { try { mv.setImage(await fileToDataUrl(f, 1800)); } catch (err) { alert(err.message); return; } }
     $('vctrl').classList.toggle('on', isVid); $('vhint').style.display = isVid ? '' : 'none';
     $('capBtn').disabled = false; $('pngBtn').disabled = false;
@@ -913,7 +934,7 @@
   swBox.innerHTML = '<div class="sw-time">00:00.000</div><div class="sw-sub">tocca per avviare</div>';
   $('movStage').appendChild(swBox);
   function swFillFps() {
-    $('swFps').innerHTML = '<option value="auto">' + (crono.fpsAuto ? 'Automatico · ' + swFpsLbl(crono.fpsAuto) : 'Automatico · fai partire il video') + '</option>' +
+    $('swFps').innerHTML = '<option value="auto">' + (crono.fpsAuto ? 'Automatico · ' + swFpsLbl(crono.fpsAuto) : 'Automatico · rilevo…') + '</option>' +
       SW_FPS_LIST.map(f => '<option value="' + f + '">' + swFpsLbl(f) + '</option>').join('');
     $('swFps').value = crono.fpsManual ? String(crono.fpsManual) : 'auto';
   }
@@ -932,7 +953,7 @@
           const raw = 1 / sorted[Math.floor(sorted.length * 0.2)];
           const near = SW_FPS_LIST.reduce((a, b) => Math.abs(b - raw) < Math.abs(a - raw) ? b : a);
           const f = Math.abs(near - raw) / raw < 0.03 ? near : Math.round(raw * 100) / 100;
-          if (f !== crono.fpsAuto) { crono.fpsAuto = f; swFillFps(); swRender(); }
+          if (!crono.fromFile && f !== crono.fpsAuto) { crono.fpsAuto = f; swFillFps(); swRender(); updTime(); }
           if (crono.samples.length > 120) crono.samples = crono.samples.slice(-60);
         }
       }
@@ -941,7 +962,57 @@
     };
     vid.requestVideoFrameCallback(cb);
   }
-  function swNewVideo() { crono.fpsAuto = null; crono.samples = []; crono.last = null; crono.start = crono.end = null; swFillFps(); swRender(); swWatch(); }
+  function swNewVideo(file) {
+    crono.fpsAuto = null; crono.fromFile = false; crono.samples = []; crono.last = null; crono.start = crono.end = null;
+    swFillFps(); swRender(); swWatch();
+    // fps scritti nel file (MP4 / MOV): giusti subito, anche per il rallentatore
+    if (file) videoFps(file).then(f => {
+      if (!f) return;
+      crono.fpsAuto = f; crono.fromFile = true; swFillFps(); swRender(); updTime();
+    }).catch(() => {});
+  }
+  // Legge dal file MP4/MOV la frequenza dei fotogrammi della traccia video
+  // (scala dei tempi e durata dei campioni), senza leggere tutto il video.
+  async function videoFps(file) {
+    const rd = async (pos, len) => new DataView(await file.slice(pos, pos + len).arrayBuffer());
+    let pos = 0, moov = null;
+    while (pos + 8 <= file.size) {
+      const h = await rd(pos, 16);
+      let size = h.getUint32(0); const type = String.fromCharCode(h.getUint8(4), h.getUint8(5), h.getUint8(6), h.getUint8(7));
+      if (size === 1) size = h.getUint32(8) * 4294967296 + h.getUint32(12); else if (size === 0) size = file.size - pos;
+      if (size < 8) return null;
+      if (type === 'moov') { if (size > 64 * 1024 * 1024) return null; moov = await rd(pos, size); break; }
+      pos += size;
+    }
+    if (!moov) return null;
+    const str = (o) => String.fromCharCode(moov.getUint8(o), moov.getUint8(o + 1), moov.getUint8(o + 2), moov.getUint8(o + 3));
+    const kids = (start, end, cb) => { let p = start; while (p + 8 <= end) { const sz = moov.getUint32(p); if (sz < 8 || p + sz > end) break; cb(str(p + 4), p, sz); p += sz; } };
+    let fps = null;
+    kids(8, moov.byteLength, (t, p, sz) => {
+      if (t !== 'trak' || fps) return;
+      let mdia = null; kids(p + 8, p + sz, (t2, p2, s2) => { if (t2 === 'mdia') mdia = [p2, s2]; });
+      if (!mdia) return;
+      let ts = 0, isVideo = false, minf = null;
+      kids(mdia[0] + 8, mdia[0] + mdia[1], (t3, p3, s3) => {
+        if (t3 === 'mdhd') ts = moov.getUint8(p3 + 8) === 1 ? moov.getUint32(p3 + 28) : moov.getUint32(p3 + 20);
+        if (t3 === 'hdlr') isVideo = str(p3 + 16) === 'vide';
+        if (t3 === 'minf') minf = [p3, s3];
+      });
+      if (!isVideo || !ts || !minf) return;
+      kids(minf[0] + 8, minf[0] + minf[1], (t4, p4, s4) => {
+        if (t4 !== 'stbl') return;
+        kids(p4 + 8, p4 + s4, (t5, p5) => {
+          if (t5 !== 'stts') return;
+          const n = moov.getUint32(p5 + 12); let count = 0, dur = 0;
+          for (let i = 0; i < n; i++) { const c = moov.getUint32(p5 + 16 + i * 8), d = moov.getUint32(p5 + 20 + i * 8); count += c; dur += c * d; }
+          if (count > 1 && dur > 0) fps = ts * count / dur;
+        });
+      });
+    });
+    if (!fps || !isFinite(fps) || fps < 5 || fps > 1000) return null;
+    const near = SW_FPS_LIST.reduce((a, b) => Math.abs(b - fps) < Math.abs(a - fps) ? b : a);
+    return Math.abs(near - fps) / fps < 0.02 ? near : Math.round(fps * 100) / 100;
+  }
   function swElapsed(t) {
     if (crono.start == null) return { sec: 0, frames: 0 };
     const frames = Math.max(0, swFrame(crono.end != null ? crono.end : t) - swFrame(crono.start));
@@ -996,6 +1067,48 @@
 
   // Foto PNG del fotogramma: quello che si vede (inquadratura, scheletro, angoli,
   // cronometro) alla risoluzione piena del video; sull'iPad si salva in Foto o File
+  // ═══════════════ Finestra di anteprima (foto e PDF) ═══════════════
+  // actions: [{ label, primary, fn }]; restituisce la funzione che la chiude
+  function showPreview(title, fill, actions) {
+    const ov = document.createElement('div'); ov.className = 'pv';
+    const bar = document.createElement('div'); bar.className = 'pv-bar';
+    const t = document.createElement('div'); t.className = 't'; t.textContent = title; bar.appendChild(t);
+    const body = document.createElement('div'); body.className = 'pv-body';
+    const close = () => { ov.remove(); document.removeEventListener('keydown', esc); };
+    const esc = e => { if (e.key === 'Escape') close(); };
+    actions.concat([{ label: '✕ Chiudi', fn: close }]).forEach(a => {
+      const btn = document.createElement('button'); btn.className = 'btn' + (a.primary ? ' primary' : ''); btn.textContent = a.label;
+      btn.onclick = () => a.fn(close); bar.appendChild(btn);
+    });
+    fill(body);
+    ov.append(bar, body); document.body.appendChild(ov);
+    document.addEventListener('keydown', esc);
+    return close;
+  }
+
+  // ═══════════════ Foto PNG: anteprima accanto al player ═══════════════
+  // Il fotogramma com'è sullo schermo (inquadratura, scheletro, angoli, cronometro)
+  // alla risoluzione piena del video; si salva col 💾 (sull'iPad in Foto o File).
+  let shots = [];
+  function renderShots() {
+    $('shotsCard').style.display = shots.length ? '' : 'none';
+    $('shotCount').textContent = shots.length ? '(' + shots.length + ')' : '';
+    const box = $('shots'); box.innerHTML = '';
+    shots.forEach((sh, i) => {
+      const d = document.createElement('div'); d.className = 'shot' + (i === 0 && sh.fresh ? ' new' : '');
+      d.innerHTML = '<img alt=""><span class="when"></span><div class="acts"><button class="btn primary" data-a="save">💾 Salva</button><button class="btn" data-a="del" title="Togli">🗑</button></div>';
+      d.querySelector('img').src = sh.url;
+      d.querySelector('.when').textContent = sh.when;
+      d.querySelector('img').onclick = () => openShot(sh);
+      d.querySelector('[data-a=save]').onclick = () => saveBlob(sh.blob, sh.name, 'image/png', 'Immagine PNG');
+      d.querySelector('[data-a=del]').onclick = () => { URL.revokeObjectURL(sh.url); shots.splice(i, 1); renderShots(); };
+      box.appendChild(d);
+    });
+  }
+  function openShot(sh) {
+    showPreview(sh.name, body => { const im = document.createElement('img'); im.src = sh.url; im.style.background = '#111'; body.appendChild(im); },
+      [{ label: '💾 Salva foto', primary: true, fn: () => saveBlob(sh.blob, sh.name, 'image/png', 'Immagine PNG') }]);
+  }
   $('pngBtn').onclick = async () => {
     if (!mv.kind) return;
     if (mv.kind === 'video' && !vid.paused) vid.pause();
@@ -1003,8 +1116,13 @@
     const r = mv.capture({ png: true }); if (!r) return;
     const blob = await new Promise(res => r.canvas.toBlob(res, 'image/png'));
     if (!blob) { alert('Non riesco a creare l\'immagine su questo dispositivo.'); return; }
+    const when = mv.kind === 'video' ? fmt(vid.currentTime) : 'foto';
     const tt = mv.kind === 'video' ? '_' + fmt(vid.currentTime).replace(/[:.]/g, '-') : '';
-    await saveBlob(blob, fileBase() + tt + '.png', 'image/png', 'Immagine PNG');
+    shots.forEach(x => x.fresh = false);
+    shots.unshift({ blob, url: URL.createObjectURL(blob), name: fileBase() + tt + '.png', when, fresh: true });
+    if (shots.length > 12) { URL.revokeObjectURL(shots.pop().url); }
+    renderShots();
+    toast('Foto pronta: la trovi accanto al video');
   };
 
   // Fotogrammi per il PDF (solo Movimento)
@@ -1124,13 +1242,63 @@
   // jsPDF con Helvetica non ha frecce e simboli speciali
   const pdfTxt = s => String(s ?? '').replace(/[↔↕]/g, '').replace(/[’‘]/g, "'").replace(/[«»“”]/g, '"').replace(/…/g, '...').replace(/[–—]/g, '-');
 
+  // Registra i comandi di disegno mandati a jsPDF (che costruisce il PDF vero)
+  // per ridisegnarli su immagini: l'anteprima è lo stesso foglio, riga per riga.
+  function recordDoc(real) {
+    const pages = [[]];
+    const doc = {};
+    ['setFillColor', 'setDrawColor', 'setTextColor', 'setFont', 'setFontSize', 'rect', 'roundedRect', 'line', 'circle', 'addImage', 'text'].forEach(n => {
+      doc[n] = (...a) => { pages[pages.length - 1].push([n, a]); return real[n](...a); };
+    });
+    doc.addPage = (...a) => { pages.push([]); return real.addPage(...a); };
+    doc.splitTextToSize = (...a) => real.splitTextToSize(...a);
+    return { doc, pages };
+  }
+  async function renderRecorded(pages, k) {
+    const PW = 210, PH = 297, PT = 0.3528;   // mm per punto tipografico
+    const imgs = {};
+    for (const ops of pages) for (const [n, a] of ops) if (n === 'addImage' && !imgs[a[0]]) {
+      imgs[a[0]] = await new Promise(res => { const im = new Image(); im.onload = () => res(im); im.onerror = () => res(null); im.src = a[0]; });
+    }
+    const col = a => a.length >= 3 ? `rgb(${a[0]},${a[1]},${a[2]})` : `rgb(${a[0]},${a[0]},${a[0]})`;
+    return pages.map(ops => {
+      const c = document.createElement('canvas'); c.width = Math.round(PW * k); c.height = Math.round(PH * k);
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);
+      ctx.scale(k, k); ctx.lineWidth = 0.2; ctx.textBaseline = 'alphabetic';
+      let fill = '#000', stroke = '#000', txt = '#000', bold = false, size = 16;
+      const font = () => { ctx.font = (bold ? 'bold ' : '') + (size * PT) + 'px Helvetica, Arial, sans-serif'; };
+      const paint = st => { st = st || 'S'; if (/F/.test(st)) { ctx.fillStyle = fill; ctx.fill(); } if (/D|S/.test(st)) { ctx.strokeStyle = stroke; ctx.stroke(); } };
+      for (const [n, a] of ops) {
+        if (n === 'setFillColor') fill = col(a);
+        else if (n === 'setDrawColor') stroke = col(a);
+        else if (n === 'setTextColor') txt = col(a);
+        else if (n === 'setFont') bold = /bold/.test(a[1] || '');
+        else if (n === 'setFontSize') size = a[0];
+        else if (n === 'rect') { ctx.beginPath(); ctx.rect(a[0], a[1], a[2], a[3]); paint(a[4]); }
+        else if (n === 'roundedRect') { ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(a[0], a[1], a[2], a[3], a[4]); else ctx.rect(a[0], a[1], a[2], a[3]); paint(a[6]); }
+        else if (n === 'line') { ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(a[2], a[3]); ctx.strokeStyle = stroke; ctx.stroke(); }
+        else if (n === 'circle') { ctx.beginPath(); ctx.arc(a[0], a[1], a[2], 0, Math.PI * 2); paint(a[3]); }
+        else if (n === 'addImage') { const im = imgs[a[0]]; if (im) ctx.drawImage(im, a[2], a[3], a[4], a[5]); }
+        else if (n === 'text') {
+          font(); ctx.fillStyle = txt;
+          const al = (a[3] && a[3].align) || 'left';
+          ctx.textAlign = al === 'right' ? 'right' : al === 'center' ? 'center' : 'left';
+          (Array.isArray(a[0]) ? a[0] : [a[0]]).forEach((ln, i) => ctx.fillText(String(ln), a[1], a[2] + i * size * 1.15 * PT));
+        }
+      }
+      return c.toDataURL('image/jpeg', 0.85);
+    });
+  }
+
   $('pdfBtn').onclick = async () => {
     if (!captures.length) { alert('Aggiungi almeno un fotogramma con «📸 Aggiungi al PDF».'); return; }
     const btn = $('pdfBtn'); btn.disabled = true; const old = btn.textContent; btn.textContent = '⏳ PDF…';
     try {
       if (!window.jspdf) await loadScript(BASE + 'jspdf-2.5.1/jspdf.umd.min.js');
       const { jsPDF } = window.jspdf;
-      const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
+      const realDoc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
+      const rec = recordDoc(realDoc), doc = rec.doc;
       const PW = 210, PH = 297, M = 14, AC = hexRgb(ACCENT), BOTTOM = PH - 22;
       const logo = LOGO ? await toPng(LOGO) : null;
       const atleta = $('atleta').value.trim(), data = $('data').value;
@@ -1216,7 +1384,13 @@
       const rep = $('reportMov').value.trim();
       if (rep) { sectionTitle('Report dei risultati'); paragraph(rep); }
       footer();
-      await saveBlob(doc.output('blob'), fileBase() + '.pdf', 'application/pdf', 'PDF');
+      const blob = realDoc.output('blob'), name = fileBase() + '.pdf';
+      // anteprima: le pagine disegnate come immagini (sull'iPad il visore PDF in pagina mostra solo la prima)
+      const pages = await renderRecorded(rec.pages, 3.2);
+      showPreview('Anteprima PDF · ' + pages.length + (pages.length === 1 ? ' pagina' : ' pagine'), body => {
+        pages.forEach((src, i) => { const im = document.createElement('img'); im.src = src; im.alt = 'Pagina ' + (i + 1); body.appendChild(im);
+          const pg = document.createElement('div'); pg.className = 'pg'; pg.textContent = 'Pagina ' + (i + 1) + ' di ' + pages.length; body.appendChild(pg); });
+      }, [{ label: '💾 Salva PDF', primary: true, fn: () => saveBlob(blob, name, 'application/pdf', 'PDF') }]);
     } catch (e) { console.error(e); alert('Errore nella creazione del PDF: ' + (e.message || e)); }
     finally { btn.disabled = false; btn.textContent = old; }
   };
