@@ -502,6 +502,24 @@
         .ct-rows button:hover:not(:disabled) { background: #fdf6f6; }
         .ct-rows button:disabled { opacity: 0.4; cursor: default; }
 
+        /* ---- TABELLE FISSE MODIFICABILI: titolo e voci rinominabili, righe, nascondi ---- */
+        .tb-title { border-color: rgba(var(--accent-rgb), 0.22); }
+        .tb-title::placeholder { color: var(--accent); opacity: 1; }
+        .tb-hide { flex: none; width: 36px; height: 34px; border: 1px solid #ddd; border-radius: 4px; background: #fff; cursor: pointer; display: grid; place-items: center; color: #8a8a8a; padding: 0; }
+        .tb-hide:hover { border-color: var(--accent); color: var(--accent); background: #fdf6f6; }
+        table.grid input.lb-in { text-transform: uppercase; font-weight: 700; text-align: center; padding: 6px 4px; }
+        table.grid td.sub input.lb-in { color: var(--accent-dark); font-size: 13px; letter-spacing: 0.4px; }
+        table.grid input.lb-in::placeholder { color: inherit; opacity: 1; }
+        .ct-area { flex-direction: column; align-items: center; gap: 12px; }
+        .tb-hidden { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: center; font-size: 13px; color: #777; }
+        .tb-hidden button { font: inherit; font-size: 13px; font-weight: 700; color: var(--accent); background: #fff; border: 1px dashed rgba(var(--accent-rgb), 0.5); border-radius: 999px; padding: 7px 14px; cursor: pointer; }
+        .tb-hidden button:hover { background: #fdf6f6; }
+        .preview-frame[data-off] { display: none; }
+        /* foglio: l'altezza delle righe si adatta a quante righe ci sono */
+        .sheet .sh-board table.grid td { height: var(--rh, 22px); }
+        .sheet .sh-board.tight table.grid, .sheet .sh-board.tight .sh-col.fill table.grid { font-size: 12px; }
+        .sheet .sh-board.tight table.grid td.sub { font-size: 10.5px; }
+
         /* ---- CAMPO (schieramento) ---- */
         .pitch-section { margin-top: 34px; }
         .pitch-head {
@@ -1187,6 +1205,7 @@ window.SuiteFile = (function () {
         'Titolo della tabella': 'Table title', 'Elimina tabella': 'Delete table', '＋ Riga': '＋ Row', '− Riga': '− Row',
         'Eliminare la tabella "{t}"?': 'Delete table "{t}"?', 'L’ultima riga contiene del testo. Eliminarla?': 'The last row contains text. Delete it?',
         'TABELLE PERSONALIZZATE': 'CUSTOM TABLES', 'Tabelle personalizzate': 'Custom tables',
+        'Nascondi tabella': 'Hide table', 'Tabelle nascoste:': 'Hidden tables:', 'DA DX': 'FROM RIGHT', 'DA SX': 'FROM LEFT',
         'NOTE': 'NOTES', 'Indicazioni, consegne, palle inattive particolari…': 'Instructions, tasks, special set pieces…',
         // schemi
         'CALCI D’ANGOLO CONTRO DA DX': 'CORNERS AGAINST FROM RIGHT', 'CALCI D’ANGOLO CONTRO DA SX': 'CORNERS AGAINST FROM LEFT',
@@ -1263,6 +1282,23 @@ window.SuiteFile = (function () {
                 formations: ['3-3-2', '3-2-3', '3-4-1', '2-3-3', '3-1-3-1'] }
     };
     const STORAGE_KEY = 'posizionamentiState';
+    // Tabelle fisse: il mister può rinominarle, allungare/accorciare gli elenchi e nasconderle.
+    // La Formazione resta sempre (è legata al campo, ai numeri e al roster).
+    const FIXED_TABLES = ['cornerContro', 'cornerFavore', 'punCentrale', 'punDx', 'punSx', 'rigori'];
+    const TABLE_TITLES = {
+        formazione: 'FORMAZIONE', cornerContro: 'CALCI D’ANGOLO CONTRO', cornerFavore: 'CALCI D’ANGOLO A FAVORE',
+        punCentrale: 'PUNIZIONE CENTRALE', punDx: 'PUNIZIONI LATERALI DX', punSx: 'PUNIZIONI LATERALI SX', rigori: 'CALCI DI RIGORE'
+    };
+    // l'elenco di righe di ogni tabella fissa e quante righe può avere
+    const LISTS = {
+        cornerContro: { path: 'cornerContro.marcatori', min: 1, max: 8, pair: true },
+        cornerFavore: { path: 'cornerFavore.copertura', min: 1, max: 6 },
+        punCentrale: { path: 'punCentrale.barriera', min: 1, max: 7 },
+        punDx: { path: 'punDx.linea', min: 2, max: 11 },
+        punSx: { path: 'punSx.linea', min: 2, max: 11 },
+        rigori: { path: 'rigori.battitori', min: 1, max: 11 }
+    };
+    const EYE_OFF = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3l18 18"/><path d="M10.6 6.1A9.8 9.8 0 0 1 12 6c5 0 9 6 9 6a16 16 0 0 1-2.6 3.2"/><path d="M6.6 6.6C4.2 8.2 3 12 3 12s4 6 9 6a9 9 0 0 0 4-.9"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>';
     // Roster della squadra: unico per calcio a 11 e a 9, salvato a parte
     // così "Pulisci" e "Reset" della scheda non lo cancellano.
     const ROSTER_KEY = 'posizionamentiRoster';
@@ -1337,6 +1373,10 @@ window.SuiteFile = (function () {
             rigori: { battitori: arr(3) },
             // tabelle create dal mister: [{ id, title, rows: [{ a, b }] }]
             customTables: [],
+            // nomi cambiati dal mister per titoli e voci delle tabelle fisse: { 'T.cornerContro': '…', 'L.palo': '…' }
+            labels: {},
+            // tabelle fisse nascoste: spariscono anche il loro schema e la loro parte nel PDF
+            hidden: [],
             note: '',
             // posizioni personalizzate sul campo, per modulo:
             // { '4-4-2': [{ num, lx, dy, name }] }
@@ -1442,6 +1482,22 @@ window.SuiteFile = (function () {
                     }));
                 }
                 if (sd && Array.isArray(sd.customFormations)) state.data[m].customFormations = sd.customFormations.filter(f => typeof f === 'string');
+                if (sd && sd.labels && typeof sd.labels === 'object') {
+                    Object.keys(sd.labels).forEach(k => {
+                        if (typeof sd.labels[k] === 'string' && sd.labels[k].trim()) state.data[m].labels[k] = sd.labels[k].slice(0, 60);
+                    });
+                }
+                if (sd && Array.isArray(sd.hidden)) state.data[m].hidden = sd.hidden.filter(k => FIXED_TABLES.includes(k));
+                // elenchi allungati o accorciati dal mister: si tiene la lunghezza salvata
+                Object.values(LISTS).forEach(L => {
+                    const arr = sd && getPath(sd, L.path);
+                    if (!Array.isArray(arr)) return;
+                    const n = Math.max(L.min, Math.min(L.max, arr.length));
+                    setPath(state.data[m], L.path, Array.from({ length: n }, (_, i) => {
+                        const v = arr[i];
+                        return L.pair ? { a: String((v && v.a) || ''), b: String((v && v.b) || '') } : (typeof v === 'string' ? v : '');
+                    }));
+                });
                 if (sd && sd.spNotes && typeof sd.spNotes === 'object') {
                     Object.keys(sd.spNotes).forEach(k => {
                         if (typeof sd.spNotes[k] === 'string') state.data[m].spNotes[k] = sd.spNotes[k];
@@ -1500,6 +1556,25 @@ window.SuiteFile = (function () {
                 : `<span class="v">${esc(v)}</span>`;
         };
         const title = (t) => `<div class="block-title">${t}</div>`;
+        const L = d.labels || {};
+        const lab = (key, def) => L[key] || t(def);
+        // titolo: nell'app si rinomina (vuoto = nome standard); la Formazione non si nasconde
+        const head = (tb, def) => {
+            if (!editable) return title(esc(lab('T.' + tb, def)));
+            const hide = tb === 'formazione' ? '' :
+                `<button type="button" class="tb-hide" data-tb-act="hide" data-tb="${tb}" aria-label="${esc(t('Nascondi tabella'))}" title="${esc(t('Nascondi tabella'))}">${EYE_OFF}</button>`;
+            return `<div class="ct-head"><input type="text" class="ct-title tb-title" data-label="T.${tb}" value="${esc(L['T.' + tb] || '')}" placeholder="${esc(t(def))}" aria-label="${esc(t('Titolo della tabella'))}" autocomplete="off"/>${hide}</div>`;
+        };
+        // voce di una riga o di un gruppo (PALO, PANCHINA…): rinominabile, resta al suo posto negli schemi
+        const lbl = (key, def) => editable
+            ? `<input type="text" class="lb-in" data-label="${key}" value="${esc(L[key] || '')}" placeholder="${esc(t(def))}" autocomplete="off"/>`
+            : esc(lab(key, def));
+        const rowsCtl = (tb) => {
+            if (!editable) return '';
+            const spec = LISTS[tb], n = getPath(d, spec.path).length;
+            return `<div class="ct-rows"><button type="button" data-tb-act="rowAdd" data-tb="${tb}" ${n >= spec.max ? 'disabled' : ''}>${t('＋ Riga')}</button>` +
+                `<button type="button" data-tb-act="rowDel" data-tb="${tb}" ${n <= spec.min ? 'disabled' : ''}>${t('− Riga')}</button></div>`;
+        };
         // colgroup esplicito: con table-layout fisso le larghezze verrebbero
         // prese dalla prima riga, che a volte è un'intestazione su 2 colonne.
         const tbl = (kind, rows) => `<table class="grid"><colgroup><col class="c-${kind}"><col></colgroup>${rows}</table>`;
@@ -1509,26 +1584,26 @@ window.SuiteFile = (function () {
         for (let i = 0; i < c.starters; i++) {
             form += `<tr><td class="n">${plain('starterNums.' + i, editable ? '—' : '')}</td><td>${rost('starters.' + i, editable ? t('Titolare') : '')}</td></tr>`;
         }
-        form += `<tr><td class="sub" colspan="2">${t('PANCHINA')}</td></tr>`;
+        form += `<tr><td class="sub" colspan="2">${lbl('S.panchina', 'PANCHINA')}</td></tr>`;
         for (let i = 0; i < c.bench; i++) {
             form += `<tr><td class="n">${plain('benchNums.' + i, editable ? '—' : '')}</td><td>${rost('bench.' + i, editable ? t('Riserva') : '')}</td></tr>`;
         }
         form += `<tr><td class="n">${plain('extraNum', editable ? '—' : '')}</td><td>${rost('extra', editable ? t('Altro / staff') : '')}</td></tr>`;
 
         // CALCI D'ANGOLO CONTRO
-        let cc = `<tr><td class="lbl">${t('PALO')}</td><td>${val('cornerContro.palo')}</td></tr>
-                  <tr><td class="lbl">${t('VERTICE')}</td><td>${val('cornerContro.vertice')}</td></tr>
-                  <tr><td class="lbl">${t('2° PALO')}</td><td>${val('cornerContro.palo2')}</td></tr>
-                  <tr><td class="sub" colspan="2">${t('MARCATORI')}</td></tr>`;
+        let cc = `<tr><td class="lbl">${lbl('L.palo', 'PALO')}</td><td>${val('cornerContro.palo')}</td></tr>
+                  <tr><td class="lbl">${lbl('L.vertice', 'VERTICE')}</td><td>${val('cornerContro.vertice')}</td></tr>
+                  <tr><td class="lbl">${lbl('L.palo2', '2° PALO')}</td><td>${val('cornerContro.palo2')}</td></tr>
+                  <tr><td class="sub" colspan="2">${lbl('S.marcatori', 'MARCATORI')}</td></tr>`;
         d.cornerContro.marcatori.forEach((_, i) => {
             cc += `<tr><td class="lbl">${plain('cornerContro.marcatori.' + i + '.a', editable ? t('Avversario') : '')}</td><td>${val('cornerContro.marcatori.' + i + '.b', editable ? t('Marcatore') : '')}</td></tr>`;
         });
 
         // CALCI D'ANGOLO A FAVORE
-        let cf = `<tr><td class="sub" colspan="2">${t('BATTITORE')}</td></tr>
-                  <tr><td class="lbl">${t('DX')}</td><td>${val('cornerFavore.dx')}</td></tr>
-                  <tr><td class="lbl">${t('SX')}</td><td>${val('cornerFavore.sx')}</td></tr>
-                  <tr><td class="sub" colspan="2">${t('COPERTURA')}</td></tr>`;
+        let cf = `<tr><td class="sub" colspan="2">${lbl('S.battitore', 'BATTITORE')}</td></tr>
+                  <tr><td class="lbl">${lbl('L.cfdx', 'DX')}</td><td>${val('cornerFavore.dx')}</td></tr>
+                  <tr><td class="lbl">${lbl('L.cfsx', 'SX')}</td><td>${val('cornerFavore.sx')}</td></tr>
+                  <tr><td class="sub" colspan="2">${lbl('S.copertura', 'COPERTURA')}</td></tr>`;
         d.cornerFavore.copertura.forEach((_, i) => {
             cf += `<tr><td class="lbl">${ord(i + 1)}</td><td>${val('cornerFavore.copertura.' + i)}</td></tr>`;
         });
@@ -1538,13 +1613,13 @@ window.SuiteFile = (function () {
         d.punCentrale.barriera.forEach((_, i) => {
             pc += `<tr><td class="n">${ord(i + 1)}</td><td>${val('punCentrale.barriera.' + i)}</td></tr>`;
         });
-        pc += `<tr><td class="n">${t('INC.')}</td><td>${val('punCentrale.inc')}</td></tr>`;
+        pc += `<tr><td class="n">${lbl('L.inc', 'INC.')}</td><td>${val('punCentrale.inc')}</td></tr>`;
 
         // PUNIZIONI LATERALI
         const pun = (key) => {
             let h = `<tr><td class="n">${ord(1)}</td><td>${val(key + '.p1')}</td></tr>
                      <tr><td class="n">${ord(2)}</td><td>${val(key + '.p2')}</td></tr>
-                     <tr><td class="sub" colspan="2">${t('LINEA DIFENSIVA')}</td></tr>`;
+                     <tr><td class="sub" colspan="2">${lbl('S.linea.' + key, 'LINEA DIFENSIVA')}</td></tr>`;
             d[key].linea.forEach((_, i) => {
                 h += `<tr><td class="n">${i + 1}</td><td>${val(key + '.linea.' + i)}</td></tr>`;
             });
@@ -1552,7 +1627,7 @@ window.SuiteFile = (function () {
         };
 
         // CALCI DI RIGORE
-        let rig = `<tr><td class="sub" colspan="2">${t('BATTITORI')}</td></tr>`;
+        let rig = `<tr><td class="sub" colspan="2">${lbl('S.battitori', 'BATTITORI')}</td></tr>`;
         d.rigori.battitori.forEach((_, i) => {
             rig += `<tr><td class="n">${ord(i + 1)}</td><td>${val('rigori.battitori.' + i)}</td></tr>`;
         });
@@ -1561,39 +1636,67 @@ window.SuiteFile = (function () {
             ? `<textarea data-path="note" placeholder="${t('Indicazioni, consegne, palle inattive particolari…')}">${esc(d.note)}</textarea>`
             : `<div class="note-text">${esc(d.note)}</div>`;
 
+        const H = d.hidden || [];
+        const noteBox = `<div class="note-box"><table class="grid"><tr><td class="sub">${t('NOTE')}</td></tr></table>${note}</div>`;
+        const parts = [
+            { k: 'cornerContro', h: `${head('cornerContro', TABLE_TITLES.cornerContro)}${tbl('lbl', cc)}${rowsCtl('cornerContro')}`, rows: 4 + d.cornerContro.marcatori.length },
+            { k: 'cornerFavore', h: `${head('cornerFavore', TABLE_TITLES.cornerFavore)}${tbl('lbl', cf)}${rowsCtl('cornerFavore')}`, rows: 4 + d.cornerFavore.copertura.length },
+            { k: 'punCentrale', h: `${head('punCentrale', TABLE_TITLES.punCentrale)}${tbl('n', pc)}${rowsCtl('punCentrale')}`, rows: 1 + d.punCentrale.barriera.length },
+            { note: true, h: noteBox },
+            { k: 'punDx', h: `${head('punDx', TABLE_TITLES.punDx)}${tbl('n', pun('punDx'))}${rowsCtl('punDx')}`, rows: 3 + d.punDx.linea.length },
+            { k: 'punSx', h: `${head('punSx', TABLE_TITLES.punSx)}${tbl('n', pun('punSx'))}${rowsCtl('punSx')}`, rows: 3 + d.punSx.linea.length },
+            { k: 'rigori', h: `${head('rigori', TABLE_TITLES.rigori)}${tbl('n', rig)}${rowsCtl('rigori')}`, rows: 1 + d.rigori.battitori.length }
+        ].filter(b => !b.k || !H.includes(b.k));
+
         // Nell'app ogni tabella è un blocco a sé: layoutBoard() li incastra
-        // nelle colonne. Il foglio PDF mantiene le sue tre colonne fisse.
+        // nelle colonne. Le tabelle nascoste si rimettono dal fondo.
         if (editable) {
-            const blocks = [
-                `${title(t('FORMAZIONE'))}${tbl('n', form)}`,
-                `${title(t('CALCI D’ANGOLO CONTRO'))}${tbl('lbl', cc)}`,
-                `${title(t('CALCI D’ANGOLO A FAVORE'))}${tbl('lbl', cf)}`,
-                `${title(t('PUNIZIONE CENTRALE'))}${tbl('n', pc)}`,
-                `<div class="note-box"><table class="grid"><tr><td class="sub">${t('NOTE')}</td></tr></table>${note}</div>`,
-                `${title(t('PUNIZIONI LATERALI DX'))}${tbl('n', pun('punDx'))}`,
-                `${title(t('PUNIZIONI LATERALI SX'))}${tbl('n', pun('punSx'))}`,
-                `${title(t('CALCI DI RIGORE'))}${tbl('n', rig)}`
-            ].concat(customTableCards(val, plain));
-            return blocks.map((h, i) => `<div class="blk${i === 4 ? ' blk-note' : ''}" data-ord="${i}">${h}</div>`).join('') +
-                `<div class="ct-area"><button type="button" class="btn btn-outline" data-ct-act="new">${t('➕ Aggiungi tabella')}</button></div>`;
+            const blocks = [{ h: `${head('formazione', TABLE_TITLES.formazione)}${tbl('n', form)}` }].concat(parts)
+                .concat(customTableCards(val, plain).map(h => ({ h })));
+            const hiddenBar = H.length
+                ? `<div class="tb-hidden"><span>${t('Tabelle nascoste:')}</span>${H.map(k =>
+                    `<button type="button" data-tb-act="show" data-tb="${k}">↺ ${esc(lab('T.' + k, TABLE_TITLES[k]))}</button>`).join('')}</div>`
+                : '';
+            return blocks.map((b, i) => `<div class="blk${b.note ? ' blk-note' : ''}" data-ord="${i}">${b.h}</div>`).join('') +
+                `<div class="ct-area">${hiddenBar}<button type="button" class="btn btn-outline" data-ct-act="new">${t('➕ Aggiungi tabella')}</button></div>`;
         }
-        const colCls = 'sh-col';
-        const fillCls = 'sh-col fill';
+
+        // Foglio PDF: Formazione nella prima colonna; le altre tabelle visibili,
+        // nel loro ordine, si dividono fra seconda e terza colonna nel modo più
+        // pari; le note vanno nella colonna più corta. Se le righe sono tante,
+        // si abbassano un po' (e il testo si rimpicciolisce) per stare nel foglio.
+        const AVAIL = 640, TITLE = 23, GAP = 10, NOTE_MIN = 90;
+        const tabs = parts.filter(b => !b.note);
+        const hOf = (list, R) => list.reduce((a, b, i) => a + TITLE + b.rows * R + (i ? GAP : 0), 0);
+        let cut = 0, bestMax = Infinity;
+        for (let c = 0; c <= tabs.length; c++) {
+            const m = Math.max(hOf(tabs.slice(0, c), 22), hOf(tabs.slice(c), 22));
+            if (m < bestMax - 0.5) { bestMax = m; cut = c; }
+        }
+        const cols = [tabs.slice(0, cut), tabs.slice(cut)];
+        const noteCol = hOf(cols[0], 22) <= hOf(cols[1], 22) ? 0 : 1;
+        // altezza riga che fa stare la colonna più piena
+        let R = 22;
+        cols.forEach((list, i) => {
+            const rows = list.reduce((a, b) => a + b.rows, 0);
+            if (!rows) return;
+            const fixed = list.length * TITLE + Math.max(0, list.length - 1) * GAP + (i === noteCol ? NOTE_MIN + GAP : 0);
+            R = Math.min(R, Math.floor((AVAIL - fixed) / rows));
+        });
+        const formRows = c.starters + c.bench + 2;
+        R = Math.max(13, Math.min(R, Math.floor((AVAIL - TITLE) / formRows) + 8));
+        const colHtml = (list, i) => {
+            const withNote = i === noteCol;
+            const inner = list.map(b => `<div${!withNote && b.rows <= 5 ? ' class="pen"' : ''}>${b.h}</div>`).join('') + (withNote ? noteBox : '');
+            return `<div class="sh-col${withNote ? '' : ' fill'}">${inner}</div>`;
+        };
         return `
-            <div class="${fillCls}">
-                <div>${title(t('FORMAZIONE'))}${tbl('n', form)}</div>
+            <div class="sh-col fill">
+                <div>${head('formazione', TABLE_TITLES.formazione)}${tbl('n', form)}</div>
             </div>
-            <div class="${colCls}">
-                <div>${title(t('CALCI D’ANGOLO CONTRO'))}${tbl('lbl', cc)}</div>
-                <div>${title(t('CALCI D’ANGOLO A FAVORE'))}${tbl('lbl', cf)}</div>
-                <div>${title(t('PUNIZIONE CENTRALE'))}${tbl('n', pc)}</div>
-                <div class="note-box"><table class="grid"><tr><td class="sub">${t('NOTE')}</td></tr></table>${note}</div>
-            </div>
-            <div class="${fillCls}">
-                <div>${title(t('PUNIZIONI LATERALI DX'))}${tbl('n', pun('punDx'))}</div>
-                <div>${title(t('PUNIZIONI LATERALI SX'))}${tbl('n', pun('punSx'))}</div>
-                <div class="pen">${title(t('CALCI DI RIGORE'))}${tbl('n', rig)}</div>
-            </div>`;
+            ${colHtml(cols[0], 0)}
+            ${colHtml(cols[1], 1)}
+            <i class="rh-flag" data-rh="${R}" hidden></i>`;
     }
 
     // ---- TABELLE PERSONALIZZATE ----
@@ -1804,7 +1907,20 @@ window.SuiteFile = (function () {
     // I numeri di maglia si salvano quando si lascia la cella (non a ogni
     // tasto), così scrivendo "14" non si passa per il numero "1".
     const isNum = (el) => isNumPath(el.dataset.path || '');
+    // titoli e voci rinominati: vuoto = nome standard (che resta tradotto)
+    function setLabel(inp) {
+        const d = cur();
+        d.labels = d.labels || {};
+        const v = inp.value.replace(/\s+/g, ' ').trim().toUpperCase();
+        if (v) d.labels[inp.dataset.label] = v.slice(0, 60); else delete d.labels[inp.dataset.label];
+        save();
+        if (/^T\./.test(inp.dataset.label)) {
+            clearTimeout(setLabel.t);
+            setLabel.t = setTimeout(renderSetPieces, 500);
+        }
+    }
     board.addEventListener('input', (e) => {
+        if (e.target.dataset.label !== undefined) { setLabel(e.target); return; }
         if (!e.target.dataset.path || isNum(e.target)) return;
         commitInputs([e.target]);
     });
@@ -1813,6 +1929,31 @@ window.SuiteFile = (function () {
         else applyRosterNumber(e.target);
     });
 
+    board.addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-tb-act]');
+        if (!btn) return;
+        const d = cur(), tb = btn.dataset.tb, act = btn.dataset.tbAct;
+        d.hidden = d.hidden || [];
+        if (act === 'hide') {
+            if (!d.hidden.includes(tb)) d.hidden.push(tb);
+        } else if (act === 'show') {
+            d.hidden = d.hidden.filter(k => k !== tb);
+        } else if (LISTS[tb]) {
+            const spec = LISTS[tb], arr = getPath(d, spec.path);
+            if (act === 'rowAdd') {
+                if (arr.length >= spec.max) return;
+                arr.push(spec.pair ? { a: '', b: '' } : '');
+            } else if (act === 'rowDel') {
+                if (arr.length <= spec.min) return;
+                const last = arr[arr.length - 1];
+                const txt = spec.pair ? (last.a + last.b) : last;
+                if (txt.trim() && !confirm(t('L’ultima riga contiene del testo. Eliminarla?'))) return;
+                arr.pop();
+            }
+        }
+        redrawBoard();
+        renderSetPieces();
+    });
     board.addEventListener('click', (e) => {
         const btn = e.target.closest('[data-ct-act]');
         if (!btn) return;
@@ -2109,7 +2250,7 @@ window.SuiteFile = (function () {
     // Le celle vicine si trovano per posizione sullo schermo, così le
     // frecce funzionano anche passando da una tabella all'altra e con
     // qualsiasi disposizione delle colonne (PC, iPad, telefono).
-    const gridInputs = () => [...board.querySelectorAll('table.grid input')];
+    const gridInputs = () => [...board.querySelectorAll('table.grid input[data-path]')];
     function neighbor(el, dir) {
         const r = el.getBoundingClientRect();
         const cx = (r.left + r.right) / 2, cy = (r.top + r.bottom) / 2;
@@ -2174,7 +2315,7 @@ window.SuiteFile = (function () {
 
     board.addEventListener('keydown', (e) => {
         const el = e.target;
-        if (!el.matches('table.grid input')) return;
+        if (!el.matches('table.grid input[data-path]')) return;
         const k = e.key;
         if (k === 'Escape' && multiSel()) { clearSel(); return; }
         if ((k === 'Delete' || k === 'Backspace') && multiSel()) {
@@ -2213,9 +2354,9 @@ window.SuiteFile = (function () {
     // selezione col mouse: clic e trascina, oppure Maiusc + clic
     let dragFrom = null;
     board.addEventListener('mousedown', (e) => {
-        const el = e.target.closest('table.grid input');
+        const el = e.target.closest('table.grid input[data-path]');
         if (!el || e.button !== 0) return;
-        if (e.shiftKey && document.activeElement && document.activeElement.matches('#board table.grid input')) {
+        if (e.shiftKey && document.activeElement && document.activeElement.matches('#board table.grid input[data-path]')) {
             e.preventDefault();
             selectRange(selAnchor || document.activeElement, el);
             return;
@@ -2225,7 +2366,7 @@ window.SuiteFile = (function () {
     });
     board.addEventListener('mouseover', (e) => {
         if (!dragFrom || !(e.buttons & 1)) return;
-        const el = e.target.closest('table.grid input');
+        const el = e.target.closest('table.grid input[data-path]');
         if (!el || (el === dragFrom && !multiSel())) return;
         selectRange(dragFrom, el);
         window.getSelection().removeAllRanges();
@@ -2382,7 +2523,15 @@ window.SuiteFile = (function () {
     $('clearBtn').addEventListener('click', () => {
         if (!confirm(t('Cancellare tutti i posizionamenti del calcio a {m}?', { m: state.mode }))) return;
         const keep = cur().customSchemes || [], keepF = cur().customFormations || [];
+        const old = cur();
         state.data[state.mode] = emptyModeData(state.mode);
+        // la struttura delle tabelle (nomi, righe, tabelle nascoste) resta
+        cur().labels = old.labels || {};
+        cur().hidden = old.hidden || [];
+        Object.values(LISTS).forEach(L => {
+            const a = getPath(old, L.path);
+            if (Array.isArray(a)) setPath(cur(), L.path, a.map(() => (L.pair ? { a: '', b: '' } : '')));
+        });
         cur().customSchemes = keep;      // gli schemi personalizzati restano, svuotati
         cur().customFormations = keepF;  // e anche i moduli creati dal mister
         save();
@@ -2850,8 +2999,18 @@ window.SuiteFile = (function () {
     ];
     // schemi personalizzati del mister: { id, title, type: 'half' | 'full' }
     const customOf = (kind) => (cur().customSchemes || []).find(c => c.id === kind);
+    // tabella da cui prende i nomi ogni schema fisso
+    const SP_TABLE = { ccdx: 'cornerContro', ccsx: 'cornerContro', cfdx: 'cornerFavore', cfsx: 'cornerFavore', pdx: 'punDx', psx: 'punSx', pc: 'punCentrale' };
+    // titolo dello schema: se il mister ha rinominato la tabella, si usa quel nome
+    function spBaseTitle(k) {
+        const o = (cur().labels || {})['T.' + SP_TABLE[k.kind]];
+        if (!o) return t(k.title);
+        const corner = cornerOf(k.kind);
+        return corner ? o + ' ' + t(corner[2] === 'dx' ? 'DA DX' : 'DA SX') : o;
+    }
     function spKinds() {
-        return SP_BASE.map(k => ({ ...k, title: t(k.title) }))
+        const H = cur().hidden || [];
+        return SP_BASE.filter(k => !H.includes(SP_TABLE[k.kind])).map(k => ({ ...k, title: spBaseTitle(k) }))
             .concat((cur().customSchemes || []).map(c => ({ kind: c.id, title: c.title, custom: c.type })));
     }
     // corner: 'cc' / 'cf' + lato ('dx' = pallone a destra nel disegno).
@@ -2894,9 +3053,12 @@ window.SuiteFile = (function () {
             const mx = (x) => dx ? x : 68 - x;
             if (dx) add('dx', t('DX'), 'cornerFavore.dx', 65, 3.2);
             else add('sx', t('SX'), 'cornerFavore.sx', 3, 3.2);
-            add('c0', ord(1), 'cornerFavore.copertura.0', 34, 20);
-            add('c1', ord(2), 'cornerFavore.copertura.1', mx(21), 25);
-            add('c2', ord(3), 'cornerFavore.copertura.2', mx(47), 25);
+            // le prime tre coperture al loro posto; le altre su una fila più dietro
+            const COP = [[34, 20], [21, 25], [47, 25]];
+            d.cornerFavore.copertura.forEach((_, i) => {
+                const p = COP[i] || [12 + ((i - 3) % 4) * 14.5, 31 + Math.floor((i - 3) / 4) * 6];
+                add('c' + i, ord(i + 1), 'cornerFavore.copertura.' + i, i === 0 ? p[0] : mx(p[0]), p[1]);
+            });
         } else {
             // punizione laterale: definita per il lato destro, specchiata per il sinistro
             const key = kind === 'pdx' ? 'punDx' : 'punSx';
@@ -2906,7 +3068,7 @@ window.SuiteFile = (function () {
             const n = d[key].linea.length;
             d[key].linea.forEach((_, i) => {
                 // il n. 1 è il più vicino alla barriera (lato del pallone)
-                const x = 44 - i * (32 / (n - 1));
+                const x = n > 1 ? 44 - i * (32 / (n - 1)) : 28;
                 add('l' + i, String(i + 1), key + '.linea.' + i, mx(x), 12.5, { nameUp: i % 2 === 1 });
             });
         }
@@ -3342,7 +3504,7 @@ window.SuiteFile = (function () {
                      <span class="sp-type">${k.custom === 'full' ? t('Campo intero') : t('Metà campo')}</span>
                      <button type="button" class="sp-act" data-act="rename" data-kind="${k.kind}">${t('✏️ Rinomina')}</button>
                      <button type="button" class="sp-act" data-act="delete" data-kind="${k.kind}">${t('🗑 Elimina')}</button></div>`
-                : `<div class="block-title">${k.title}</div>`;
+                : `<div class="block-title">${esc(k.title)}</div>`;
             const tools = `<div class="sp-tools" data-kind="${k.kind}">
                 <button type="button" class="sp-act" data-act="selmode" data-kind="${k.kind}">${t('☐ Seleziona')}</button>
                 <button type="button" class="sp-act sel-only" data-act="selall" data-kind="${k.kind}">${t('Tutte')}</button>
@@ -4033,6 +4195,11 @@ window.SuiteFile = (function () {
 
     function buildSheet() {
         sheet.innerHTML = sheetHead(t('POSIZIONAMENTI')) + `<div class="sh-board">${buildBoard(false)}</div>`;
+        // altezza delle righe calcolata da buildBoard per far stare tutto nel foglio
+        const shBoard = sheet.querySelector('.sh-board');
+        const rh = +((shBoard.querySelector('.rh-flag') || {}).dataset || {}).rh || 22;
+        shBoard.style.setProperty('--rh', rh + 'px');
+        shBoard.classList.toggle('tight', rh < 20);
 
         // Pagina 2: campo stampabile (solo linee nere) + panchina
         const d = cur();
@@ -4050,9 +4217,11 @@ window.SuiteFile = (function () {
             </div>`;
 
         // Pagine 3-9: palle inattive, uno schema per pagina (solo linee nere)
+        const hid = d.hidden || [];
         SP_BASE.forEach((k, i) => {
-            $('sheet' + (i + 3)).innerHTML = sheetHead(t(k.title)) +
-                `<div class="sh-sp">${spSVG(k.kind, true)}</div>`;
+            const el = $('sheet' + (i + 3)), off = hid.includes(SP_TABLE[k.kind]);
+            el.parentNode.toggleAttribute('data-off', off);
+            el.innerHTML = off ? '' : sheetHead(esc(spBaseTitle(k))) + `<div class="sh-sp">${spSVG(k.kind, true)}</div>`;
         });
         // poi una pagina per ogni schema personalizzato
         $('extraFrames').innerHTML = (cur().customSchemes || []).map(c =>
@@ -4084,9 +4253,9 @@ window.SuiteFile = (function () {
         // Il contenuto scalato mantiene l'ingombro originale: lo limitiamo
         // con dimensioni esplicite sul contenitore.
         scaler.style.width = (1122 * scale) + 'px';
-        const pages = scaler.querySelectorAll('.preview-frame').length;
+        const pages = scaler.querySelectorAll('.preview-frame:not([data-off])').length;
         scaler.style.height = ((790 * pages + 24 * (pages - 1)) * scale) + 'px';
-        scaler.querySelectorAll('.preview-frame').forEach(f => { f.style.width = '1122px'; });
+        scaler.querySelectorAll('.preview-frame:not([data-off])').forEach(f => { f.style.width = '1122px'; });
         $('zoomFitBtn').textContent = Math.round(scale * 100) + '%';
     }
     function changeZoom(step) {
@@ -4108,7 +4277,7 @@ window.SuiteFile = (function () {
             customTablePages().map((_, i) => t('Tabelle personalizzate') + (tablePages > 1 ? ' ' + (i + 1) : '')));
     }
     function renderPagePick() {
-        const frames = [...scaler.querySelectorAll('.preview-frame')];
+        const frames = [...scaler.querySelectorAll('.preview-frame:not([data-off])')];
         frames.forEach((f, i) => f.classList.toggle('excluded', skipPages.has(i)));
         const names = pageNames();
         const all = skipPages.size === 0;
@@ -4127,7 +4296,7 @@ window.SuiteFile = (function () {
     });
     $('pagePick').addEventListener('click', (e) => {
         if (e.target.id !== 'pagesAllBtn') return;
-        const count = scaler.querySelectorAll('.preview-frame').length;
+        const count = scaler.querySelectorAll('.preview-frame:not([data-off])').length;
         skipPages = skipPages.size === 0 ? new Set([...Array(count).keys()]) : new Set();
         renderPagePick();
     });
@@ -4174,7 +4343,7 @@ window.SuiteFile = (function () {
         };
         // Solo le pagine scelte. Per ogni foglio dopo il primo si aggiunge
         // una pagina A4 orizzontale e lo si cattura.
-        const sheets = [...scaler.querySelectorAll('.sheet')].filter((_, i) => !skipPages.has(i));
+        const sheets = [...scaler.querySelectorAll('.preview-frame:not([data-off]) .sheet')].filter((_, i) => !skipPages.has(i));
         if (!sheets.length) {
             btn.classList.remove('loading');
             btn.disabled = false;
