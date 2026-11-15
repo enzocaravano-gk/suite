@@ -203,6 +203,7 @@
               <button data-p="tutto">Tutto</button>
               <button data-p="gambe">Gambe</button>
               <button data-p="busto">Busto</button>
+              <button data-p="nessuno" title="Nessun marker sul corpo">Nessuno</button>
             </div>
             <span class="sp"></span>
             <button class="btn" id="swBtn" title="Cronometro">⏱ Cronometro</button>
@@ -494,7 +495,7 @@
   const PART_LBL = { gambe: 'Gambe', busto: 'Busto' };
   const ALL_PARTS = Object.keys(PART_LBL);
   let PARTS = new Set(ALL_PARTS);
-  const partsLabel = ps => ps.length === ALL_PARTS.length ? 'Tutto' : ps.map(x => PART_LBL[x]).join(' + ');
+  const partsLabel = ps => !ps.length ? 'Senza marker' : ps.length === ALL_PARTS.length ? 'Tutto' : ps.map(x => PART_LBL[x]).join(' + ');
   function drawSkeleton(ctx, lm, toPx, unit) {
     const BONES = [...PARTS].flatMap(k => PART_BONES[k]);
     ctx.save();
@@ -824,7 +825,7 @@
     stage: $('movStage'), vista: 'front', modo: 'movimento', video: true,
     emptyTitle: 'Carica un video o una foto', emptyText: 'Tocca qui oppure usa «Carica video o foto».<br>Tutto resta su questo dispositivo.',
     onPick: () => $('movInput').click(), onFile: f => loadMovFile(f),
-    onUpdate: V => { $('movMis').innerHTML = misTable(V, 'Carica un video o una foto.'); },
+    onUpdate: V => { $('movMis').innerHTML = V.kind && !PARTS.size ? '<div class="none">Nessun marker sul corpo: scegli Gambe, Busto o Tutto per misurare.</div>' : misTable(V, 'Carica un video o una foto.'); },
     onCaptureDraw: (ctx, W, H) => swDrawOnCanvas(ctx, W, H),
     onTime: updTime, onPlay: p => { $('playIco').innerHTML = p ? '<path d="M6 5h4v14H6zM14 5h4v14h-4z"/>' : '<path d="M7 5v14l12-7z"/>'; },
   });
@@ -837,18 +838,17 @@
     $('vctrl').classList.toggle('on', isVid); $('vhint').style.display = isVid ? '' : 'none';
     $('capBtn').disabled = false; $('pngBtn').disabled = false;
   }
-  // Tutto = gambe e busto insieme; Gambe o Busto = solo quella parte
+  // Tutto = gambe e busto insieme; Gambe o Busto = solo quella parte; Nessuno = nessun marker
   function showParts() {
     const all = PARTS.size === ALL_PARTS.length;
-    document.querySelectorAll('#partSeg button').forEach(x => x.classList.toggle('on', x.dataset.p === 'tutto' ? all : !all && PARTS.has(x.dataset.p)));
+    document.querySelectorAll('#partSeg button').forEach(x => x.classList.toggle('on', x.dataset.p === 'tutto' ? all : x.dataset.p === 'nessuno' ? PARTS.size === 0 : !all && PARTS.has(x.dataset.p)));
   }
-  try { const sp = JSON.parse(localStorage.getItem('movimentoParti') || 'null'); if (Array.isArray(sp) && sp.length) PARTS = new Set(sp.filter(x => PART_LBL[x])); } catch (e) {}
-  if (!PARTS.size) PARTS = new Set(ALL_PARTS);
+  try { const sp = JSON.parse(localStorage.getItem('movimentoParti') || 'null'); if (Array.isArray(sp)) PARTS = new Set(sp.filter(x => PART_LBL[x])); } catch (e) {}
   showParts();
   document.querySelectorAll('#partSeg button').forEach(b => b.onclick = () => {
     const p = b.dataset.p;
     // Gambe e Busto mostrano solo quella parte; Tutto le mostra insieme
-    PARTS = new Set(p === 'tutto' ? ALL_PARTS : [p]);
+    PARTS = new Set(p === 'tutto' ? ALL_PARTS : p === 'nessuno' ? [] : [p]);
     try { localStorage.setItem('movimentoParti', JSON.stringify([...PARTS])); } catch (e) {}
     showParts(); mv.redraw();
   });
