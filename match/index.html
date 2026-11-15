@@ -524,6 +524,17 @@
         .rtb-sep { width: 1px; height: 18px; background: rgba(255,255,255,.25); margin: 0 3px; }
         .rtb-col i { display: inline-block; width: 16px; height: 16px; border-radius: 50%; border: 2px solid rgba(255,255,255,.55); vertical-align: middle; }
         .rtb-col.on i { border-color: #fff; box-shadow: 0 0 0 2px #ffd21f; }
+        /* cronometro sul video: misura il tempo del video (fotogramma per fotogramma), non dell'orologio */
+        .review-sw { display: none; position: absolute; left: 10px; bottom: 10px; z-index: 11; background: rgba(0,0,0,.78); color: #fff;
+            border: 2px solid #22d3ee; border-radius: 12px; padding: 6px 12px 5px; cursor: pointer; user-select: none; -webkit-user-select: none; text-align: center; }
+        .review-sw.on { display: block; }
+        .review-sw.run { border-color: #22c55e; }
+        .review-sw .sw-time { font: 800 clamp(20px, 3.4vw, 34px)/1.05 ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-variant-numeric: tabular-nums; letter-spacing: .5px; }
+        .review-sw .sw-sub { font-size: 11px; opacity: .75; margin-top: 2px; white-space: nowrap; }
+        #reviewSwBar { border-color: #22d3ee; }
+        #reviewSwBar button { width: auto; padding: 0 10px; font-size: 13px; }
+        #reviewSwBar select { background: transparent; color: #fff; border: 0; font: 700 12px/1 inherit; padding: 0 4px; height: 28px; cursor: pointer; }
+        #reviewSwBar select option { color: #111; }
         .review-text-mark { position: absolute; top: calc(100% + 3px); height: 4px; min-width: 4px; background: #ffd21f; border-radius: 2px; pointer-events: all; cursor: pointer; }
         .review-text-mark::before { content: ""; position: absolute; inset: -6px 0; }
         .review-laser-orb {
@@ -911,7 +922,7 @@
     "Heatmap Aggregata":"Aggregated Heatmap","Importa":"Import","In Porta":"On Target","Indietro":"Back",
     "Inserisci un nome per questa sessione":"Enter a name for this session","Inserisci un nome.":"Enter a name.",
     "Inverti":"Invert","LIVE IN TRIBUNA":"LIVE FROM THE STANDS",
-    "Laser: orb rosso per indicare":"Laser: red orb to point",
+    "Laser: orb rosso per indicare":"Laser: red orb to point","Frame: avanzamento di un fotogramma (fps reali del video)":"Frame: step one frame (real video fps)","Cronometro: tocca per avviare e fermare, conta i fotogrammi del video":"Stopwatch: tap to start and stop, counts the video frames",
     "Zoom: tocca un punto per ingrandire, trascina per spostarti":"Zoom: tap a point to zoom in, drag to move around","Riduci":"Zoom out","Elimina testo":"Delete text","Testo: tocca il video per scrivere, resta per i secondi scelti ed esce anche nelle clip":"Text: tap the video to write, it stays for the chosen seconds and also shows in clips","Meno secondi":"Fewer seconds","Più secondi":"More seconds","Testo più piccolo":"Smaller text","Testo più grande":"Larger text","Bianco":"White","Giallo":"Yellow","Rosso":"Red","Nero":"Black","Testo sul video":"Text on video","Puntatore più piccolo":"Smaller pointer","Puntatore più grande":"Larger pointer","Ingrandisci":"Zoom in","Immagine intera":"Full picture","MODALITÀ VIDEO":"VIDEO MODE",
     "Media per Partita":"Average per Match","Menu sessione":"Session menu","NOME FILE":"FILE NAME",
     "Nessun evento associato. Puoi comunque creare clip e usare gli strumenti.":"No associated event. You can still create clips and use the tools.",
@@ -944,7 +955,7 @@
     "⇄ Cambia squadra":"⇄ Change team","⏩ DOPO":"⏩ AFTER","⏪ PRIMA":"⏪ BEFORE",
     "◀ ATTACCO":"◀ ATTACK","◀ DIFESA":"◀ DEFENSE","⚡ Solo Attacco (Z9–Z16)":"⚡ Attack Only (Z9–Z16)",
     "⚽ Gol":"⚽ Goal","Gol":"Goal","✓ Clip salvata!":"✓ Clip saved!","🔍 ZOOM ATTIVO":"🔍 ZOOM ACTIVE","✏️ TESTO: tocca il video per scrivere":"✏️ TEXT: tap the video to write",
-    "🔴 LASER ATTIVO":"🔴 LASER ACTIVE","🛡 Solo Difesa (Z1–Z8)":"🛡 Defense Only (Z1–Z8)",
+    "🔴 LASER ATTIVO":"🔴 LASER ACTIVE","tocca per avviare":"tap to start","fotogrammi":"frames","fermo":"stopped","Ferma":"Stop","Avvia":"Start","🛡 Solo Difesa (Z1–Z8)":"🛡 Defense Only (Z1–Z8)",
     "Clip manuale · ":"Manual clip · ","Sessione importata":"Session imported","Errore: ":"Error: ",
     "generato il":"generated on","Generato il":"Generated on","STORICO":"HISTORY","VIDEO":"VIDEO","Menu":"Menu",
     "SESSIONE":"SESSION","DATI":"DATA","INTERVALLO":"HALF-TIME","1° TEMPO":"1ST HALF","2° TEMPO":"2ND HALF",
@@ -1620,6 +1631,7 @@ function analisiAvviso(msg) {
                                 <button class="posture-card-btn" id="reviewZoomBtn" onclick="reviewToggleZoom()" title="Lente ingrandimento"><i class="fas fa-search-plus"></i></button>
                                 <button class="posture-card-btn" id="reviewLaserBtn" onclick="reviewToggleLaser()" title="Puntatore laser"><i class="fas fa-dot-circle"></i></button>
                                 <button class="posture-card-btn" id="reviewTextBtn" onclick="reviewToggleText()" title="Testo sul video"><i class="fas fa-font"></i></button>
+                                <button class="posture-card-btn" id="reviewSwBtn" onclick="reviewToggleSw()" title="Cronometro"><i class="fas fa-stopwatch"></i></button>
                                 <button class="posture-card-btn" onclick="reviewAvviaClipManuale()" title="Taglia clip dal momento attuale" style="border-color:var(--purple);color:var(--purple);"><i class="fas fa-cut"></i> Clip</button>
                             </div>
                         </div>
@@ -1633,6 +1645,10 @@ function analisiAvviso(msg) {
                             <div id="reviewTextLayer" class="review-text-layer"></div>
                             <div id="reviewLaserOrb" class="review-laser-orb"></div>
                             <div id="reviewToolBadge" class="review-tool-badge"></div>
+                            <div id="reviewSw" class="review-sw" onclick="swGo()" title="Tocca per avviare / fermare">
+                                <div class="sw-time" id="swTime">00:00.000</div>
+                                <div class="sw-sub" id="swSub">tocca per avviare</div>
+                            </div>
                             <div class="review-bars">
                             <div class="review-zoom-bar" id="reviewZoomBar">
                                 <button type="button" onclick="reviewZoomStep(-1)" title="Riduci" aria-label="Riduci">−</button>
@@ -1652,6 +1668,12 @@ function analisiAvviso(msg) {
                                 <button type="button" class="rtb-col" data-c="yellow" onclick="reviewTextColor('yellow')" title="Giallo" aria-label="Giallo"><i style="background:#ffd21f"></i></button>
                                 <button type="button" class="rtb-col" data-c="red" onclick="reviewTextColor('red')" title="Rosso" aria-label="Rosso"><i style="background:#ff4040"></i></button>
                                 <button type="button" class="rtb-col" data-c="black" onclick="reviewTextColor('black')" title="Nero" aria-label="Nero"><i style="background:#111"></i></button>
+                            </div>
+                            <div class="review-zoom-bar" id="reviewSwBar">
+                                <button type="button" id="swGoBtn" onclick="swGo()" title="Avvia / ferma il cronometro">▶ Avvia</button>
+                                <button type="button" onclick="swReset()" title="Azzera" aria-label="Azzera">⟲</button>
+                                <i class="rtb-sep"></i>
+                                <select id="swFps" onchange="swSetFps(this.value)" title="Fotogrammi al secondo del video"></select>
                             </div>
                             <div class="review-zoom-bar" id="reviewLaserBar">
                                 <button type="button" id="reviewLaserMinus" onclick="reviewLaserStep(-1)" title="Puntatore più piccolo" aria-label="Puntatore più piccolo">−</button>
@@ -1692,7 +1714,8 @@ function analisiAvviso(msg) {
                         <span><i class="fas fa-search-plus" style="color:var(--blue);margin-right:4px;"></i>Zoom: tocca un punto per ingrandire, trascina per spostarti</span>
                         <span><i class="fas fa-dot-circle" style="color:var(--red);margin-right:4px;"></i>Laser: orb rosso per indicare</span>
                         <span><i class="fas fa-font" style="color:#c99a00;margin-right:4px;"></i>Testo: tocca il video per scrivere, resta per i secondi scelti ed esce anche nelle clip</span>
-                        <span><i class="fas fa-step-forward" style="color:var(--orange);margin-right:4px;"></i>Frame: avanzamento 1/30s</span>
+                        <span><i class="fas fa-step-forward" style="color:var(--orange);margin-right:4px;"></i>Frame: avanzamento di un fotogramma (fps reali del video)</span>
+                        <span><i class="fas fa-stopwatch" style="color:#22d3ee;margin-right:4px;"></i>Cronometro: tocca per avviare e fermare, conta i fotogrammi del video</span>
                     </div>
                 </div>
 
@@ -2633,6 +2656,7 @@ function analisiAvviso(msg) {
         const vid = document.getElementById('reviewVideo');
         vid.src = URL.createObjectURL(file); vid.load(); vid.style.display = 'block';
         rtLoad('matchTexts:' + file.name + ':' + file.size);
+        swOnNewVideo();
         document.getElementById('reviewVideoPlaceholder').style.display = 'none';
         vid.onloadedmetadata = () => {
             document.getElementById('reviewVidDur').textContent = formatAnalisiTime(vid.duration || 0);
@@ -2845,6 +2869,104 @@ function analisiAvviso(msg) {
         document.getElementById('reviewTextBar').classList.add('on');
         reviewZoomApply(); rtRender(); reviewUpdateToolUI();
     }
+    // ===== CRONOMETRO =====
+    // Conta il tempo DEL VIDEO, non dell'orologio: funziona a qualsiasi velocità,
+    // in pausa e fotogramma per fotogramma. Il tempo è sempre un numero intero di
+    // fotogrammi diviso gli fps del video (rilevati mentre il video scorre).
+    const SW_FPS_LIST = [23.976, 24, 25, 29.97, 30, 48, 50, 59.94, 60, 100, 119.88, 120, 240];
+    const sw = { on: false, start: null, end: null, fpsAuto: null, fpsManual: null, samples: [], last: null, raf: 0 };
+    const swFps = () => sw.fpsManual || sw.fpsAuto || 30;
+    const swFrame = t => Math.round(t * swFps() + 1e-6);
+    function swFmt(sec) {
+        const ms = Math.max(0, Math.round(sec * 1000));
+        const m = Math.floor(ms / 60000), s = Math.floor(ms / 1000) % 60, r = ms % 1000;
+        return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0') + '.' + String(r).padStart(3, '0');
+    }
+    const swVid = () => { const v = document.getElementById('reviewVideo'); return v && v.src && v.src !== window.location.href ? v : null; };
+    function swFpsLabel(f) { return (Math.round(f * 100) / 100) + ' fps'; }
+    function swFillFps() {
+        const sel = document.getElementById('swFps'); if (!sel) return;
+        sel.innerHTML = `<option value="auto">${sw.fpsAuto ? 'Auto · ' + swFpsLabel(sw.fpsAuto) : 'Auto · rilevo…'}</option>` +
+            SW_FPS_LIST.map(f => `<option value="${f}">${swFpsLabel(f)}</option>`).join('');
+        sel.value = sw.fpsManual ? String(sw.fpsManual) : 'auto';
+    }
+    function swSetFps(v) { sw.fpsManual = v === 'auto' ? null : Number(v); reviewFPS = swFps(); swRender(); }
+    // fps reali: durata del singolo fotogramma letta mentre il video scorre
+    function swWatch() {
+        const v = document.getElementById('reviewVideo');
+        if (!v || !v.requestVideoFrameCallback) return;
+        const gen = sw.gen = (sw.gen || 0) + 1;   // un solo ascolto per video
+        const cb = (now, md) => {
+            if (gen !== sw.gen) return;
+            if (sw.last && md.presentedFrames - sw.last.n === 1) {
+                const d = md.mediaTime - sw.last.t;
+                if (d > 0.002 && d < 0.2) sw.samples.push(d);
+                if (sw.samples.length >= 12) {
+                    const sorted = sw.samples.slice().sort((a, b) => a - b);
+                    const raw = 1 / sorted[Math.floor(sorted.length * 0.2)];
+                    const near = SW_FPS_LIST.reduce((a, b) => Math.abs(b - raw) < Math.abs(a - raw) ? b : a);
+                    const f = Math.abs(near - raw) / raw < 0.03 ? near : Math.round(raw * 100) / 100;
+                    if (f !== sw.fpsAuto) { sw.fpsAuto = f; if (!sw.fpsManual) reviewFPS = f; swFillFps(); swRender(); }
+                    if (sw.samples.length > 120) sw.samples = sw.samples.slice(-60);
+                }
+            }
+            sw.last = { n: md.presentedFrames, t: md.mediaTime };
+            v.requestVideoFrameCallback(cb);
+        };
+        v.requestVideoFrameCallback(cb);
+    }
+    function swOnNewVideo() { sw.fpsAuto = null; sw.samples = []; sw.last = null; sw.start = sw.end = null; reviewFPS = swFps(); swFillFps(); swRender(); swWatch(); }
+    // tempo misurato (in secondi, a fotogrammi interi) e numero di fotogrammi
+    function swElapsed(t) {
+        if (sw.start == null) return { sec: 0, frames: 0 };
+        const endT = sw.end != null ? sw.end : t;
+        const frames = Math.max(0, swFrame(endT) - swFrame(sw.start));
+        return { sec: frames / swFps(), frames };
+    }
+    function swRender() {
+        if (!sw.on) return;
+        const v = swVid(), e = swElapsed(v ? v.currentTime : 0);
+        const running = sw.start != null && sw.end == null;
+        document.getElementById('swTime').textContent = swFmt(e.sec);
+        document.getElementById('swSub').textContent = sw.start == null ? MT('tocca per avviare')
+            : `${e.frames} ${MT('fotogrammi')} · ${swFpsLabel(swFps())}${running ? '' : ' · ' + MT('fermo')}`;
+        document.getElementById('reviewSw').classList.toggle('run', running);
+        document.getElementById('swGoBtn').textContent = running ? '⏹ ' + MT('Ferma') : '▶ ' + MT('Avvia');
+    }
+    function swLoop() { swRender(); if (sw.on) sw.raf = requestAnimationFrame(swLoop); }
+    function reviewToggleSw() {
+        sw.on = !sw.on;
+        document.getElementById('reviewSw').classList.toggle('on', sw.on);
+        document.getElementById('reviewSwBar').classList.toggle('on', sw.on);
+        const b = document.getElementById('reviewSwBtn');
+        if (b) { b.style.borderColor = sw.on ? '#22d3ee' : 'var(--border)'; b.style.color = sw.on ? '#22d3ee' : 'var(--text-2)'; }
+        cancelAnimationFrame(sw.raf);
+        if (sw.on) { swFillFps(); swLoop(); }
+    }
+    // Avvia dal fotogramma attuale; Ferma sul fotogramma attuale; un nuovo Avvia riparte da zero
+    function swGo() {
+        const v = swVid(); if (!v) { alert(MT('Carica prima il video')); return; }
+        const t = swFrame(v.currentTime) / swFps();
+        if (sw.start == null || sw.end != null) { sw.start = t; sw.end = null; }
+        else sw.end = Math.max(sw.start, t);
+        swRender();
+    }
+    function swReset() { sw.start = sw.end = null; swRender(); }
+    // nelle clip il cronometro compare com'è sullo schermo
+    function swDrawOnCanvas(ctx, W, H, t) {
+        if (!sw.on || sw.start == null) return;
+        const e = swElapsed(t), txt = swFmt(e.sec), fs = Math.max(14, W * 0.035);
+        ctx.save();
+        ctx.font = `800 ${fs}px Menlo, Consolas, monospace`;
+        ctx.textBaseline = 'middle';
+        const w = ctx.measureText(txt).width, pad = fs * 0.45, bw = w + pad * 2, bh = fs * 1.5;
+        const x = W * 0.015, y = H - H * 0.02 - bh;
+        ctx.fillStyle = 'rgba(0,0,0,.78)'; ctx.strokeStyle = sw.end == null ? '#22c55e' : '#22d3ee'; ctx.lineWidth = Math.max(2, fs * 0.08);
+        ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(x, y, bw, bh, fs * 0.35); else ctx.rect(x, y, bw, bh); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = '#fff'; ctx.fillText(txt, x + pad, y + bh / 2);
+        ctx.restore();
+    }
+
     // scrittura nella casella: Invio conferma (Maiusc+Invio va a capo), casella vuota = eliminata
     function rtEdit(id) {
         const el = document.querySelector(`#reviewTextLayer .rt-box[data-id="${id}"] .rt-txt`);
@@ -3093,6 +3215,7 @@ function analisiAvviso(msg) {
             if (!clipIsRecording) return;
             ctx.drawImage(vid, 0, 0, canvas.width, canvas.height);
             rtDrawOnCanvas(ctx, canvas.width, canvas.height, vid.currentTime);
+            swDrawOnCanvas(ctx, canvas.width, canvas.height, vid.currentTime);
             const elapsed = vid.currentTime - start;
             const pct = Math.min(100, (elapsed / clipDur) * 100);
             document.getElementById('clipProgressFill').style.width = pct + '%';
