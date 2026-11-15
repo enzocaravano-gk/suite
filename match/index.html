@@ -503,6 +503,29 @@
             font-weight: 700; font-size: 16px; line-height: 1; cursor: pointer; padding: 0; }
         .review-zoom-bar button:hover { background: rgba(255,255,255,.16); }
         .review-zoom-bar span { color: #fff; font-size: .78rem; font-weight: 700; min-width: 38px; text-align: center; }
+        /* testo sul video: caselle spostabili, a tempo, incluse nelle clip */
+        .review-text-layer { position: absolute; inset: 0; transform-origin: 0 0; transition: transform .25s ease; container-type: size; pointer-events: none; z-index: 5; }
+        .review-text-layer.panning { transition: none; }
+        .review-video-container.text-on { cursor: text; touch-action: none; }
+        .review-video-container.text-on .review-text-layer { pointer-events: auto; }
+        .rt-box { position: absolute; transform: translate(-50%, -50%); display: none; font: 700 calc(var(--fs) * 100cqw)/1.2 "Segoe UI", Arial, sans-serif;
+            color: var(--c); background: var(--bg); padding: .3em .45em; border-radius: .3em; white-space: pre; user-select: none; -webkit-user-select: none; touch-action: none; }
+        .rt-box.show { display: block; }
+        .review-video-container.text-on .rt-box { cursor: move; }
+        .review-video-container.text-on .rt-box.sel { outline: 2px dashed #fff; outline-offset: 3px; }
+        .rt-txt { display: inline-block; min-width: 1ch; }
+        .rt-txt[contenteditable="true"] { outline: none; cursor: text; user-select: text; -webkit-user-select: text; }
+        .rt-txt:empty::before { content: "Scrivi…"; opacity: .6; }
+        .rt-del { display: none; position: absolute; top: -13px; right: -13px; width: 26px; height: 26px; border-radius: 50%; border: 2px solid #fff;
+            background: #e53935; color: #fff; font: 700 15px/22px Arial, sans-serif; cursor: pointer; padding: 0; }
+        .review-video-container.text-on .rt-box.sel .rt-del { display: block; }
+        #reviewTextBar { border-color: #ffd21f; flex-wrap: wrap; justify-content: flex-end; }
+        #reviewTextBar button:disabled { opacity: .35; cursor: default; }
+        .rtb-sep { width: 1px; height: 18px; background: rgba(255,255,255,.25); margin: 0 3px; }
+        .rtb-col i { display: inline-block; width: 16px; height: 16px; border-radius: 50%; border: 2px solid rgba(255,255,255,.55); vertical-align: middle; }
+        .rtb-col.on i { border-color: #fff; box-shadow: 0 0 0 2px #ffd21f; }
+        .review-text-mark { position: absolute; top: calc(100% + 3px); height: 4px; min-width: 4px; background: #ffd21f; border-radius: 2px; pointer-events: all; cursor: pointer; }
+        .review-text-mark::before { content: ""; position: absolute; inset: -6px 0; }
         .review-laser-orb {
             position: absolute;
             width: 60px;
@@ -889,7 +912,7 @@
     "Inserisci un nome per questa sessione":"Enter a name for this session","Inserisci un nome.":"Enter a name.",
     "Inverti":"Invert","LIVE IN TRIBUNA":"LIVE FROM THE STANDS",
     "Laser: orb rosso per indicare":"Laser: red orb to point",
-    "Zoom: tocca un punto per ingrandire, trascina per spostarti":"Zoom: tap a point to zoom in, drag to move around","Riduci":"Zoom out","Puntatore più piccolo":"Smaller pointer","Puntatore più grande":"Larger pointer","Ingrandisci":"Zoom in","Immagine intera":"Full picture","MODALITÀ VIDEO":"VIDEO MODE",
+    "Zoom: tocca un punto per ingrandire, trascina per spostarti":"Zoom: tap a point to zoom in, drag to move around","Riduci":"Zoom out","Elimina testo":"Delete text","Testo: tocca il video per scrivere, resta per i secondi scelti ed esce anche nelle clip":"Text: tap the video to write, it stays for the chosen seconds and also shows in clips","Meno secondi":"Fewer seconds","Più secondi":"More seconds","Testo più piccolo":"Smaller text","Testo più grande":"Larger text","Bianco":"White","Giallo":"Yellow","Rosso":"Red","Nero":"Black","Testo sul video":"Text on video","Puntatore più piccolo":"Smaller pointer","Puntatore più grande":"Larger pointer","Ingrandisci":"Zoom in","Immagine intera":"Full picture","MODALITÀ VIDEO":"VIDEO MODE",
     "Media per Partita":"Average per Match","Menu sessione":"Session menu","NOME FILE":"FILE NAME",
     "Nessun evento associato. Puoi comunque creare clip e usare gli strumenti.":"No associated event. You can still create clips and use the tools.",
     "Nessun evento corrisponde ai filtri":"No event matches the filters",
@@ -920,7 +943,7 @@
     "Avvia il timer per registrare":"Start the timer to record",
     "⇄ Cambia squadra":"⇄ Change team","⏩ DOPO":"⏩ AFTER","⏪ PRIMA":"⏪ BEFORE",
     "◀ ATTACCO":"◀ ATTACK","◀ DIFESA":"◀ DEFENSE","⚡ Solo Attacco (Z9–Z16)":"⚡ Attack Only (Z9–Z16)",
-    "⚽ Gol":"⚽ Goal","Gol":"Goal","✓ Clip salvata!":"✓ Clip saved!","🔍 ZOOM ATTIVO":"🔍 ZOOM ACTIVE",
+    "⚽ Gol":"⚽ Goal","Gol":"Goal","✓ Clip salvata!":"✓ Clip saved!","🔍 ZOOM ATTIVO":"🔍 ZOOM ACTIVE","✏️ TESTO: tocca il video per scrivere":"✏️ TEXT: tap the video to write",
     "🔴 LASER ATTIVO":"🔴 LASER ACTIVE","🛡 Solo Difesa (Z1–Z8)":"🛡 Defense Only (Z1–Z8)",
     "Clip manuale · ":"Manual clip · ","Sessione importata":"Session imported","Errore: ":"Error: ",
     "generato il":"generated on","Generato il":"Generated on","STORICO":"HISTORY","VIDEO":"VIDEO","Menu":"Menu",
@@ -1596,6 +1619,7 @@ function analisiAvviso(msg) {
                             <div style="display:flex;gap:6px;align-items:center;">
                                 <button class="posture-card-btn" id="reviewZoomBtn" onclick="reviewToggleZoom()" title="Lente ingrandimento"><i class="fas fa-search-plus"></i></button>
                                 <button class="posture-card-btn" id="reviewLaserBtn" onclick="reviewToggleLaser()" title="Puntatore laser"><i class="fas fa-dot-circle"></i></button>
+                                <button class="posture-card-btn" id="reviewTextBtn" onclick="reviewToggleText()" title="Testo sul video"><i class="fas fa-font"></i></button>
                                 <button class="posture-card-btn" onclick="reviewAvviaClipManuale()" title="Taglia clip dal momento attuale" style="border-color:var(--purple);color:var(--purple);"><i class="fas fa-cut"></i> Clip</button>
                             </div>
                         </div>
@@ -1606,6 +1630,7 @@ function analisiAvviso(msg) {
                                 <div style="font-size:0.78rem;opacity:0.6;">Poi clicca un evento dalla lista per sincronizzarti</div>
                             </div>
                             <video id="reviewVideo" style="display:none;width:100%;display:block;cursor:crosshair;"></video>
+                            <div id="reviewTextLayer" class="review-text-layer"></div>
                             <div id="reviewLaserOrb" class="review-laser-orb"></div>
                             <div id="reviewToolBadge" class="review-tool-badge"></div>
                             <div class="review-bars">
@@ -1614,6 +1639,19 @@ function analisiAvviso(msg) {
                                 <span id="reviewZoomLvl">1×</span>
                                 <button type="button" onclick="reviewZoomStep(1)" title="Ingrandisci" aria-label="Ingrandisci">+</button>
                                 <button type="button" onclick="reviewZoomReset()" title="Immagine intera" aria-label="Immagine intera">⟲</button>
+                            </div>
+                            <div class="review-zoom-bar" id="reviewTextBar">
+                                <button type="button" id="rtDurMinus" onclick="reviewTextDur(-1)" title="Meno secondi" aria-label="Meno secondi">−</button>
+                                <span id="reviewTextDurLbl">3 s</span>
+                                <button type="button" id="rtDurPlus" onclick="reviewTextDur(1)" title="Più secondi" aria-label="Più secondi">+</button>
+                                <i class="rtb-sep"></i>
+                                <button type="button" id="rtSizeMinus" onclick="reviewTextSize(-1)" title="Testo più piccolo" aria-label="Testo più piccolo" style="font-size:12px">A</button>
+                                <button type="button" id="rtSizePlus" onclick="reviewTextSize(1)" title="Testo più grande" aria-label="Testo più grande" style="font-size:19px">A</button>
+                                <i class="rtb-sep"></i>
+                                <button type="button" class="rtb-col" data-c="white" onclick="reviewTextColor('white')" title="Bianco" aria-label="Bianco"><i style="background:#fff"></i></button>
+                                <button type="button" class="rtb-col" data-c="yellow" onclick="reviewTextColor('yellow')" title="Giallo" aria-label="Giallo"><i style="background:#ffd21f"></i></button>
+                                <button type="button" class="rtb-col" data-c="red" onclick="reviewTextColor('red')" title="Rosso" aria-label="Rosso"><i style="background:#ff4040"></i></button>
+                                <button type="button" class="rtb-col" data-c="black" onclick="reviewTextColor('black')" title="Nero" aria-label="Nero"><i style="background:#111"></i></button>
                             </div>
                             <div class="review-zoom-bar" id="reviewLaserBar">
                                 <button type="button" id="reviewLaserMinus" onclick="reviewLaserStep(-1)" title="Puntatore più piccolo" aria-label="Puntatore più piccolo">−</button>
@@ -1628,6 +1666,7 @@ function analisiAvviso(msg) {
                                 <div class="video-progress-container" id="reviewProgressContainer" style="flex:1;">
                                     <div id="reviewProgressFill" class="video-progress-fill"></div>
                                     <div id="reviewMarkers" class="video-markers"></div>
+                                    <div id="reviewTextMarks" class="video-markers"></div>
                                 </div>
                                 <span style="font-size:0.72rem;color:#aaa;min-width:38px;text-align:right;" id="reviewVidDur">0:00</span>
                             </div>
@@ -1652,6 +1691,7 @@ function analisiAvviso(msg) {
                     <div style="display:flex;gap:10px;margin-top:10px;font-size:0.75rem;color:var(--text-3);flex-wrap:wrap;">
                         <span><i class="fas fa-search-plus" style="color:var(--blue);margin-right:4px;"></i>Zoom: tocca un punto per ingrandire, trascina per spostarti</span>
                         <span><i class="fas fa-dot-circle" style="color:var(--red);margin-right:4px;"></i>Laser: orb rosso per indicare</span>
+                        <span><i class="fas fa-font" style="color:#c99a00;margin-right:4px;"></i>Testo: tocca il video per scrivere, resta per i secondi scelti ed esce anche nelle clip</span>
                         <span><i class="fas fa-step-forward" style="color:var(--orange);margin-right:4px;"></i>Frame: avanzamento 1/30s</span>
                     </div>
                 </div>
@@ -2592,6 +2632,7 @@ function analisiAvviso(msg) {
         const file = e.target.files[0]; if (!file) return;
         const vid = document.getElementById('reviewVideo');
         vid.src = URL.createObjectURL(file); vid.load(); vid.style.display = 'block';
+        rtLoad('matchTexts:' + file.name + ':' + file.size);
         document.getElementById('reviewVideoPlaceholder').style.display = 'none';
         vid.onloadedmetadata = () => {
             document.getElementById('reviewVidDur').textContent = formatAnalisiTime(vid.duration || 0);
@@ -2644,7 +2685,7 @@ function analisiAvviso(msg) {
     function reviewToggleLaser() {
         reviewLaserActive = !reviewLaserActive;
         const wrap = document.getElementById('reviewVideoWrap');
-        if (reviewLaserActive) { reviewZoomActive = false; wrap.classList.remove('zoom-on'); }
+        if (reviewLaserActive) { reviewZoomActive = false; wrap.classList.remove('zoom-on'); rtOff(); }
         else document.getElementById('reviewLaserOrb').style.display = 'none';
         wrap.classList.toggle('laser-on', reviewLaserActive);
         document.getElementById('reviewLaserBar').classList.toggle('on', reviewLaserActive);
@@ -2655,6 +2696,7 @@ function analisiAvviso(msg) {
         reviewZoomActive = !reviewZoomActive;
         const wrap = document.getElementById('reviewVideoWrap');
         if (reviewZoomActive) {
+            rtOff();
             reviewLaserActive = false;
             wrap.classList.remove('laser-on');
             document.getElementById('reviewLaserBar').classList.remove('on');
@@ -2668,9 +2710,12 @@ function analisiAvviso(msg) {
         const laserBtn = document.getElementById('reviewLaserBtn'), zoomBtn = document.getElementById('reviewZoomBtn'), badge = document.getElementById('reviewToolBadge');
         if (laserBtn) { laserBtn.style.borderColor = reviewLaserActive ? 'var(--red)' : 'var(--border)'; laserBtn.style.color = reviewLaserActive ? 'var(--red)' : 'var(--text-2)'; }
         if (zoomBtn) { zoomBtn.style.borderColor = reviewZoomActive ? 'var(--blue)' : 'var(--border)'; zoomBtn.style.color = reviewZoomActive ? 'var(--blue)' : 'var(--text-2)'; }
+        const textBtn = document.getElementById('reviewTextBtn');
+        if (textBtn) { textBtn.style.borderColor = reviewTextActive ? '#c99a00' : 'var(--border)'; textBtn.style.color = reviewTextActive ? '#c99a00' : 'var(--text-2)'; }
         const wrap = document.getElementById('reviewVideoWrap');
         if (reviewLaserActive) { wrap.style.cursor = 'none'; badge.style.display = 'block'; badge.textContent = '🔴 LASER ATTIVO'; badge.style.borderColor = 'var(--red)'; }
         else if (reviewZoomActive) { wrap.style.cursor = 'zoom-in'; badge.style.display = 'block'; badge.textContent = '🔍 ZOOM ATTIVO'; badge.style.borderColor = 'var(--blue)'; }
+        else if (reviewTextActive) { wrap.style.cursor = 'text'; badge.style.display = 'block'; badge.textContent = MT('✏️ TESTO: tocca il video per scrivere'); badge.style.borderColor = '#ffd21f'; }
         else { wrap.style.cursor = 'default'; badge.style.display = 'none'; }
     }
     function reviewHandleMouseMove(e) {
@@ -2692,6 +2737,8 @@ function analisiAvviso(msg) {
         const ty = Math.min(0, Math.max(1 - z, 0.5 - reviewZoom.cy * z));
         reviewZoom.cx = (0.5 - tx) / z; reviewZoom.cy = (0.5 - ty) / z;
         vid.style.transform = z > 1 ? `translate(${tx * 100}%, ${ty * 100}%) scale(${z})` : '';
+        const tl = document.getElementById('reviewTextLayer');
+        if (tl) { tl.style.transform = vid.style.transform; tl.classList.toggle('panning', vid.classList.contains('panning')); }
         const bar = document.getElementById('reviewZoomBar');
         if (bar) bar.classList.toggle('on', reviewZoomActive || z > 1);
         const lvl = document.getElementById('reviewZoomLvl');
@@ -2704,6 +2751,219 @@ function analisiAvviso(msg) {
         reviewZoomApply();
     }
     function reviewZoomReset() { reviewZoom = { z: 1, cx: 0.5, cy: 0.5 }; reviewZoomApply(); }
+    // ---- TESTO SUL VIDEO ----
+    // Ogni testo parte dal momento in cui lo crei (t0) e resta per `dur` secondi.
+    // Posizione e grandezza sono riferite all'immagine intera del video, così
+    // nella clip (che registra l'immagine intera) compare nello stesso punto.
+    let reviewTextActive = false, reviewTexts = [], reviewTextKey = null, reviewTextSelId = null;
+    const RT_DURS = [1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 20, 30];
+    const RT_SIZES = [0.022, 0.03, 0.04, 0.052, 0.068];
+    const RT_COLORS = { white: ['#ffffff', 'rgba(0,0,0,0.55)'], yellow: ['#ffd21f', 'rgba(0,0,0,0.55)'], red: ['#ff4040', 'rgba(0,0,0,0.6)'], black: ['#111111', 'rgba(255,255,255,0.8)'] };
+    let rtDef = { dur: 3, size: 2, color: 'white' };
+    try { const v = JSON.parse(localStorage.getItem('matchTextDefaults') || 'null'); if (v && typeof v === 'object') rtDef = { ...rtDef, ...v }; } catch (_) {}
+    const rtEsc = (x) => String(x).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    const rtSel = () => reviewTexts.find(x => x.id === reviewTextSelId) || null;
+    const rtOn = (x, t) => t >= x.t0 - 0.05 && t < x.t0 + x.dur;
+    function rtSave() {
+        if (reviewTextKey) { try { localStorage.setItem(reviewTextKey, JSON.stringify(reviewTexts.filter(x => x.text.trim()))); } catch (_) {} }
+        try { localStorage.setItem('matchTextDefaults', JSON.stringify(rtDef)); } catch (_) {}
+    }
+    function rtLoad(key) {
+        reviewTextKey = key; reviewTextSelId = null; reviewTexts = [];
+        try {
+            const v = JSON.parse(localStorage.getItem(key) || '[]');
+            if (Array.isArray(v)) reviewTexts = v.filter(x => x && typeof x.text === 'string' && typeof x.t0 === 'number');
+        } catch (_) {}
+        rtRender();
+    }
+    function rtRender() {
+        const layer = document.getElementById('reviewTextLayer'); if (!layer) return;
+        layer.innerHTML = reviewTexts.map(x => {
+            const c = RT_COLORS[x.color] || RT_COLORS.white;
+            return `<div class="rt-box${x.id === reviewTextSelId ? ' sel' : ''}" data-id="${x.id}" style="left:${x.x * 100}%;top:${x.y * 100}%;--fs:${RT_SIZES[x.size] || RT_SIZES[2]};--c:${c[0]};--bg:${c[1]}">` +
+                `<span class="rt-txt">${rtEsc(x.text)}</span><button type="button" class="rt-del" aria-label="${rtEsc(MT('Elimina testo'))}" title="${rtEsc(MT('Elimina testo'))}">×</button></div>`;
+        }).join('');
+        rtVisibility(); rtMarks(); rtBarUI();
+    }
+    function rtVisibility() {
+        const vid = document.getElementById('reviewVideo'), t = vid ? vid.currentTime : 0;
+        document.querySelectorAll('#reviewTextLayer .rt-box').forEach(el => {
+            const x = reviewTexts.find(r => r.id === el.dataset.id); if (!x) return;
+            el.classList.toggle('show', rtOn(x, t) || (reviewTextActive && x.id === reviewTextSelId));
+        });
+    }
+    function rtMarks() {
+        const c = document.getElementById('reviewTextMarks'), vid = document.getElementById('reviewVideo');
+        if (!c) return;
+        const d = vid && vid.duration;
+        if (!d || !isFinite(d)) { c.innerHTML = ''; return; }
+        c.innerHTML = reviewTexts.filter(x => x.text.trim()).map(x =>
+            `<div class="review-text-mark" data-id="${x.id}" style="left:${x.t0 / d * 100}%;width:${Math.max(0.5, x.dur / d * 100)}%" title="${rtEsc(x.text)}"></div>`).join('');
+    }
+    function rtBarUI() {
+        const s = rtSel() || rtDef;
+        const lbl = document.getElementById('reviewTextDurLbl'); if (lbl) lbl.textContent = s.dur + ' s';
+        const set = (id, off) => { const b = document.getElementById(id); if (b) b.disabled = off; };
+        set('rtDurMinus', s.dur <= RT_DURS[0]); set('rtDurPlus', s.dur >= RT_DURS[RT_DURS.length - 1]);
+        set('rtSizeMinus', s.size <= 0); set('rtSizePlus', s.size >= RT_SIZES.length - 1);
+        document.querySelectorAll('#reviewTextBar .rtb-col').forEach(b => b.classList.toggle('on', b.dataset.c === s.color));
+    }
+    // i comandi della barra cambiano il testo selezionato e diventano la scelta per i prossimi
+    function reviewTextDur(dir) {
+        const s = rtSel(), cur = (s || rtDef).dur;
+        let i = RT_DURS.findIndex(v => v >= cur); if (i < 0) i = RT_DURS.length - 1;
+        const v = RT_DURS[Math.max(0, Math.min(RT_DURS.length - 1, i + dir))];
+        rtDef.dur = v; if (s) s.dur = v;
+        rtSave(); rtRender();
+    }
+    function reviewTextSize(dir) {
+        const s = rtSel(), v = Math.max(0, Math.min(RT_SIZES.length - 1, (s || rtDef).size + dir));
+        rtDef.size = v; if (s) s.size = v;
+        rtSave(); rtRender();
+    }
+    function reviewTextColor(c) {
+        const s = rtSel(); rtDef.color = c; if (s) s.color = c;
+        rtSave(); rtRender();
+    }
+    function rtOff() {
+        if (!reviewTextActive) return;
+        reviewTextActive = false; reviewTextSelId = null;
+        reviewTexts = reviewTexts.filter(x => x.text.trim());
+        document.getElementById('reviewVideoWrap').classList.remove('text-on');
+        document.getElementById('reviewTextBar').classList.remove('on');
+        rtSave(); rtRender();
+    }
+    function reviewToggleText() {
+        if (reviewTextActive) { rtOff(); reviewUpdateToolUI(); return; }
+        const wrap = document.getElementById('reviewVideoWrap');
+        reviewTextActive = true;
+        reviewZoomActive = false; wrap.classList.remove('zoom-on');
+        reviewLaserActive = false; wrap.classList.remove('laser-on');
+        document.getElementById('reviewLaserBar').classList.remove('on');
+        document.getElementById('reviewLaserOrb').style.display = 'none';
+        wrap.classList.add('text-on');
+        document.getElementById('reviewTextBar').classList.add('on');
+        reviewZoomApply(); rtRender(); reviewUpdateToolUI();
+    }
+    // scrittura nella casella: Invio conferma (Maiusc+Invio va a capo), casella vuota = eliminata
+    function rtEdit(id) {
+        const el = document.querySelector(`#reviewTextLayer .rt-box[data-id="${id}"] .rt-txt`);
+        const x = reviewTexts.find(r => r.id === id);
+        if (!el || !x) return;
+        el.contentEditable = 'true'; el.focus();
+        try { const rg = document.createRange(); rg.selectNodeContents(el); rg.collapse(false); const sl = getSelection(); sl.removeAllRanges(); sl.addRange(rg); } catch (_) {}
+        const read = () => el.innerText.replace(/\n$/, '');
+        el.oninput = () => { x.text = read(); rtSave(); };
+        el.onkeydown = (ev) => {
+            ev.stopPropagation();
+            if ((ev.key === 'Enter' && !ev.shiftKey) || ev.key === 'Escape') { ev.preventDefault(); el.blur(); }
+        };
+        el.onblur = () => {
+            el.contentEditable = 'false';
+            x.text = read();
+            if (!x.text.trim()) { reviewTexts = reviewTexts.filter(r => r !== x); if (reviewTextSelId === x.id) reviewTextSelId = null; }
+            rtSave(); rtRender();
+        };
+    }
+    // disegna i testi visibili al tempo t sul fotogramma della clip
+    function rtDrawOnCanvas(ctx, W, H, t) {
+        reviewTexts.forEach(x => {
+            if (!rtOn(x, t) || !x.text.trim()) return;
+            const fs = (RT_SIZES[x.size] || RT_SIZES[2]) * W, c = RT_COLORS[x.color] || RT_COLORS.white;
+            ctx.save();
+            ctx.font = `700 ${fs}px "Segoe UI", Arial, sans-serif`;
+            ctx.textBaseline = 'middle';
+            const lines = x.text.split('\n'), lh = fs * 1.2;
+            const w = Math.max(...lines.map(l => ctx.measureText(l).width));
+            const padX = fs * 0.45, padY = fs * 0.3, bw = w + padX * 2, bh = lh * lines.length + padY * 2;
+            const bx = x.x * W - bw / 2, by = x.y * H - bh / 2, rr = fs * 0.3;
+            ctx.fillStyle = c[1];
+            ctx.beginPath();
+            ctx.moveTo(bx + rr, by); ctx.lineTo(bx + bw - rr, by); ctx.quadraticCurveTo(bx + bw, by, bx + bw, by + rr);
+            ctx.lineTo(bx + bw, by + bh - rr); ctx.quadraticCurveTo(bx + bw, by + bh, bx + bw - rr, by + bh);
+            ctx.lineTo(bx + rr, by + bh); ctx.quadraticCurveTo(bx, by + bh, bx, by + bh - rr);
+            ctx.lineTo(bx, by + rr); ctx.quadraticCurveTo(bx, by, bx + rr, by);
+            ctx.closePath(); ctx.fill();
+            ctx.fillStyle = c[0];
+            lines.forEach((l, i) => ctx.fillText(l, bx + padX, by + padY + lh * (i + 0.5)));
+            ctx.restore();
+        });
+    }
+    (function () {
+        const layer = document.getElementById('reviewTextLayer'), wrap = document.getElementById('reviewVideoWrap');
+        const vid = document.getElementById('reviewVideo');
+        if (!layer || !wrap || !vid) return;
+        const clamp = (v) => Math.max(0.02, Math.min(0.98, v));
+        // punto toccato → coordinate sull'immagine intera (tiene conto dello zoom)
+        const toVideo = (e) => {
+            const r = wrap.getBoundingClientRect(), z = reviewZoom.z;
+            const px = (e.clientX - r.left) / r.width, py = (e.clientY - r.top) / r.height;
+            return { x: (px - (0.5 - reviewZoom.cx * z)) / z, y: (py - (0.5 - reviewZoom.cy * z)) / z };
+        };
+        let drag = null;
+        layer.addEventListener('pointerdown', (e) => {
+            if (!reviewTextActive || e.target.closest('.rt-del')) return;
+            if (e.target.closest('.rt-txt[contenteditable="true"]')) return;
+            const box = e.target.closest('.rt-box');
+            if (!box) {
+                if (!_reviewHasVideo()) return;
+                // tocco su un punto libero: se c'è un testo selezionato lo si lascia, altrimenti nuovo testo
+                if (reviewTextSelId) { reviewTextSelId = null; reviewTexts = reviewTexts.filter(x => x.text.trim()); rtRender(); return; }
+                vid.pause(); document.getElementById('reviewPlayBtn').innerHTML = '<i class="fas fa-play"></i>';
+                const p = toVideo(e);
+                const x = { id: 't' + Date.now().toString(36), t0: Math.round(vid.currentTime * 10) / 10, dur: rtDef.dur, size: rtDef.size, color: rtDef.color, x: clamp(p.x), y: clamp(p.y), text: '' };
+                reviewTexts.push(x); reviewTextSelId = x.id;
+                rtRender();
+                e.preventDefault();
+                setTimeout(() => rtEdit(x.id), 0);
+                return;
+            }
+            const x = reviewTexts.find(r => r.id === box.dataset.id); if (!x) return;
+            const p = toVideo(e);
+            drag = { x, el: box, ox: x.x - p.x, oy: x.y - p.y, sx: e.clientX, sy: e.clientY, moved: false };
+            if (reviewTextSelId !== x.id) {
+                reviewTextSelId = x.id;
+                layer.querySelectorAll('.rt-box').forEach(b => b.classList.toggle('sel', b === box));
+                rtBarUI();
+            }
+            try { layer.setPointerCapture(e.pointerId); } catch (_) {}
+            e.preventDefault();
+        });
+        layer.addEventListener('pointermove', (e) => {
+            if (!drag) return;
+            if (!drag.moved && Math.hypot(e.clientX - drag.sx, e.clientY - drag.sy) < 5) return;
+            drag.moved = true;
+            const p = toVideo(e);
+            drag.x.x = clamp(p.x + drag.ox); drag.x.y = clamp(p.y + drag.oy);
+            drag.el.style.left = drag.x.x * 100 + '%'; drag.el.style.top = drag.x.y * 100 + '%';
+        });
+        const end = () => {
+            if (!drag) return;
+            const d = drag; drag = null;
+            if (d.moved) rtSave(); else rtEdit(d.x.id);
+        };
+        layer.addEventListener('pointerup', end);
+        layer.addEventListener('pointercancel', () => { if (drag && drag.moved) rtSave(); drag = null; });
+        layer.addEventListener('click', (e) => {
+            const del = e.target.closest('.rt-del'); if (!del) return;
+            const id = del.closest('.rt-box').dataset.id;
+            reviewTexts = reviewTexts.filter(r => r.id !== id); reviewTextSelId = null;
+            rtSave(); rtRender();
+        });
+        vid.addEventListener('timeupdate', rtVisibility);
+        vid.addEventListener('seeked', rtVisibility);
+        vid.addEventListener('loadedmetadata', rtMarks);
+        // segnetto sulla barra: va al momento del testo
+        document.getElementById('reviewTextMarks').addEventListener('click', (e) => {
+            const m = e.target.closest('.review-text-mark'); if (!m) return;
+            e.stopPropagation();
+            const x = reviewTexts.find(r => r.id === m.dataset.id); if (!x) return;
+            vid.pause(); document.getElementById('reviewPlayBtn').innerHTML = '<i class="fas fa-play"></i>';
+            vid.currentTime = x.t0 + 0.05;
+            if (reviewTextActive) { reviewTextSelId = x.id; rtRender(); }
+        });
+        rtBarUI();
+    })();
     // grandezza del puntatore laser (si ricorda su questo dispositivo)
     const LASER_SIZES = [24, 40, 60, 85, 120];
     let reviewLaserIdx = 2;
@@ -2832,6 +3092,7 @@ function analisiAvviso(msg) {
         const drawLoop = () => {
             if (!clipIsRecording) return;
             ctx.drawImage(vid, 0, 0, canvas.width, canvas.height);
+            rtDrawOnCanvas(ctx, canvas.width, canvas.height, vid.currentTime);
             const elapsed = vid.currentTime - start;
             const pct = Math.min(100, (elapsed / clipDur) * 100);
             document.getElementById('clipProgressFill').style.width = pct + '%';
