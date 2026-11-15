@@ -1,7 +1,0 @@
-Librerie ospitate dall'app Postura (copiate da SportHub, public/vendor):
-nessun dato a terzi, nessun codice che cambi a nostra insaputa.
-Si scaricano solo quando servono (motore al primo "Scheletro"/"Angoli", jsPDF al primo PDF).
-
-- mediapipe-0.10.14/   @mediapipe/tasks-vision (Apache 2.0) -> riconoscimento del corpo (bundle + wasm)
-- mediapipe-models/    pose_landmarker_full.task (Apache 2.0, Google MediaPipe)
-- jspdf-2.5.1/         jsPDF (MIT) -> PDF finale

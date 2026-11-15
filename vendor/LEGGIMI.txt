@@ -1,0 +1,8 @@
+Librerie comuni alle app Postura e Movimento (copiate da SportHub, public/vendor):
+nessun dato a terzi, nessun codice che cambi a nostra insaputa.
+Si scaricano solo quando servono (riconoscimento del corpo alla prima analisi, jsPDF al primo PDF)
+e, essendo nella stessa cartella, il dispositivo le scarica una volta sola per entrambe le app.
+
+- mediapipe-0.10.14/   @mediapipe/tasks-vision (Apache 2.0) -> riconoscimento del corpo (bundle + wasm)
+- mediapipe-models/    pose_landmarker_full.task (Apache 2.0, Google MediaPipe)
+- jspdf-2.5.1/         jsPDF (MIT) -> PDF
