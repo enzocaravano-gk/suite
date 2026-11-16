@@ -6,3 +6,6 @@ e, essendo nella stessa cartella, il dispositivo le scarica una volta sola per e
 - mediapipe-0.10.14/   @mediapipe/tasks-vision (Apache 2.0) -> riconoscimento del corpo (bundle + wasm)
 - mediapipe-models/    pose_landmarker_full.task (Apache 2.0, Google MediaPipe)
 - jspdf-2.5.1/         jsPDF (MIT) -> PDF
+
+Ogni cartella contiene il file LICENSE con il testo della licenza (richiesto per poterle distribuire).
+L'elenco completo delle librerie della suite è nella pagina licenze.html.

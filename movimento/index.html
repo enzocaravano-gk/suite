@@ -193,6 +193,7 @@
   </header>
 
   <div class="page">
+    <p class="hint" style="margin:0 0 12px">📷 Fotografa o filma gli atleti solo con il loro consenso (per i minori, quello dei genitori). Foto e video restano su questo dispositivo e non vengono inviati a nessuno. Strumento per l'allenamento sportivo, non una valutazione medica.</p>
     <section class="card topcard">
       <div class="bar" style="margin-bottom:10px">
         <span class="sp"></span>
@@ -271,7 +272,7 @@
       </div>
       <section class="card" style="margin-top:16px">
         <h2>Report dei risultati</h2>
-        <textarea class="txt report" id="reportMov" placeholder="Scrivi qui le tue conclusioni sul gesto: cosa hai visto, cosa correggere, esercizi…"></textarea>
+        <textarea class="txt report" id="reportMov" placeholder="Scrivi qui le tue conclusioni sul gesto: cosa hai visto, cosa migliorare nel gesto tecnico, esercizi…"></textarea>
       </section>
     </div>
   </div>
@@ -348,11 +349,11 @@
   // ═══════════════ Soglie scientifiche (da SportHub, posturaScienza) ═══════════════
   // Cinque livelli; valgono per la persona ferma in piedi, non per il movimento.
   const LEVELS = [
-    { l: 0, label: 'nella norma', color: '#1e9e55' },
-    { l: 1, label: 'lieve asimmetria', color: '#7cb342' },
-    { l: 2, label: 'da monitorare', color: '#e0b400' },
-    { l: 3, label: 'asimmetria significativa', color: '#ef7d00' },
-    { l: 4, label: 'consigliato approfondimento', color: '#d32f2f' },
+    { l: 0, label: 'nei valori di riferimento', color: '#1e9e55' },
+    { l: 1, label: 'lieve scostamento', color: '#7cb342' },
+    { l: 2, label: 'scostamento moderato', color: '#e0b400' },
+    { l: 3, label: 'scostamento marcato', color: '#ef7d00' },
+    { l: 4, label: 'fuori dai valori di riferimento', color: '#d32f2f' },
   ];
   const SCI = {
     CVA:       { dir: 'basso', mdc: 2.84, bande: [{ l: 0, min: 53, max: null }, { l: 1, min: 50, max: 52.9 }, { l: 2, min: 45, max: 49.9 }, { l: 3, min: 40, max: 44.9 }, { l: 4, min: null, max: 39.9 }] },
@@ -1319,7 +1320,7 @@
       };
       const footer = () => {
         doc.setFontSize(8.5); doc.setTextColor(130); doc.setFont('helvetica', 'normal');
-        doc.text('Strumento di controllo e monitoraggio, non una diagnosi. Misure stimate dalla posizione dei punti del corpo nell\'immagine.', M, PH - 9);
+        doc.text('Strumento per l\'allenamento sportivo, non una valutazione medica. Misure stimate dalla posizione dei punti del corpo nell\'immagine.', M, PH - 9);
         doc.text(String(page), PW - M, PH - 9, { align: 'right' });
         if (COACH) { doc.setFontSize(10); doc.setTextColor(60); doc.text(pdfTxt('Allenatore: ' + COACH), PW - M, PH - 15, { align: 'right' }); }
       };
