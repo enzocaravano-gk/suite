@@ -1120,6 +1120,9 @@
         .cform .fld.cmin { flex: 0 0 90px; }
         .fld input:focus, .fld select:focus, .fld textarea:focus, .pg-ruolo:focus, .pg-note:focus, .pg-min input:focus, .ex-r select:focus, .ex-r input:focus {
             outline: 2px solid rgba(var(--accent-rgb), .35); outline-offset: 0; border-color: var(--accent); }
+        .ospite[hidden] { display: none; }
+        .pr-nome { flex: 0 1 auto; }
+        .pr-ruolo { flex: 0 100 auto; min-width: 0; }
         .ospite .btn, .cform .btn-mini { height: 42px; box-sizing: border-box; padding: 0 14px; display: inline-flex; align-items: center; }
         .ospite, .cform { align-items: flex-end; }
         .seg { height: 42px; box-sizing: border-box; align-items: center; padding: 3px; display: flex; width: 100%; flex-wrap: nowrap; align-self: stretch; }
@@ -2407,10 +2410,10 @@ window.SuiteFile = (function () {
                 const togli = dove === 'panca' && !usati.has(r.uid);
                 return `<div class="pr${sel && sel.uid === r.uid ? ' sel' : ''}" data-act="tocca" data-uid="${r.uid}" data-campo="${dove === 'campo' ? 1 : ''}" role="button" tabindex="0">
                     <input class="pr-num" data-num="${r.uid}" value="${esc(r.num)}" inputmode="numeric" maxlength="3" placeholder="#" title="Numero di maglia in questa partita" />
-                    <span class="pr-nome" title="${esc(r.name)}">${esc(r.name)}</span>
+                    <span class="pr-nome" title="${esc(r.name)}">${esc(nomePdf(r.name))}</span>
                     ${r.guest ? '<span class="badge-fr">FUORI ROSA</span>' : ''}
                     ${usc ? `<span class="dn">↓${usc.min}'</span>` : ''}${ent ? `<span class="up">↑${ent.min}'</span>` : ''}
-                    <span class="pr-ruolo">${esc(r.role)}</span>
+                    <span class="pr-ruolo" title="${esc(r.role)}">${esc(r.role ? abbr(r.role) : '')}</span>
                     ${togli ? `<button type="button" class="pr-x" data-act="nonconv" data-uid="${r.uid}" title="Togli dai convocati">✕</button>` : ''}
                 </div>`;
             }
@@ -2454,7 +2457,7 @@ window.SuiteFile = (function () {
                             ${panca.map(r => rigaGiocatore(r, 'panca', cambi, usati)).join('')}
                             ${!tutti.length ? '<div class="vuoto">Nessun giocatore: apri 👥 Roster squadra per caricare la rosa, oppure usa ＋ Fuori rosa.</div>' : ''}
                             ${nc.length ? `<details class="nc"${ncOpen ? ' open' : ''}><summary>Non convocati (${nc.length}) · tocca per convocare</summary>
-                                ${nc.map(p => `<div class="pr" data-act="convoca" data-name="${esc(p.name)}" role="button" tabindex="0"><span class="pg-num">${esc(p.num || '—')}</span><span class="pr-nome">${esc(p.name)}</span><span class="pr-ruolo">${esc(p.role)}</span></div>`).join('')}
+                                ${nc.map(p => `<div class="pr" data-act="convoca" data-name="${esc(p.name)}" role="button" tabindex="0"><span class="pg-num">${esc(p.num || '—')}</span><span class="pr-nome" title="${esc(p.name)}">${esc(nomePdf(p.name))}</span><span class="pr-ruolo" title="${esc(p.role)}">${esc(p.role ? abbr(p.role) : '')}</span></div>`).join('')}
                             </details>` : ''}
                         </div>
                     </div>
@@ -2858,7 +2861,7 @@ window.SuiteFile = (function () {
                 const thT = ut && t.n > 1 ? Array.from({ length: t.n }, (_, j) => `<th class="c">${j + 1}°T</th>`).join('') : '';
                 return `<div class="sheet">
                     <div class="sh-top">${logo}
-                        <div class="sh-tit"><small>Report gara · ${esc(S.type)} · ${esc(S.venue)}</small><b>${esc(S.opponent || 'Avversario')}</b>
+                        <div class="sh-tit"><small>Report gara · ${esc(S.type)} · ${esc(S.venue)}</small><b>${esc(S.opponent || 'Avversario').replace(/ /g, '&nbsp;')}</b>
                             <span>${esc(data)} · a ${S.formato} · ${esc(modEff())} · ${t.n} × ${t.durata}'</span></div>
                         ${res ? `<div class="sh-res">${esc(res)}</div>` : ''}</div>
                     <div class="sh-mid">
@@ -2930,5 +2933,6 @@ window.SuiteFile = (function () {
   try{var _c=JSON.parse(localStorage.getItem('clubAccentColor')||'null');_c=typeof _c==='string'?_c:(_c&&(_c.accent||_c.color));
     if(_c)document.getElementById('suite-home').style.setProperty('--suite-accent',_c);}catch(e){}
 </script>
+<script src="../guida/guida.js" data-app="report"></script>
 </body>
 </html>
