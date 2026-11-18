@@ -949,7 +949,8 @@
         /* elenchi a sinistra, campo a destra (su telefono il campo va sopra) */
         .tg-griglia { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 16px; align-items: start; }
         .tg-liste { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        @media (max-width: 760px) { .tg-griglia { grid-template-columns: 1fr; } .tg-campo { order: -1; } }
+        @media (max-width: 920px) { .tg-griglia { grid-template-columns: 1fr; } .tg-campo { order: -1; } }
+        .tg-liste > div { min-width: 0; }
         @media (max-width: 520px) { .tg-liste { grid-template-columns: 1fr; } }
         .lt { font-size: 12px; color: var(--t3); font-weight: 700; margin-bottom: 8px; display: flex; justify-content: space-between; gap: 8px; }
         .lt .ok { color: #1e8449; } .lt .warn { color: #c46a00; }
@@ -1022,11 +1023,53 @@
         .fg-min { display: flex; align-items: center; gap: 8px; padding: 0 14px 8px; font-size: 13px; color: var(--t2); }
         .fg-min input { width: 70px; padding: 6px 8px; text-align: center; border: 1px solid #d6d6db; border-radius: 8px; font: inherit; }
         .fg-l { overflow-y: auto; padding: 0 10px 12px; }
+        .foglio.fg-sost { max-height: 94%; }
+        .fg-sost .fg-min { flex-wrap: wrap; padding: 0 14px 6px; }
+        .fg-sost .fg-min span { font-weight: 700; }
+        .fg-sost .fg-min input { width: 76px; font-size: 20px; font-weight: 800; padding: 6px 8px; border: 2px solid var(--accent); border-radius: 10px; }
+        .fg-sost .fg-min small { font-size: 11.5px; color: var(--t3); }
+        .fg-calc { margin: 0 14px 8px; padding: 8px 10px; border-radius: 10px; background: var(--bg1); font-size: 13.5px; color: var(--t2); }
+        .fg-calc b { color: var(--accent); font-size: 15px; }
+        .fg-voto { display: flex; align-items: center; gap: 8px; padding: 0 14px 8px; font-size: 13px; font-weight: 700; color: var(--t2); }
+        .fg-voto .dot { width: 26px; height: 26px; }
+        .fg-ok { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0 14px 8px; font-size: 14px; }
+        .fg-ok button { border: 0; border-radius: 10px; padding: 10px 14px; background: var(--accent); color: #fff; font: inherit; font-weight: 800; cursor: pointer; }
+        .fg-tl { padding: 2px 14px 6px; font-size: 11px; font-weight: 800; letter-spacing: 1.3px; text-transform: uppercase; color: var(--t3); }
         .fg-l button { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; border: 0; background: var(--bg1); font: inherit; font-size: 14.5px;
             padding: 11px 12px; border-radius: 11px; margin-bottom: 5px; cursor: pointer; min-height: 46px; color: #1a1a1a; }
         .fg-l button b { font-size: 12.5px; color: var(--t3); width: 24px; text-align: center; }
         .fg-l button small { margin-left: auto; font-size: 11.5px; color: var(--t3); }
         .pitch-foot { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; margin: 7px auto 0; max-width: 440px; font-size: 12px; color: var(--t3); }
+
+        /* barra del minuto del cambio */
+        .minbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; margin: -2px 0 14px; }
+        .minbar .mb-hint { flex: 1 1 240px; flex-basis: auto; }
+        .mb-l { font-size: 11px; font-weight: 800; letter-spacing: 1.3px; text-transform: uppercase; color: var(--t3); flex-basis: 100%; }
+        .mb-chips { display: flex; flex-wrap: wrap; gap: 6px; flex: 1 1 260px; }
+        .mb { border: 1px solid var(--line); background: #fff; color: var(--t2); border-radius: 10px; min-width: 46px; min-height: 40px; padding: 5px 10px; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; line-height: 1.1; position: relative; }
+        .mb small { display: block; font-size: 10px; font-weight: 600; color: var(--t3); }
+        .mb.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+        .mb.on small { color: rgba(255,255,255,.8); }
+        .mb.ha::after { content: ''; position: absolute; top: 4px; right: 4px; width: 6px; height: 6px; border-radius: 50%; background: #1e8449; }
+        .mb-step { display: flex; align-items: center; gap: 4px; background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 3px; }
+        .mb-step button { width: 36px; height: 34px; border: 0; border-radius: 8px; background: var(--bg1); font-size: 18px; font-weight: 800; cursor: pointer; color: var(--t2); }
+        .mb-step b { min-width: 54px; text-align: center; font-size: 14px; }
+        .mb-undo { border: 1px solid var(--line); background: #fff; color: var(--t2); border-radius: 10px; min-height: 40px; padding: 6px 12px; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
+        .mb-undo:disabled { opacity: .4; cursor: default; }
+        .mb-hint { flex-basis: 100%; font-size: 13px; color: var(--t2); }
+        .mb-hint b { color: var(--accent); }
+        .pr.sel { border-color: var(--accent); background: rgba(var(--accent-rgb), .09); box-shadow: 0 0 0 2px rgba(var(--accent-rgb), .25); }
+        .ped.sel .ped-c { background: rgba(var(--accent-rgb), .85); border-color: #fff; box-shadow: 0 0 0 4px rgba(255,255,255,.55); }
+        .ped.esce .ped-c { opacity: .55; }
+        /* panchina sotto il campo */
+        .pstrip { max-width: 440px; margin: 10px auto 0; }
+        .ps-t { font-size: 11px; font-weight: 800; letter-spacing: 1.3px; text-transform: uppercase; color: var(--t3); margin-bottom: 6px; }
+        .ps-l { display: flex; flex-wrap: wrap; gap: 6px; }
+        .chip { display: flex; align-items: center; gap: 6px; border: 1px solid var(--line); background: #fff; border-radius: 999px; padding: 5px 11px 5px 5px; min-height: 40px; font: inherit; font-size: 13px; cursor: pointer; touch-action: none; user-select: none; -webkit-user-select: none; color: #1a1a1a; }
+        .chip b { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; background: var(--bg1); font-size: 12px; }
+        .chip.sel { border-color: var(--accent); background: rgba(var(--accent-rgb), .09); }
+        .chip.sel b { background: var(--accent); color: #fff; }
+        .chip-ghost { position: fixed; z-index: 99999; pointer-events: none; transform: translate(-50%, -50%) scale(1.08); box-shadow: 0 10px 24px rgba(0,0,0,.3); }
 
         /* pagella */
         .legenda { display: flex; gap: 10px; text-transform: none; letter-spacing: 0; font-weight: 600; flex-wrap: wrap; }
@@ -1256,11 +1299,13 @@ window.SuiteFile = (function () {
             </div>
             <div class="hint" id="dictHint">Detta: «numero 1 Rossi, numero 2 Bianchi…». I primi dettati partono in campo nel 1° tempo.</div>
             <div class="tabs" id="tempiTabs"></div>
+            <div class="minbar" id="minBar"></div>
             <div class="tg-griglia">
                 <div class="tg-sx" id="tgListe"></div>
                 <div class="tg-campo">
                     <div class="pitch" id="pitch"></div>
                     <div class="pitch-foot" id="pitchFoot"></div>
+                    <div class="pstrip" id="pancaStrip"></div>
                 </div>
             </div>
         </section>
@@ -2181,14 +2226,74 @@ window.SuiteFile = (function () {
             let libero = null, cambioForm = false, avviso = false, foglio = null, aperto = null, ncOpen = false;
             const fissati = new Set();
             let lastTap = 0;
+            // minuto del cambio scelto per ogni tempo (0 = inizio tempo), giocatore selezionato, storia per Annulla
+            const ultimoMin = {};   // ultimo minuto usato nel tempo: il popup lo ripropone (doppi cambi)
+            let sel = null;
+            let storia = [];
+            const mSel = () => 0;
+            // chi è in campo al minuto m del tempo k (m = 0: a inizio tempo)
+            function inCampoAl(t, k, m) {
+                const v = lungo(inizioTempo(t, k)).slice();
+                if (m > 0) ordinati(t.periodi[k].cambi).forEach(c => { if (c.min <= m) { const i = v.indexOf(c.esce); if (i >= 0) v[i] = c.entra; } });
+                return v;
+            }
+            const slotsVisti = () => lungo(fineTempo(T(), kk()));
+            function ricorda() { storia.push(JSON.stringify(T())); if (storia.length > 40) storia.shift(); }
 
-            function scrivi(fn) { fn(T().periodi); autoSave(); renderAll(); }
+            function scrivi(fn) { ricorda(); fn(T().periodi); autoSave(); renderAll(); }
+            // cambio: chi esce → chi entra al minuto scelto (minuto 0 = dall'inizio del tempo)
+            function faiCambio(esce, entra, mDato) {
+                const t = T(), k = kk(), m = mDato == null ? mSel() : mDato, cambi = t.periodi[k].cambi;
+                sel = null; aperto = null; foglio = null;
+                const nome = (u) => pl(u) ? pl(u).name : '';
+                if (!esce || !entra || esce === entra) return renderCampo();
+                const alMin = inCampoAl(t, k, m);
+                if (!alMin.includes(esce)) { showToast(`Al ${m}' ${nome(esce)} non è in campo.`); return renderCampo(); }
+                if (alMin.includes(entra)) { showToast(`Al ${m}' ${nome(entra)} è già in campo.`); return renderCampo(); }
+                if (m > 0) ultimoMin[k] = m;
+                if (m === 0) {
+                    const v = lungo(inizioTempo(t, k)), i = v.indexOf(esce);
+                    if (i < 0 || v.includes(entra)) return renderCampo();
+                    fissati.add(entra);
+                    return scrivi(p => {
+                        v[i] = entra; p[k].inizio = v;
+                        p[k].cambi = p[k].cambi.filter(c => v.includes(c.esce) || p[k].cambi.some(x => x.entra === c.esce && x.min <= c.min));
+                    });
+                }
+                const dopo = cambi.filter(c => c.min > m);
+                const ce = dopo.find(c => c.entra === entra || c.esce === entra), cu = dopo.find(c => c.esce === esce);
+                if (ce) { showToast(`${nome(entra)} ha già un cambio al ${ce.min}': cambia prima quello.`); return renderCampo(); }
+                if (cu) { showToast(`${nome(esce)} esce già al ${cu.min}': cambia prima quello.`); return renderCampo(); }
+                scrivi(p => { p[k].cambi.push({ min: m, esce, entra }); });
+                showToast(`${m}' ↑ ${nome(entra)} ↓ ${nome(esce)}`);
+            }
+            function apriCambio(esce, entra) {
+                sel = null; aperto = null;
+                const fs = slotsVisti();
+                foglio = { tipo: 'sost', slot: fs.indexOf(esce), uid: esce, entra: entra || null, min: ultimoMin[kk()] ? String(ultimoMin[kk()]) : '' };
+                renderCampo();
+                const inp = $('fgMin'); if (inp) setTimeout(() => { inp.focus(); inp.select(); }, 50);
+            }
+            function contoUscita(uid, m) {
+                const t = T(), k = kk(), mpt = minutiPerTempo(t)[uid] || Array(t.n).fill(0);
+                const ent = t.periodi[k].cambi.find(c => c.entra === uid && c.min <= m);
+                const parti = [];
+                for (let j = 0; j < k; j++) if (mpt[j]) parti.push([mpt[j], `${j + 1}° T`]);
+                parti.push([Math.max(0, m - (ent ? ent.min : 0)), `${k + 1}° T`]);
+                const tot = parti.reduce((a, x) => a + x[0], 0);
+                return parti.length > 1 ? parti.map(x => `${x[0]}' ${x[1]}`).join(' + ') + ` = <b>${tot}'</b>` : `<b>${tot}'</b> nel ${k + 1}° tempo`;
+            }
+            function selezione(uid, dove) {
+                if (sel && sel.uid === uid) { sel = null; return renderCampo(); }
+                if (sel && sel.dove !== dove) return dove === 'campo' ? faiCambio(uid, sel.uid) : faiCambio(sel.uid, uid);
+                sel = { uid, dove }; aperto = null; foglio = null; renderCampo();
+            }
             function tocca(uid, inCampo) {
                 const t = T(), k = kk(), v = lungo(inizioTempo(t, k)), presenti = v.filter(Boolean);
                 if (inCampo) { const i = v.indexOf(uid); v[i] = null; libero = i; }
                 else if (libero != null && v[libero] == null) { v[libero] = uid; libero = null; fissati.add(uid); }
                 else {
-                    if (!v.includes(null)) { avviso = true; renderCampo(); setTimeout(() => { avviso = false; renderCampo(); }, 1800); return; }
+                    if (!v.includes(null)) { sel = { uid, dove: 'panca' }; renderCampo(); return; }
                     const mobili = presenti.filter(u => !fissati.has(u));
                     const ammessi = v.map((x, i) => (x == null || mobili.includes(x) ? i : -1)).filter(i => i >= 0);
                     const nuovi = assegnaPosti([...mobili, uid].map(pl).filter(Boolean), r => r.role, modEff(), S.formato, ammessi);
@@ -2201,6 +2306,13 @@ window.SuiteFile = (function () {
             }
             function scegli(nuovo) {
                 if (!foglio) return;
+                if (foglio.tipo === 'sost') {
+                    const D = T().durata, txt = String(foglio.min).trim(), m = parseInt(txt, 10);
+                    const inp = $('fgMin');
+                    if (txt === '' || isNaN(m)) { showToast('Scrivi prima il minuto del cambio.'); if (inp) inp.focus(); return; }
+                    if (m < 0 || m >= D) { showToast(`Il tempo dura ${D}': scrivi un minuto da 0 a ${D - 1}.`); if (inp) inp.focus(); return; }
+                    return faiCambio(foglio.uid, nuovo, m);
+                }
                 const t = T(), k = kk(), v = lungo(inizioTempo(t, k)), cambi = t.periodi[k].cambi;
                 if (foglio.tipo === 'posto') { const s = foglio.slot; foglio = null; fissati.add(nuovo); scrivi(p => { v[s] = nuovo; p[k].inizio = v; }); return; }
                 const esce = foglio.uid, min = Math.max(0, Math.min(t.durata - 1, parseInt(foglio.min, 10) || 0));
@@ -2214,7 +2326,7 @@ window.SuiteFile = (function () {
                 if (ent) scrivi(p => { p[k].cambi = p[k].cambi.filter(c => c !== ent); });
                 else if (lungo(inizioTempo(T(), k)).includes(uid)) tocca(uid, true);
             }
-            function scriviPos(fn) { fn(T().pos[kk()]); autoSave(); }
+            function scriviPos(fn) { ricorda(); fn(T().pos[kk()]); autoSave(); }
             function cambiaFormato(n) {
                 S.formato = n;
                 const list = moduliPer(n);
@@ -2264,7 +2376,7 @@ window.SuiteFile = (function () {
             function rigaGiocatore(r, dove, cambi, usati) {
                 const usc = cambi.find(c => c.esce === r.uid), ent = cambi.find(c => c.entra === r.uid);
                 const togli = dove === 'panca' && !usati.has(r.uid);
-                return `<div class="pr" data-act="tocca" data-uid="${r.uid}" data-campo="${dove === 'campo' ? 1 : ''}" role="button" tabindex="0">
+                return `<div class="pr${sel && sel.uid === r.uid ? ' sel' : ''}" data-act="tocca" data-uid="${r.uid}" data-campo="${dove === 'campo' ? 1 : ''}" role="button" tabindex="0">
                     <input class="pr-num" data-num="${r.uid}" value="${esc(r.num)}" inputmode="numeric" maxlength="3" placeholder="#" title="Numero di maglia in questa partita" />
                     <span class="pr-nome" title="${esc(r.name)}">${esc(r.name)}</span>
                     ${r.guest ? '<span class="badge-fr">FUORI ROSA</span>' : ''}
@@ -2278,6 +2390,8 @@ window.SuiteFile = (function () {
                 const t = T(), k = kk(), tit = S.formato, mod = modEff();
                 const inizio = lungo(inizioTempo(t, k)), fineSlot = lungo(fineTempo(t, k));
                 const presenti = inizio.filter(Boolean), fine = fineSlot.filter(Boolean);
+                if (sel && !righe().some(r => r.uid === sel.uid)) sel = null;
+                if (sel && sel.dove === 'campo' && !presenti.includes(sel.uid)) sel = null;
                 const cambi = t.periodi[k].cambi;
                 const usati = new Set(t.periodi.slice(0, t.n).flatMap(p => [...(p.inizio || []), ...p.cambi.flatMap(c => [c.esce, c.entra])]).filter(Boolean));
                 const tutti = righe();
@@ -2288,6 +2402,13 @@ window.SuiteFile = (function () {
                     const nc = t.periodi[j].cambi.length;
                     return `<button type="button" class="tab${j === k ? ' on' : ''}" data-act="tab" data-k="${j}">${j + 1}° tempo${nc ? `<small>${nc} ${nc === 1 ? 'cambio' : 'cambi'}</small>` : ''}</button>`;
                 }).join('');
+
+                // riga d'aiuto + Annulla (i cambi si fanno toccando le pedine)
+                const nomeSel = sel ? esc(pl(sel.uid).name) : '';
+                $('minBar').innerHTML = `<div class="mb-hint">${sel ? (sel.dove === 'campo' ? `Esce <b>${nomeSel}</b> dall'inizio del tempo: ora tocca chi entra.` : `Entra <b>${nomeSel}</b>: ora tocca la pedina di chi esce.`)
+                        : presenti.length < tit ? 'Tocca i giocatori in panchina per metterli in campo a inizio tempo.'
+                        : 'Per un cambio tocca la pedina di chi esce: scrivi il minuto del tempo e scegli chi entra.'}</div>
+                    <button type="button" class="mb-undo" data-act="annulla"${storia.length ? '' : ' disabled'}>↶ Annulla</button>`;
 
                 const nc = nonConvocati();
                 const starters = tutti.filter(r => r.starter);
@@ -2308,15 +2429,12 @@ window.SuiteFile = (function () {
                             </details>` : ''}
                         </div>
                     </div>
-                    <div class="hint${avviso ? ' warn' : ''}">${avviso ? 'Campo pieno: tocca prima chi esce, poi chi entra.'
-                        : k > 0 ? 'Questo tempo parte da come è finito il precedente: tocca chi esce e poi chi entra.'
-                        : 'Tocca un giocatore in campo per mandarlo in panchina, poi chi entra al suo posto.'}</div>
                     <div class="cambi">
                         <div class="cambi-h"><span>Cambi durante il tempo</span><button type="button" class="btn-mini" data-act="cambioToggle">${cambioForm ? 'Annulla' : '+ Cambio'}</button></div>
                         ${cambioForm ? `<div class="cform">
                             <label class="fld"><span>Esce</span><select id="cEsce">${fine.map(u => `<option value="${u}">${esc((pl(u).num ? pl(u).num + ' ' : '') + pl(u).name)}</option>`).join('')}</select></label>
                             <label class="fld"><span>Entra</span><select id="cEntra">${tutti.filter(r => !fine.includes(r.uid)).sort(perNumero).map(r => `<option value="${r.uid}">${esc((r.num ? r.num + ' ' : '') + r.name)}</option>`).join('')}</select></label>
-                            <label class="fld cmin"><span>Minuto</span><input type="number" id="cMin" min="1" max="${t.durata - 1}" value="${Math.round(t.durata * .6)}" inputmode="numeric" /></label>
+                            <label class="fld cmin"><span>Minuto</span><input type="number" id="cMin" min="1" max="${t.durata - 1}" value="${m || Math.round(t.durata * .6)}" inputmode="numeric" /></label>
                             <button type="button" class="btn-mini on" data-act="cambioOk">Aggiungi</button>
                         </div>` : ''}
                         ${ordinati(cambi).map(c => `<div class="crow"><span class="m">${c.min}'</span>
@@ -2335,7 +2453,7 @@ window.SuiteFile = (function () {
                 html += P.map((q, i) => {
                     const u = fineSlot[i], r = u && pl(u), e = u && cambi.find(c => c.entra === u);
                     const col = r && r.rating ? RCOL[r.rating] : '';
-                    return `<div class="ped${r ? '' : ' vuota'}${u && u === aperto ? ' on' : ''}" data-slot="${i}" style="left:${q[0]}%;top:${q[1]}%">
+                    return `<div class="ped${r ? '' : ' vuota'}${u && u === aperto ? ' on' : ''}${u && sel && sel.uid === u ? ' sel' : ''}" data-slot="${i}" style="left:${q[0]}%;top:${q[1]}%">
                         <div class="ped-c"${col ? ` style="border-color:${col};box-shadow:0 0 0 2px ${col}88,0 3px 8px rgba(0,0,0,.35)"` : ''}>${r ? esc(r.num || '—') : '+'}${e ? `<span class="ped-b">↑${e.min}'</span>` : ''}</div>
                         <div class="ped-n">${r ? esc(nomeCorto(r.name)) : ''}</div></div>`;
                 }).join('');
@@ -2353,20 +2471,40 @@ window.SuiteFile = (function () {
                         <div class="sc-b"><button type="button" class="sc-sost" data-act="sost" data-uid="${aperto}">⇄ Sostituisci</button><button type="button" class="sc-pan" data-act="panca" data-uid="${aperto}">In panchina</button></div>
                     </div>`;
                 }
-                if (foglio) {
-                    const lista = tutti.filter(r => !fine.includes(r.uid)).sort(perNumero), esce = foglio.uid ? pl(foglio.uid) : null;
-                    html += `<div class="foglio">
-                        <div class="fg-h"><div><b>${esce ? `Chi entra al posto di ${esc(esce.name)}?` : 'Chi va in questo posto?'}</b>
-                            <small>${esce ? "Scegli dalla panchina · minuto 0 = dall'inizio del tempo" : `${k + 1}° tempo · dalla panchina`}</small></div>
+                if (foglio && foglio.tipo === 'sost' && pl(foglio.uid)) {
+                    // popup del cambio: minuto del tempo + chi entra; il conto dei minuti si aggiorna mentre si scrive
+                    const esce = pl(foglio.uid), mm = parseInt(foglio.min, 10), fineT = lungo(fineTempo(t, k));
+                    const usciti = new Set(t.periodi.slice(0, t.n).flatMap(p => p.cambi.map(c => c.esce)));
+                    const lista = tutti.filter(r => !fineT.includes(r.uid) && r.uid !== esce.uid).sort((a, b) => (usciti.has(a.uid) - usciti.has(b.uid)) || perNumero(a, b));
+                    html += `<div class="foglio fg-sost">
+                        <div class="fg-h"><div><b>Esce ${esc((esce.num ? esce.num + ' ' : '') + esce.name)}</b>
+                            <small>${k + 1}° tempo da ${t.durata}' · scrivi il minuto e scegli chi entra</small></div>
                             <button type="button" class="fg-x" data-act="fgClose" aria-label="Chiudi">✕</button></div>
-                        ${esce ? `<div class="fg-min">Minuto <input type="number" id="fgMin" min="0" max="${t.durata - 1}" value="${esc(foglio.min)}" inputmode="numeric" /> del ${k + 1}° tempo (${t.durata}')</div>` : ''}
+                        <div class="fg-min"><span>Minuto del ${k + 1}° tempo</span>
+                            <input type="text" id="fgMin" inputmode="numeric" maxlength="2" placeholder="es. 10" value="${esc(foglio.min)}" autocomplete="off" />
+                            <small>0 = dall'inizio del tempo</small></div>
+                        <div class="fg-calc" id="fgCalc">${isNaN(mm) ? 'Scrivi il minuto: i minuti giocati si calcolano da soli.' : mm >= t.durata ? `Il tempo dura ${t.durata}'.` : `${esc(esce.name)}: ${contoUscita(esce.uid, mm)}`}</div>
+                        <div class="fg-voto"><span>Voto</span>${[1, 2, 3].map(n => `<button type="button" class="dot${esce.rating === n ? ' on' : ''}" style="--c:${RCOL[n]}" data-act="voto" data-uid="${esce.uid}" data-v="${n}" title="${RTXT[n]}"></button>`).join('')}</div>
+                        ${foglio.entra && pl(foglio.entra) ? `<div class="fg-ok"><span>Entra <b>${esc(pl(foglio.entra).name)}</b></span><button type="button" data-act="fgOk">✓ Fai il cambio</button></div>` : ''}
+                        <div class="fg-tl">${foglio.entra ? 'Oppure scegli un altro' : 'Chi entra'}</div>
+                        <div class="fg-l">${lista.length ? lista.map(r => `<button type="button" data-act="scegli" data-uid="${r.uid}"><b>${esc(r.num || '—')}</b>${esc(r.name)}<small>${usciti.has(r.uid) ? 'già uscito' : r.guest ? 'fuori rosa' : esc(r.role)}</small></button>`).join('')
+                            : '<div class="vuoto">Nessuno in panchina.</div>'}</div>
+                    </div>`;
+                } else if (foglio) {
+                    const lista = tutti.filter(r => !fine.includes(r.uid)).sort(perNumero);
+                    html += `<div class="foglio">
+                        <div class="fg-h"><div><b>Chi va in questo posto?</b><small>${k + 1}° tempo · dalla panchina</small></div>
+                            <button type="button" class="fg-x" data-act="fgClose" aria-label="Chiudi">✕</button></div>
                         <div class="fg-l">${lista.length ? lista.map(r => `<button type="button" data-act="scegli" data-uid="${r.uid}"><b>${esc(r.num || '—')}</b>${esc(r.name)}<small>${r.guest ? 'fuori rosa' : esc(r.role)}</small></button>`).join('')
                             : '<div class="vuoto">Nessuno in panchina.</div>'}</div>
                     </div>`;
                 }
                 $('pitch').innerHTML = html;
+                const pchip = tutti.filter(r => !fine.includes(r.uid)).sort(perNumero);
+                $('pancaStrip').innerHTML = pchip.length ? `<div class="ps-t">Panchina · tocca o trascina sulla pedina di chi esce</div><div class="ps-l">${pchip.map(r =>
+                    `<button type="button" class="chip${sel && sel.uid === r.uid ? ' sel' : ''}" data-chip="${r.uid}"><b>${esc(r.num || '—')}</b>${esc(nomeCorto(r.name))}</button>`).join('')}</div>` : '';
                 const spostate = P.some((_, i) => posizioneTempo(t, k, i));
-                $('pitchFoot').innerHTML = `<span>${k + 1}° tempo · ${mod} · trascina o tocca una pedina</span>` +
+                $('pitchFoot').innerHTML = `<span>${k + 1}° tempo · ${mod} · tocca una pedina per il cambio</span>` +
                     (spostate ? '<button type="button" class="btn-mini" data-act="comeModulo">↺ Come il modulo</button>' : '');
             }
 
@@ -2446,8 +2584,15 @@ window.SuiteFile = (function () {
                 const a = e.target.closest('[data-act]'); if (!a) return;
                 const uid = a.dataset.uid, act = a.dataset.act, k = kk(), t = T();
                 switch (act) {
-                    case 'tab': K = +a.dataset.k; libero = null; cambioForm = false; foglio = null; aperto = null; renderCampo(); break;
-                    case 'tocca': tocca(uid, !!a.dataset.campo); break;
+                    case 'tab': K = +a.dataset.k; libero = null; cambioForm = false; foglio = null; aperto = null; sel = null; renderCampo(); break;
+                    case 'tocca':
+                        if (mSel() > 0 || (sel && sel.dove !== (a.dataset.campo ? 'campo' : 'panca')) || (sel && sel.uid === uid)) selezione(uid, a.dataset.campo ? 'campo' : 'panca');
+                        else tocca(uid, !!a.dataset.campo);
+                        break;
+                    case 'annulla':
+                        if (!storia.length) break;
+                        S.tempi = JSON.parse(storia.pop()); sel = null; aperto = null; foglio = null; libero = null;
+                        autoSave(); renderAll(); showToast('Annullato'); break;
                     case 'nonconv':
                         S.players = S.players.filter(p => p.uid !== uid);
                         ['scorers', 'assists', 'gks'].forEach(x => { S[x] = S[x].filter(y => y.uid !== uid); });
@@ -2470,9 +2615,10 @@ window.SuiteFile = (function () {
                     case 'voto': { const r = pl(uid), v = +a.dataset.v; r.rating = r.rating === v ? 0 : v; autoSave(); renderAll(); break; }
                     case 'vc': { const r = pl(uid); r.rating = ((r.rating || 0) + 1) % 4; autoSave(); renderAll(); break; }
                     case 'starter': { const r = pl(uid); r.starter = !r.starter; autoSave(); renderAll(); break; }
-                    case 'sost': { const fs = lungo(fineTempo(t, k)); foglio = { tipo: 'sost', slot: fs.indexOf(uid), uid, min: String(Math.round(t.durata * .6)) }; aperto = null; renderCampo(); break; }
+                    case 'sost': { const fs = slotsVisti(); foglio = { tipo: 'sost', slot: fs.indexOf(uid), uid, min: String(mSel() || Math.round(t.durata * .6)) }; aperto = null; renderCampo(); break; }
                     case 'panca': aperto = null; inPanchina(uid); break;
                     case 'fgClose': foglio = null; renderCampo(); break;
+                    case 'fgOk': if (foglio && foglio.entra) scegli(foglio.entra); break;
                     case 'scegli': scegli(uid); break;
                     case 'comeModulo': T().pos = T().pos.map((p, j) => j < k ? p : {}); autoSave(); renderCampo(); break;
                     case 'exAdd': S[a.dataset.ex].push({ uid: '', n: a.dataset.ex === 'gks' ? 0 : 1 }); autoSave(); renderExtra(); break;
@@ -2490,7 +2636,12 @@ window.SuiteFile = (function () {
                 else if (d.note) { pl(d.note).note = el.value; autoSave(); }
                 else if (d.min) { pl(d.min).minutes = parseInt(el.value, 10) || 0; autoSave(); }
                 else if (d.ex && d.f === 'n') { S[d.ex][+d.i].n = parseInt(el.value, 10) || 0; autoSave(); }
-                else if (el.id === 'fgMin' && foglio) foglio.min = el.value;
+                else if (el.id === 'fgMin' && foglio) {
+                    foglio.min = el.value.replace(/\D/g, '').slice(0, 2); if (el.value !== foglio.min) el.value = foglio.min;
+                    const c = $('fgCalc'), m = parseInt(foglio.min, 10);
+                    if (c && foglio.uid) c.innerHTML = isNaN(m) ? 'Scrivi il minuto: i minuti giocati si calcolano da soli.'
+                        : m >= T().durata ? `Il tempo dura ${T().durata}'.` : `${esc(pl(foglio.uid).name)}: ${contoUscita(foglio.uid, m)}`;
+                }
             });
             document.getElementById('app').addEventListener('change', (e) => {
                 const el = e.target, d = el.dataset;
@@ -2512,11 +2663,11 @@ window.SuiteFile = (function () {
             pitch.addEventListener('pointermove', (e) => {
                 if (!trasc) return;
                 if (!trasc.mosso && Math.hypot(e.clientX - trasc.x, e.clientY - trasc.y) < 6) return;
-                if (!lungo(fineTempo(T(), kk()))[trasc.i]) return;      // un posto vuoto non si trascina
+                if (!slotsVisti()[trasc.i]) return;      // un posto vuoto non si trascina
                 if (!trasc.mosso) { trasc.mosso = true; trasc.el.classList.add('drag'); const s = pitch.querySelector('.scheda'); if (s) s.remove(); aperto = null; }
                 const [x, y] = pct(e.clientX, e.clientY), r = pitch.getBoundingClientRect();
                 trasc.el.style.left = x + '%'; trasc.el.style.top = y + '%';
-                const fs = lungo(fineTempo(T(), kk()));
+                const fs = slotsVisti();
                 trasc.bers = null;
                 pitch.querySelectorAll('.ped').forEach(p => {
                     const j = +p.dataset.slot;
@@ -2527,7 +2678,7 @@ window.SuiteFile = (function () {
             pitch.addEventListener('pointerup', (e) => {
                 const t0 = trasc; trasc = null;
                 if (!t0) return;
-                const k = kk(), fs = lungo(fineTempo(T(), k));
+                const k = kk(), fs = slotsVisti();
                 if (t0.mosso) {
                     const [x, y] = pct(e.clientX, e.clientY);
                     if (t0.bers != null) {
@@ -2538,6 +2689,8 @@ window.SuiteFile = (function () {
                 }
                 lastTap = Date.now();
                 const u = fs[t0.i];
+                if (u) { apriCambio(u, sel && sel.dove === 'panca' ? sel.uid : null); return; }
+
                 if (u) { aperto = aperto === u ? null : u; foglio = null; }
                 else { foglio = { tipo: 'posto', slot: t0.i, min: '0' }; aperto = null; }
                 renderCampo();
@@ -2545,8 +2698,41 @@ window.SuiteFile = (function () {
             pitch.addEventListener('pointercancel', () => { trasc = null; renderCampo(); });
             pitch.addEventListener('click', (e) => {
                 if (Date.now() - lastTap < 400 || e.target.closest('.ped, .scheda, .foglio')) return;
-                if (aperto || foglio) { aperto = null; foglio = null; renderCampo(); }
+                if (aperto || foglio || sel) { aperto = null; foglio = null; sel = null; renderCampo(); }
             });
+
+            const strip = $('pancaStrip');
+            let pdrag = null;
+            strip.addEventListener('pointerdown', (e) => {
+                const c = e.target.closest('.chip'); if (!c) return;
+                try { c.setPointerCapture(e.pointerId); } catch (_) {}
+                pdrag = { uid: c.dataset.chip, x: e.clientX, y: e.clientY, el: c, ghost: null, slot: null };
+            });
+            strip.addEventListener('pointermove', (e) => {
+                if (!pdrag) return;
+                if (!pdrag.ghost && Math.hypot(e.clientX - pdrag.x, e.clientY - pdrag.y) < 8) return;
+                if (!pdrag.ghost) { pdrag.ghost = pdrag.el.cloneNode(true); pdrag.ghost.classList.add('chip-ghost', 'sel'); document.body.appendChild(pdrag.ghost); }
+                pdrag.ghost.style.left = e.clientX + 'px'; pdrag.ghost.style.top = e.clientY + 'px';
+                const fs = slotsVisti(), r = pitch.getBoundingClientRect();
+                pdrag.slot = null;
+                pitch.querySelectorAll('.ped').forEach(p => {
+                    const pr = p.querySelector('.ped-c').getBoundingClientRect();
+                    const on = fs[+p.dataset.slot] && Math.hypot(pr.left + pr.width / 2 - e.clientX, pr.top + pr.height / 2 - e.clientY) < 30;
+                    p.classList.toggle('bers', !!on); if (on) pdrag.slot = +p.dataset.slot;
+                });
+            });
+            const fineChip = (e, annulla) => {
+                const d = pdrag; pdrag = null; if (!d) return;
+                if (d.ghost) {
+                    d.ghost.remove(); pitch.querySelectorAll('.ped.bers').forEach(p => p.classList.remove('bers'));
+                    if (!annulla && d.slot != null) apriCambio(slotsVisti()[d.slot], d.uid);
+                    return;
+                }
+                if (annulla) return;
+                sel = sel && sel.uid === d.uid ? null : { uid: d.uid, dove: 'panca' }; foglio = null; renderCampo();
+            };
+            strip.addEventListener('pointerup', (e) => fineChip(e, false));
+            strip.addEventListener('pointercancel', (e) => fineChip(e, true));
 
             // ---- DETTATURA: "numero 7 Rossi" → convocato col numero; i primi partono in campo ----
             let dettati = [];
@@ -2604,7 +2790,7 @@ window.SuiteFile = (function () {
                         if (!f) return;
                         if (!confirm('Aprire questa partita? Quella attuale verrà sostituita (se ti serve, salvala prima con 💾 Salva file).')) return;
                         S = f.dati.v === 2 ? normalizza(f.dati) : daVecchio(f.dati);
-                        K = 0; libero = null; foglio = null; aperto = null; cambioForm = false; fissati.clear();
+                        K = 0; libero = null; foglio = null; aperto = null; cambioForm = false; fissati.clear(); sel = null; storia = [];
                         autoSave(); renderAll(); flash(openBtn, 'Partita aperta');
                     });
                 });
@@ -2612,7 +2798,7 @@ window.SuiteFile = (function () {
 
             $('resetBtn').addEventListener('click', () => {
                 if (!confirm('Iniziare una nuova partita? Quella attuale verrà cancellata da questo dispositivo (se ti serve, salvala prima con 💾 Salva file).')) return;
-                S = nuovoStato(); K = 0; libero = null; foglio = null; aperto = null; cambioForm = false; fissati.clear();
+                S = nuovoStato(); K = 0; libero = null; foglio = null; aperto = null; cambioForm = false; fissati.clear(); sel = null; storia = [];
                 autoSave(); renderAll();
             });
 
@@ -2692,7 +2878,7 @@ window.SuiteFile = (function () {
             document.addEventListener('keydown', function(e) {
                 if (e.key === 'Escape' && rosterModal.classList.contains('open')) { closeRoster(); return; }
                 if (e.key === 'Escape' && previewModal.classList.contains('open')) { closePreview(); return; }
-                if (e.key === 'Escape' && (aperto || foglio)) { aperto = null; foglio = null; renderCampo(); }
+                if (e.key === 'Escape' && (aperto || foglio || sel)) { aperto = null; foglio = null; sel = null; renderCampo(); }
             });
         })();
     </script>
