@@ -984,6 +984,7 @@
         .pr { display: flex; align-items: center; gap: 6px; padding: 5px 8px; border-radius: 10px; cursor: pointer; font-size: 13.5px;
             min-height: 42px; margin-bottom: 5px; background: var(--bg1); border: 1px solid var(--line); user-select: none; -webkit-user-select: none; }
         .pr:hover { border-color: rgba(var(--accent-rgb), .45); }
+        .pr.pr-fisso { cursor: default; } .pr.pr-fisso:hover { border-color: var(--line); }
         .pr.libero { border-style: dashed; }
         .pr-num { width: 34px; padding: 4px 2px; text-align: center; font-weight: 800; font-size: 12.5px; color: var(--t2);
             background: transparent; border: 1px dashed transparent; border-radius: 7px; flex-shrink: 0; font-family: inherit; }
@@ -1061,6 +1062,7 @@
         .fg-voto .dot { width: 26px; height: 26px; }
         .fg-ok { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0 14px 8px; font-size: 14px; }
         .fg-ok button { border: 0; border-radius: 10px; padding: 10px 14px; background: var(--accent); color: #fff; font: inherit; font-weight: 800; cursor: pointer; }
+        .fg-via { float: right; border: 0; background: none; color: var(--accent); font: inherit; font-size: 12px; font-weight: 700; text-transform: none; letter-spacing: 0; cursor: pointer; padding: 0; }
         .fg-tl { padding: 2px 14px 6px; font-size: 11px; font-weight: 800; letter-spacing: 1.3px; text-transform: uppercase; color: var(--t3); }
         .fg-l button { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; border: 0; background: var(--bg1); font: inherit; font-size: 14.5px;
             padding: 11px 12px; border-radius: 11px; margin-bottom: 5px; cursor: pointer; min-height: 46px; color: #1a1a1a; }
@@ -2280,7 +2282,7 @@ window.SuiteFile = (function () {
                             cambi: Array.isArray(p.cambi) ? p.cambi.filter(c => c && c.esce && c.entra).map(c => ({ min: +c.min || 0, esce: c.esce, entra: c.entra })) : [] }; }),
                     pos: Array.from({ length: 4 }, (_, j) => (t.pos && t.pos[j] && typeof t.pos[j] === 'object') ? t.pos[j] : {}) };
                 s.players = (Array.isArray(s.players) ? s.players : []).filter(p => p && p.uid).map(p => ({
-                    uid: p.uid, num: String(p.num || ''), name: String(p.name || ''), role: String(p.role || ''), guest: !!p.guest,
+                    uid: p.uid, num: String(p.num || ''), numMano: !!p.numMano, name: String(p.name || ''), role: String(p.role || ''), guest: !!p.guest,
                     rating: +p.rating || 0, note: String(p.note || ''), minutes: +p.minutes || 0, starter: !!p.starter }));
                 ['scorers', 'assists', 'gks'].forEach(k => { s[k] = (Array.isArray(s[k]) ? s[k] : []).map(x => ({ uid: x.uid || '', n: x.n == null ? 1 : +x.n || 0 })); });
                 return s;
@@ -2501,7 +2503,7 @@ window.SuiteFile = (function () {
             function rigaGiocatore(r, dove, cambi, usati) {
                 const usc = cambi.find(c => c.esce === r.uid), ent = cambi.find(c => c.entra === r.uid);
                 const togli = dove === 'panca' && !usati.has(r.uid);
-                return `<div class="pr${sel && sel.uid === r.uid ? ' sel' : ''}" data-act="tocca" data-uid="${r.uid}" data-campo="${dove === 'campo' ? 1 : ''}" role="button" tabindex="0">
+                return `<div class="pr pr-fisso" data-uid="${r.uid}">
                     <input class="pr-num" data-num="${r.uid}" value="${esc(r.num)}" inputmode="numeric" maxlength="3" placeholder="#" title="Numero di maglia in questa partita" />
                     <span class="pr-nome" title="${esc(r.name)}">${esc(nomePdf(r.name))}</span>
                     ${r.guest ? '<span class="badge-fr">FUORI ROSA</span>' : ''}
@@ -2546,7 +2548,7 @@ window.SuiteFile = (function () {
                 // riga d'aiuto + Annulla (i cambi si fanno toccando le pedine)
                 const nomeSel = sel ? esc(pl(sel.uid).name) : '';
                 $('minBar').innerHTML = `<div class="mb-hint">${sel ? (sel.dove === 'campo' ? `Esce <b>${nomeSel}</b> dall'inizio del tempo: ora tocca chi entra.` : `Entra <b>${nomeSel}</b>: ora tocca la pedina di chi esce.`)
-                        : presenti.length < tit ? 'Tocca i giocatori in panchina per metterli in campo a inizio tempo.'
+                        : presenti.length < tit ? 'Tocca un posto vuoto (+) sul campo e scegli il giocatore: il numero di maglia si mette da solo.'
                         : 'Per un cambio tocca la pedina di chi esce: scrivi il minuto del tempo e scegli chi entra.'}</div>
                     <button type="button" class="mb-undo" data-act="annulla"${storia.length ? '' : ' disabled'}>↶ Annulla</button>`;
 
@@ -2626,25 +2628,23 @@ window.SuiteFile = (function () {
                         <div class="fg-calc" id="fgCalc">${isNaN(mm) ? 'Scrivi il minuto: i minuti giocati si calcolano da soli.' : mm >= t.durata ? `Il tempo dura ${t.durata}'.` : `${esc(esce.name)}: ${contoUscita(esce.uid, mm)}`}</div>
                         <div class="fg-voto"><span>Voto</span>${[1, 2, 3].map(n => `<button type="button" class="dot${esce.rating === n ? ' on' : ''}" style="--c:${RCOL[n]}" data-act="voto" data-uid="${esce.uid}" data-v="${n}" title="${RTXT[n]}"></button>`).join('')}</div>
                         ${foglio.entra && pl(foglio.entra) ? `<div class="fg-ok"><span>Entra <b>${esc(pl(foglio.entra).name)}</b></span><button type="button" data-act="fgOk">✓ Fai il cambio</button></div>` : ''}
-                        <div class="fg-tl">${foglio.entra ? 'Oppure scegli un altro' : 'Chi entra'}</div>
+                        <div class="fg-tl">${foglio.entra ? 'Oppure scegli un altro' : 'Chi entra'}${inizio.includes(esce.uid) || cambi.some(c => c.entra === esce.uid) ? `<button type="button" class="fg-via" data-act="fgPanca">Togli dal campo</button>` : ''}</div>
                         <div class="fg-l">${lista.length ? lista.map(r => `<button type="button" data-act="scegli" data-uid="${r.uid}"><b>${esc(r.num || '—')}</b>${esc(r.name)}<small>${usciti.has(r.uid) ? 'già uscito' : r.guest ? 'fuori rosa' : esc(r.role)}</small></button>`).join('')
                             : '<div class="vuoto">Nessuno in panchina.</div>'}</div>
                     </div>`;
                 } else if (foglio) {
                     const lista = tutti.filter(r => !fine.includes(r.uid)).sort(perNumero);
                     html += `<div class="foglio">
-                        <div class="fg-h"><div><b>Chi va in questo posto?</b><small>${k + 1}° tempo · dalla panchina</small></div>
+                        <div class="fg-h"><div><b>Chi va in questo posto?</b><small>${k === 0 && numeriPosti(mod, tit)[foglio.slot] ? `Maglia n° ${numeriPosti(mod, tit)[foglio.slot]} · ` : ''}${k + 1}° tempo · dalla panchina</small></div>
                             <button type="button" class="fg-x" data-act="fgClose" aria-label="Chiudi">✕</button></div>
                         <div class="fg-l">${lista.length ? lista.map(r => `<button type="button" data-act="scegli" data-uid="${r.uid}"><b>${esc(r.num || '—')}</b>${esc(r.name)}<small>${r.guest ? 'fuori rosa' : esc(r.role)}</small></button>`).join('')
                             : '<div class="vuoto">Nessuno in panchina.</div>'}</div>
                     </div>`;
                 }
                 $('pitch').innerHTML = html;
-                const pchip = tutti.filter(r => !fine.includes(r.uid)).sort(perNumero);
-                $('pancaStrip').innerHTML = pchip.length ? `<div class="ps-t">Panchina · tocca o trascina sulla pedina di chi esce</div><div class="ps-l">${pchip.map(r =>
-                    `<button type="button" class="chip${sel && sel.uid === r.uid ? ' sel' : ''}" data-chip="${r.uid}"><b>${esc(r.num || '—')}</b>${esc(nomeCorto(r.name))}</button>`).join('')}</div>` : '';
+                $('pancaStrip').innerHTML = '';
                 const spostate = P.some((_, i) => posizioneTempo(t, k, i));
-                $('pitchFoot').innerHTML = `<span>${k + 1}° tempo · ${mod} · tocca una pedina per il cambio</span>` +
+                $('pitchFoot').innerHTML = `<span>${k + 1}° tempo · ${mod} · tocca una pedina</span>` +
                     (spostate ? '<button type="button" class="btn-mini" data-act="comeModulo">↺ Come il modulo</button>' : '');
             }
 
@@ -2690,7 +2690,47 @@ window.SuiteFile = (function () {
             function renderCount() {
                 $('playerCountLabel').textContent = `${righe().length} convocati · a ${S.formato} · modulo ${modEff()} · ${T().n}×${T().durata}'`;
             }
-            function renderAll() { renderStruttura(); renderCampo(); renderPagella(); renderExtra(); renderCount(); }
+            // numeri classici per posto: portiere 1, difesa (terzini 3 a sinistra e 2 a destra, centrali 6-5-4),
+            // attacco (9, 9-10, 11-9-7), centrocampo (esterni 11 e 7, al centro 4-8-10); per i moduli più usati a 11 una tabella fissa
+            const NUM_CLASSICI = {
+                '4-4-2': [1, 3, 6, 5, 2, 11, 4, 8, 7, 9, 10], '4-3-3': [1, 3, 6, 5, 2, 10, 4, 8, 11, 9, 7],
+                '4-2-3-1': [1, 3, 6, 5, 2, 4, 8, 11, 10, 7, 9], '3-5-2': [1, 6, 5, 4, 3, 10, 8, 7, 2, 9, 11],
+                '5-3-2': [1, 3, 6, 5, 4, 2, 10, 8, 7, 9, 11], '4-1-2-1-2': [1, 3, 6, 5, 2, 4, 8, 7, 10, 9, 11]
+            };
+            function numeriPosti(modulo, n) {
+                if (n === 11 && NUM_CLASSICI[modulo]) return NUM_CLASSICI[modulo];
+                if (n <= 7) return Array.from({ length: n }, (_, i) => i + 1);     // a 7 e a 5: 1, 2, 3… dalla porta all'attacco
+                const linee = modulo.split('-').map(Number), usati = new Set([1]);
+                const prendi = (pref) => { for (const x of pref) if (x <= n && !usati.has(x)) { usati.add(x); return x; }
+                    for (let x = 2; x <= n; x++) if (!usati.has(x)) { usati.add(x); return x; } return null; };
+                const L = linee.map(c => Array(c).fill(null));
+                const d = linee[0];
+                if (d >= 4) { L[0][0] = prendi([3]); L[0][d - 1] = prendi([2]); for (let i = 1; i < d - 1; i++) L[0][i] = prendi([6, 5, 4]); }
+                else for (let i = 0; i < d; i++) L[0][i] = prendi([6, 5, 4, 3, 2]);
+                const a = linee.length - 1, ca = linee[a];
+                if (a > 0) { const pa = ca === 1 ? [9] : ca === 2 ? [9, 10] : [11, 9, 7]; for (let i = 0; i < ca; i++) L[a][i] = prendi([pa[i], 9, 10, 11, 7]); }
+                for (let li = 1; li < a; li++) {
+                    const c = linee[li];
+                    if (c >= 4) { L[li][0] = prendi([11, 3]); L[li][c - 1] = prendi([7, 2]); }
+                    for (let i = 0; i < c; i++) if (L[li][i] == null) L[li][i] = prendi([4, 8, 10, 7, 11, 3, 2, 6, 5]);
+                }
+                return [1, ...L.flat()];
+            }
+            function numeraAuto() {
+                const t = T(), n = S.formato, nums = numeriPosti(modEff(), n), ini = lungo(t.periodi[0].inizio || []);
+                let cambiato = false;
+                const metti = (p, v) => { if (p.num !== v) { p.num = v; cambiato = true; } };
+                const tit = new Set();
+                ini.forEach((u, i) => { const p = u && pl(u); if (!p) return; tit.add(u); if (!p.numMano && nums[i] != null) metti(p, String(nums[i])); });
+                const occupati = new Set(S.players.filter(p => tit.has(p.uid) || p.numMano).map(p => parseInt(p.num, 10)).filter(Boolean));
+                const ORD = { POR: 0, DIF: 1, CEN: 2, ATT: 3 };
+                const panca = S.players.map((p, i) => [p, i]).filter(([p]) => p.name.trim() && !tit.has(p.uid) && !p.numMano)
+                    .sort((x, y) => ((ORD[gruppoRuolo(x[0].role)] ?? 4) - (ORD[gruppoRuolo(y[0].role)] ?? 4)) || x[1] - y[1]).map(x => x[0]);
+                let prossimo = n + 1;      // a 11: 12 al secondo portiere, poi 13, 14…
+                panca.forEach(p => { while (occupati.has(prossimo)) prossimo++; metti(p, String(prossimo)); occupati.add(prossimo); prossimo++; });
+                if (cambiato) autoSave();
+            }
+            function renderAll() { numeraAuto(); renderStruttura(); renderCampo(); renderPagella(); renderExtra(); renderCount(); }
 
             // ═══════════════ EVENTI ═══════════════
             const bindVal = (id, k, ev) => $(id).addEventListener(ev || 'input', () => { S[k] = $(id).value; autoSave(); if (k === 'opponent') renderCount(); });
@@ -2764,6 +2804,7 @@ window.SuiteFile = (function () {
                     case 'panca': aperto = null; inPanchina(uid); break;
                     case 'fgClose': foglio = null; renderCampo(); break;
                     case 'fgOk': if (foglio && foglio.entra) scegli(foglio.entra); break;
+                    case 'fgPanca': { const u = foglio && foglio.uid; foglio = null; if (u) inPanchina(u); else renderCampo(); break; }
                     case 'scegli': scegli(uid); break;
                     case 'comeModulo': T().pos = T().pos.map((p, j) => j < k ? p : {}); autoSave(); renderCampo(); break;
                     case 'exAdd': S[a.dataset.ex].push({ uid: '', n: a.dataset.ex === 'gks' ? 0 : 1 }); autoSave(); renderExtra(); break;
@@ -2777,7 +2818,7 @@ window.SuiteFile = (function () {
             // campi scritti: aggiornano lo stato senza ridisegnare (non si perde il cursore)
             document.getElementById('app').addEventListener('input', (e) => {
                 const el = e.target, d = el.dataset;
-                if (d.num) { el.value = el.value.replace(/\D/g, '').slice(0, 3); pl(d.num).num = el.value; autoSave(); }
+                if (d.num) { el.value = el.value.replace(/\D/g, '').slice(0, 3); pl(d.num).num = el.value; pl(d.num).numMano = !!el.value; autoSave(); }
                 else if (d.note) { pl(d.note).note = el.value; autoSave(); }
                 else if (d.min) { pl(d.min).minutes = parseInt(el.value, 10) || 0; autoSave(); }
                 else if (d.ex && d.f === 'n') { S[d.ex][+d.i].n = parseInt(el.value, 10) || 0; autoSave(); }
@@ -2826,6 +2867,11 @@ window.SuiteFile = (function () {
                 const k = kk(), fs = slotsVisti();
                 if (t0.mosso) {
                     const [x, y] = pct(e.clientX, e.clientY);
+                    const ini0 = lungo(T().periodi[0].inizio || []), ua = fs[t0.i], ub = fs[t0.bers];
+                    if (t0.bers != null && k === 0 && ini0.includes(ua) && ini0.includes(ub)) {
+                        scrivi(p => { const v = lungo(p[0].inizio || []); const a = v.indexOf(ua), b = v.indexOf(ub); v[a] = ub; v[b] = ua; p[0].inizio = v; });
+                        lastTap = Date.now(); return;
+                    }
                     if (t0.bers != null) {
                         const base = postiModulo(modEff()), pa = posizioneTempo(T(), k, t0.i) || base[t0.i], pb = posizioneTempo(T(), k, t0.bers) || base[t0.bers];
                         scriviPos(p => { p[String(t0.i)] = pb; p[String(t0.bers)] = pa; });
