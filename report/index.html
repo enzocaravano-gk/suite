@@ -663,14 +663,40 @@
         .roster-paste .row-btns, .roster-confirm .row-btns { flex-wrap: wrap; }
         .roster-confirm p { font-size: 14px; font-weight: 600; margin-bottom: 8px; }
         .roster-list { flex: 1; min-height: 120px; overflow-y: auto; border: 1px solid #e3e3e3; border-radius: 12px; margin-bottom: 10px; }
-        .roster-list .r-row { display: grid; grid-template-columns: 58px 1fr 92px 36px; border-bottom: 1px solid #eee; }
+        .roster-list .r-row { display: grid; grid-template-columns: 58px minmax(0, 1fr) auto 36px; grid-template-areas: "num nome ruolo del"; align-items: center; gap: 0 6px; padding: 4px 6px; border-bottom: 1px solid #eee; }
+        .roster-list .r-row > .r-num { grid-area: num; } .roster-list .r-row > .r-nome { grid-area: nome; }
+        .roster-list .r-row > .r-ruolo { grid-area: ruolo; } .roster-list .r-row > .r-del { grid-area: del; }
+        .roster-list .r-head { display: grid; }
         .roster-list .r-row:last-child { border-bottom: none; }
         .roster-list .r-head { position: sticky; top: 0; background: #faf6f6; z-index: 1; font-size: 11px; font-weight: 800; color: var(--accent); text-transform: uppercase; }
         .roster-list .r-head span { padding: 7px 10px; }
         .roster-list input {
-            border: none; border-radius: 0; padding: 9px 10px; font-size: 15px; background: transparent;
+            border: 1px solid #e3e3e3; border-radius: 9px; padding: 0 10px; height: 40px; box-sizing: border-box; font-size: 15px; background: #fff;
             min-width: 0; width: 100%; font-family: inherit; color: #1a1a1a;
         }
+        .roster-list input::placeholder { color: #b5b5bb; }
+        .r-ruolo { display: flex; align-items: center; gap: 4px; }
+        .r-ch { border: 1px solid #e3e3e3; background: #fff; color: #6b6b73; border-radius: 8px; height: 34px; min-width: 40px; padding: 0 6px; font: inherit; font-size: 12px; font-weight: 800; cursor: pointer; }
+        .r-ch.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+        .r-prec { height: 34px; max-width: 34px; padding: 0; border: 1px solid #e3e3e3; border-radius: 8px; background: #fff; font: inherit; font-size: 13px; color: #6b6b73; cursor: pointer; text-align: center; -webkit-appearance: none; appearance: none; }
+        .r-prec.on { max-width: 64px; min-width: 40px; padding: 0 6px; font-weight: 800; font-size: 12px; text-align: center; color: #fff; background: var(--accent); border-color: var(--accent); text-align: left; }
+        .r-quick { display: flex; gap: 8px; margin-bottom: 4px; }
+        .r-quick input { flex: 1; min-width: 0; height: 44px; box-sizing: border-box; padding: 0 12px; border: 2px solid var(--accent); border-radius: 11px; font: inherit; font-size: 16px; }
+        .r-quick input:focus { outline: 2px solid rgba(var(--accent-rgb), .3); }
+        .r-quick .btn { height: 44px; padding: 0 16px; }
+        .r-quick-hint { font-size: 12.5px; color: #777; margin: 0 0 10px; min-height: 17px; }
+        .r-quick-hint.ok { color: #1e8449; font-weight: 600; }
+        .r-prev { max-height: 190px; overflow-y: auto; background: #fff; border: 1px solid #e3e3e3; border-radius: 10px; margin-bottom: 10px; }
+        .r-prev div { display: flex; gap: 10px; padding: 7px 10px; border-bottom: 1px solid #f0f0f0; font-size: 14px; }
+        .r-prev div:last-child { border-bottom: 0; }
+        .r-prev b { width: 30px; text-align: center; color: #6b6b73; }
+        .r-prev span:last-child { margin-left: auto; color: #6b6b73; font-size: 12px; font-weight: 700; }
+        .benv { border: 2px dashed rgba(var(--accent-rgb), .45); background: rgba(var(--accent-rgb), .04); border-radius: 18px; padding: 22px 20px; text-align: center; margin: 6px 0 4px; }
+        .benv-t { font-size: 20px; font-weight: 800; color: var(--accent); margin-bottom: 6px; }
+        .benv p { font-size: 15px; color: #444; line-height: 1.45; max-width: 520px; margin: 0 auto 14px; }
+        .benv-b { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+        .benv-b .btn { height: 46px; padding: 0 18px; font-size: 15px; }
+        .benv small { display: block; margin-top: 12px; color: #777; font-size: 13px; }
         .roster-list input:focus { outline: 2px solid var(--accent); outline-offset: -2px; background: #fffdf8; }
         .roster-list input.r-num { text-align: center; font-weight: 700; }
         .roster-list input.dup { color: #c00; background: #fff0f0; }
@@ -680,7 +706,8 @@
         .roster-add { align-self: flex-start; margin-bottom: 12px; border: none; background: none; color: var(--accent); font: inherit; font-weight: 700; cursor: pointer; padding: 4px 2px; }
         .roster-card .row-btns { justify-content: space-between; }
         @media (max-width: 480px) {
-            .roster-list .r-row { grid-template-columns: 50px 1fr 64px 32px; }
+            .roster-list .r-row { grid-template-columns: 50px minmax(0, 1fr) 32px; grid-template-areas: "num nome del" ". ruolo ruolo"; row-gap: 6px; }
+            .roster-list .r-head > span:nth-child(3) { display: none; }
             .roster-tools .btn { flex: 1 1 calc(50% - 4px); justify-content: center; }
         }
 
@@ -1330,6 +1357,7 @@ window.SuiteFile = (function () {
                 <button type="button" class="btn btn-outline" id="ospNo">Annulla</button>
             </div>
             <div class="hint" id="dictHint">Detta: «numero 1 Rossi, numero 2 Bianchi…». I primi dettati partono in campo nel 1° tempo.</div>
+            <div id="primoAvvio"></div>
             <div class="tabs" id="tempiTabs"></div>
             <div class="minbar" id="minBar"></div>
             <div class="tg-griglia">
@@ -1384,7 +1412,7 @@ window.SuiteFile = (function () {
     <div class="pl-editor" id="rosterModal" aria-hidden="true">
         <div class="pl-card roster-card" role="dialog" aria-labelledby="rosterTitle">
             <h3 id="rosterTitle">👥 Roster squadra</h3>
-            <p class="roster-help">Quando scrivi un nome nella tabella, i giocatori del roster compaiono nell'elenco dei suggerimenti e, scegliendone uno, il ruolo si imposta da solo. Il roster resta salvato su questo dispositivo (ed è lo stesso dell'app Posizionamenti): esportalo per averne una copia o per passarlo ai collaboratori.</p>
+            <p class="roster-help">La rosa si inserisce una volta sola: resta su questo dispositivo, vale anche per Posizionamenti e dalla prossima partita i giocatori sono già tra i convocati. Con «Esporta» ne salvi una copia o la passi ai collaboratori.</p>
             <div class="roster-tools">
                 <button type="button" class="btn btn-outline" id="rosterImportBtn">📂 Importa file</button>
                 <button type="button" class="btn btn-outline" id="rosterPasteBtn">📋 Incolla elenco</button>
@@ -1393,7 +1421,7 @@ window.SuiteFile = (function () {
                 <input type="file" id="rosterFile" accept=".csv,.txt,.json,text/csv,text/plain,application/json" hidden />
             </div>
             <div class="roster-paste" id="rosterPaste" hidden>
-                <textarea id="rosterPasteText" placeholder="Un giocatore per riga, ad esempio:&#10;1 Rossi&#10;7 Bianchi Marco&#10;10 Verdi (A)"></textarea>
+                <textarea id="rosterPasteText" placeholder="Un giocatore per riga, anche copiato da WhatsApp, Note o Excel:&#10;1 Esposito Antonio&#10;7 Rossi Marco&#10;10 Bianchi Luca (C)"></textarea>
                 <div class="row-btns">
                     <button type="button" class="btn btn-primary" id="rosterPasteOk">Leggi elenco</button>
                     <button type="button" class="btn btn-outline" id="rosterPasteCancel">Annulla</button>
@@ -1401,14 +1429,21 @@ window.SuiteFile = (function () {
             </div>
             <div class="roster-confirm" id="rosterConfirm" hidden>
                 <p id="rosterConfirmText"></p>
+                <div class="r-prev" id="rosterPreview"></div>
                 <div class="row-btns">
-                    <button type="button" class="btn btn-primary" id="rosterReplace">Sostituisci roster</button>
-                    <button type="button" class="btn btn-outline" id="rosterMerge">Aggiungi</button>
+                    <button type="button" class="btn btn-primary" id="rosterMerge">Aggiungi</button>
+                    <button type="button" class="btn btn-outline" id="rosterReplace">Sostituisci roster</button>
+                    <button type="button" class="btn btn-outline" id="rosterFix">Correggi l'elenco</button>
                     <button type="button" class="btn btn-outline" id="rosterImportCancel">Annulla</button>
                 </div>
             </div>
+            <div class="r-quick">
+                <input type="text" id="rosterQuick" placeholder="Es. 7 Rossi Marco, poi Invio" autocomplete="off" autocapitalize="words" enterkeyhint="next" aria-label="Nuovo giocatore: numero e nome" />
+                <button type="button" class="btn btn-primary" id="rosterQuickOk">Aggiungi</button>
+            </div>
+            <div class="r-quick-hint" id="rosterQuickHint">Numero e nome, poi Invio. Senza numero metto il primo libero; il ruolo lo scegli con un tocco.</div>
             <div class="roster-list" id="rosterRows"></div>
-            <button type="button" class="roster-add" id="rosterAddBtn">＋ Aggiungi giocatore</button>
+            <button type="button" class="roster-add" id="rosterAddBtn" hidden>＋ Aggiungi giocatore</button>
             <div class="row-btns">
                 <button type="button" class="btn btn-outline" id="rosterClearBtn">🗑 Svuota</button>
                 <button type="button" class="btn btn-primary" id="rosterDoneBtn">Fatto</button>
@@ -1831,14 +1866,14 @@ window.SuiteFile = (function () {
             function renderRosterRows() {
                 const nums = roster.map(p => p.num.trim()).filter(Boolean);
                 const dup = new Set(nums.filter((n, i) => nums.indexOf(n) !== i));
-                $('rosterRows').innerHTML = '<div class="r-row r-head"><span>N°</span><span>Nome</span><span>Ruolo</span><span></span></div>' +
+                $('rosterRows').innerHTML = '<div class="r-row r-head"><span>N°</span><span>Cognome e nome</span><span>Ruolo</span><span></span></div>' +
                     (roster.length ? roster.map((p, i) => `<div class="r-row">
-                        <input class="r-num${dup.has(p.num.trim()) ? ' dup' : ''}" data-i="${i}" data-f="num" value="${escHtml(p.num)}" inputmode="numeric" maxlength="3" aria-label="Numero"/>
-                        <input data-i="${i}" data-f="name" value="${escHtml(p.name)}" placeholder="Nome" aria-label="Nome"/>
-                        <input data-i="${i}" data-f="role" value="${escHtml(p.role)}" placeholder="—" aria-label="Ruolo"/>
+                        <input class="r-num${dup.has(p.num.trim()) ? ' dup' : ''}" data-i="${i}" data-f="num" value="${escHtml(p.num)}" inputmode="numeric" maxlength="3" placeholder="N°" aria-label="Numero"/>
+                        <input class="r-nome" data-i="${i}" data-f="name" value="${escHtml(p.name)}" placeholder="Cognome Nome" aria-label="Nome"/>
+                        ${ruoloTocco(p.role, i)}
                         <button type="button" class="r-del" data-del="${i}" aria-label="Elimina">✕</button>
                     </div>`).join('')
-                    : '<div class="roster-empty">Nessun giocatore. Importa un file, incolla un elenco o aggiungili uno per uno.</div>');
+                    : '<div class="roster-empty">Ancora nessun giocatore: scrivili qui sopra uno per riga, oppure incolla un elenco o importa un file.</div>');
                 $('rosterTitle').textContent = '👥 Roster squadra' + (roster.length ? ' · ' + roster.length : '');
             }
             $('rosterBtn').addEventListener('click', openRoster);
@@ -1856,12 +1891,65 @@ window.SuiteFile = (function () {
                 }
             });
             $('rosterRows').addEventListener('click', (e) => {
+                const ch = e.target.closest('.r-ch');
+                if (ch) { const p = roster[+ch.dataset.i]; if (p) { p.role = gruppoRuolo(p.role) === ch.dataset.g && GENERICO[ch.dataset.g] === p.role ? '' : GENERICO[ch.dataset.g]; saveRoster(); renderRosterRows(); } return; }
                 const i = e.target.dataset.del;
                 if (i === undefined) return;
                 roster.splice(+i, 1);
                 saveRoster();
                 renderRosterRows();
             });
+            $('rosterRows').addEventListener('change', (e) => {
+                if (!e.target.classList.contains('r-prec')) return;
+                const p = roster[+e.target.dataset.i]; if (!p || !e.target.value) return;
+                p.role = e.target.value; saveRoster(); renderRosterRows();
+            });
+            // ruolo con un tocco: POR · DIF · CEN · ATT, più il ruolo preciso dal menu «…»
+            const GENERICO = { POR: 'Portiere', DIF: 'Difensore', CEN: 'Centrocampista', ATT: 'Attaccante' };
+            function gruppoRuolo(r) {
+                const s = String(r || '').toLowerCase().trim();
+                if (!s) return '';
+                if (/^(p|por|gk)$/.test(s) || /portier/.test(s)) return 'POR';
+                if (/^(d|dif)$/.test(s) || /difens|terzin|braccett|quint|centrale/.test(s)) return 'DIF';
+                if (/^(c|cen)$/.test(s) || /centrocamp|play|regist|mezzal|trequart|mediano/.test(s)) return 'CEN';
+                if (/^(a|att)$/.test(s) || /attacc|^ala|punta|centravant|esterno/.test(s)) return 'ATT';
+                return '';
+            }
+            function ruoloTocco(role, i) {
+                const g = gruppoRuolo(role), preciso = role && !Object.values(GENERICO).includes(role);
+                return `<div class="r-ruolo">${Object.keys(GENERICO).map(k => `<button type="button" class="r-ch${g === k ? ' on' : ''}" data-i="${i}" data-g="${k}">${k}</button>`).join('')}
+                    <select class="r-prec${preciso ? ' on' : ''}" data-i="${i}" title="Ruolo preciso" aria-label="Ruolo preciso">
+                        <option value="">${preciso ? escHtml(abbr(role)) : '…'}</option>${RUOLI.map(x => `<option>${x}</option>`).join('')}</select></div>`;
+            }
+            function ruoloInCoda(p) {
+                if (p.role) return p;
+                const m = /^(.+?)\s+(p|d|c|a|por|dif|cen|att)\.?$/i.exec(p.name || '');
+                if (m && m[1].trim().length > 1) { p.name = m[1].trim(); p.role = m[2]; }
+                return p;
+            }
+            function normaRuolo(r) {
+                const s = String(r || '').trim(), g = /^(p|d|c|a|por|dif|cen|att)$/i.test(s) ? gruppoRuolo(s) : '';
+                return g ? GENERICO[g] : s;
+            }
+            // inserimento veloce: "7 Rossi Marco" + Invio
+            function aggiungiVeloce() {
+                const inp = $('rosterQuick'), t = inp.value.trim();
+                if (!t) { inp.focus(); return; }
+                const p = parseRoster(t)[0];
+                if (!p || !p.name) { $('rosterQuickHint').textContent = 'Scrivi almeno il nome, per esempio «7 Rossi Marco».'; return; }
+                ruoloInCoda(p); p.name = capitalizeName(p.name); p.role = normaRuolo(p.role);
+                if (!p.num) { const usati = new Set(roster.map(r => parseInt(r.num, 10)).filter(Boolean)); let n = 1; while (usati.has(n)) n++; p.num = String(n); }
+                const ex = roster.find(r => r.name.trim().toLowerCase() === p.name.toLowerCase());
+                if (ex) { ex.num = p.num; if (p.role) ex.role = p.role; } else roster.push({ num: p.num, name: p.name, role: p.role || '' });
+                saveRoster(); renderRosterRows();
+                inp.value = ''; inp.focus();
+                const h = $('rosterQuickHint'); h.textContent = `✓ Aggiunto ${p.num} ${p.name}. Scrivi il prossimo.`; h.classList.add('ok');
+                const rows = $('rosterRows').querySelectorAll('.r-row:not(.r-head)'); const r = ex ? null : rows[rows.length - 1];
+                if (r) r.scrollIntoView({ block: 'nearest' });
+            }
+            $('rosterQuickOk').addEventListener('click', aggiungiVeloce);
+            $('rosterQuick').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); aggiungiVeloce(); } });
+            $('rosterQuick').addEventListener('input', () => { const h = $('rosterQuickHint'); if (h.classList.contains('ok')) { h.classList.remove('ok'); h.textContent = 'Numero e nome, poi Invio. Senza numero metto il primo libero; il ruolo lo scegli con un tocco.'; } });
             $('rosterAddBtn').addEventListener('click', () => {
                 roster.push({ num: '', name: '', role: '' });
                 renderRosterRows();
@@ -1969,9 +2057,13 @@ window.SuiteFile = (function () {
                     return;
                 }
                 $('rosterPaste').hidden = true;
-                if (!roster.length) { applyImport(list, true); return; }
-                pendingImport = list;
-                $('rosterConfirmText').textContent = `Trovati ${list.length} giocatori. Il roster ne ha già ${roster.length}: vuoi sostituirlo o aggiungere quelli nuovi?`;
+                pendingImport = list.map(p => ruoloInCoda({ num: String(p.num || '').trim(), name: p.name, role: p.role })).map(p => ({ num: p.num, name: capitalizeName(p.name), role: normaRuolo(p.role) }));
+                $('rosterConfirmText').innerHTML = `Ho letto <b>${list.length} giocatori</b>: controlla che numeri e nomi siano giusti.` +
+                    (roster.length ? ` Il roster ne ha già ${roster.length}: puoi aggiungerli o sostituirlo.` : '');
+                $('rosterPreview').innerHTML = pendingImport.map(p => `<div><b>${escHtml(p.num || '—')}</b><span>${escHtml(p.name)}</span><span>${escHtml(p.role ? (gruppoRuolo(p.role) || p.role) : '')}</span></div>`).join('');
+                $('rosterMerge').textContent = roster.length ? `Aggiungi ai ${roster.length}` : `✓ Conferma ${list.length} giocatori`;
+                $('rosterReplace').hidden = !roster.length;
+                $('rosterFix').hidden = source !== 'list';
                 $('rosterConfirm').hidden = false;
             }
             function applyImport(list, replace) {
@@ -1994,6 +2086,7 @@ window.SuiteFile = (function () {
             $('rosterReplace').addEventListener('click', () => pendingImport && applyImport(pendingImport, true));
             $('rosterMerge').addEventListener('click', () => pendingImport && applyImport(pendingImport, false));
             $('rosterImportCancel').addEventListener('click', () => { pendingImport = null; $('rosterConfirm').hidden = true; });
+            $('rosterFix').addEventListener('click', () => { pendingImport = null; $('rosterConfirm').hidden = true; $('rosterPaste').hidden = false; $('rosterPasteText').focus(); });
 
             $('rosterImportBtn').addEventListener('click', () => { $('rosterFile').value = ''; $('rosterFile').click(); });
             $('rosterFile').addEventListener('change', (e) => {
@@ -2430,6 +2523,21 @@ window.SuiteFile = (function () {
                 const panca = tutti.filter(r => !presenti.includes(r.uid)).sort(perNumero);
                 if (aperto && !fine.includes(aperto)) aperto = null;
 
+                // primo avvio: nessun giocatore → al posto del campo vuoto, come inserire la rosa
+                const vuota = !tutti.length;
+                $('primoAvvio').innerHTML = vuota ? `<div class="benv">
+                    <div class="benv-t">Prima di tutto: la tua rosa</div>
+                    <p>La inserisci una volta sola: resta su questo dispositivo e dalla prossima partita i giocatori sono già tra i convocati (vale anche per Posizionamenti).</p>
+                    <div class="benv-b">
+                        ${roster.some(p => p.name.trim()) ? `<button type="button" class="btn btn-primary" data-act="convocaTutti">✓ Convoca tutta la rosa (${roster.filter(p => p.name.trim()).length})</button>` : ''}
+                        <button type="button" class="btn ${roster.length ? 'btn-outline' : 'btn-primary'}" data-act="rScrivi">✍️ Scrivi i giocatori</button>
+                        <button type="button" class="btn btn-outline" data-act="rIncolla">📋 Incolla un elenco</button>
+                        <button type="button" class="btn btn-outline" data-act="rFile">📂 Importa un file</button>
+                    </div>
+                    <small>Un giocatore per riga, per esempio «7 Rossi Marco». L'elenco puoi copiarlo da WhatsApp, Note o Excel.</small>
+                </div>` : '';
+                ['tempiTabs', 'minBar'].forEach(id => { $(id).style.display = vuota ? 'none' : ''; });
+                document.querySelector('.tg-griglia').style.display = vuota ? 'none' : '';
                 $('tempiTabs').innerHTML = Array.from({ length: t.n }, (_, j) => {
                     const nc = t.periodi[j].cambi.length;
                     return `<button type="button" class="tab${j === k ? ' on' : ''}" data-act="tab" data-k="${j}">${j + 1}° tempo${nc ? `<small>${nc} ${nc === 1 ? 'cambio' : 'cambi'}</small>` : ''}</button>`;
@@ -2629,6 +2737,11 @@ window.SuiteFile = (function () {
                         S.players = S.players.filter(p => p.uid !== uid);
                         ['scorers', 'assists', 'gks'].forEach(x => { S[x] = S[x].filter(y => y.uid !== uid); });
                         autoSave(); renderAll(); break;
+                    case 'rScrivi': openRoster(); setTimeout(() => $('rosterQuick').focus(), 60); break;
+                    case 'rIncolla': openRoster(); $('rosterPasteBtn').click(); break;
+                    case 'rFile': openRoster(); $('rosterFile').value = ''; $('rosterFile').click(); break;
+                    case 'convocaTutti': S.players = roster.filter(p => p.name.trim()).map(giocatoreDaRoster); autoSave(); renderAll();
+                        showToast(`${S.players.length} giocatori convocati: ora tocca gli ${S.formato} che partono.`); break;
                     case 'convoca': { const p = roster.find(r => r.name === a.dataset.name); if (p) { S.players.push(giocatoreDaRoster(p)); autoSave(); renderAll(); } break; }
                     case 'dalleT': {
                         const st = righe().filter(r => r.starter).slice(0, S.formato);
@@ -2795,9 +2908,16 @@ window.SuiteFile = (function () {
             }
 
             // suggerimenti e contatore del roster (richiamato anche dalla finestra Roster)
+            let avvisoConvocati = false;
             function updateRosterList() {
                 $('rosterBtn').textContent = '👥 Roster squadra' + (roster.length ? ' · ' + roster.length : '');
-                if (S && !S.players.length && roster.some(p => p.name.trim())) { S.players = roster.filter(p => p.name.trim()).map(giocatoreDaRoster); autoSave(); }
+                if (S && !S.players.length && roster.some(p => p.name.trim())) {
+                    S.players = roster.filter(p => p.name.trim()).map(giocatoreDaRoster); autoSave(); avvisoConvocati = true;
+                }
+                if (avvisoConvocati && S && !rosterModal.classList.contains('open')) {
+                    avvisoConvocati = false;
+                    setTimeout(() => showToast(`${S.players.length} giocatori convocati: ora tocca gli ${S.formato} che partono.`), 300);
+                }
                 if (S) renderAll();
             }
 
