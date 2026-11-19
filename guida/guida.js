@@ -18,17 +18,19 @@
 
   var css = document.createElement('style');
   css.textContent = [
-    '#suite-guida{position:fixed;left:126px;bottom:14px;z-index:2147483000;width:44px;height:44px;border-radius:50%;border:2px solid #fff;',
+    '#suite-guida{position:fixed;left:126px;bottom:14px;z-index:2147483000;width:44px;height:44px;box-sizing:border-box;margin:0;border-radius:50%;border:2px solid #fff;touch-action:manipulation;-webkit-tap-highlight-color:transparent;',
     'background:var(--gd-accent);color:#fff;font:700 21px/1 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;cursor:pointer;',
     'box-shadow:0 4px 16px rgba(0,0,0,.28);transition:transform .15s;padding:0}',
     '#suite-guida:hover{transform:scale(1.07)}',
     '#suite-guida.gd-new{animation:gdPulse 1.6s ease-in-out 4}',
     '@keyframes gdPulse{50%{box-shadow:0 0 0 9px color-mix(in srgb,var(--gd-accent) 30%,transparent),0 4px 16px rgba(0,0,0,.28)}}',
-    '@media print{#suite-guida,#gd-dlg{display:none!important}}',
-    '#gd-dlg{border:1px solid #e2ded6;border-radius:22px;padding:0;width:min(900px,calc(100% - 24px));max-height:calc(100% - 24px);background:#fff;color:#1b1b1b;',
-    'font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}',
-    '#gd-dlg::backdrop{background:rgba(0,0,0,.55)}',
-    '#gd-dlg .gd-in{display:grid;gap:14px;padding:18px;overflow:auto;max-height:inherit;box-sizing:border-box}',
+    '@media print{#suite-guida,#gd-ov{display:none!important}}',
+    /* finestra fatta con un semplice livello sopra la pagina: si apre allo stesso modo su ogni versione di Safari */
+    '#gd-ov{position:fixed;top:0;left:0;right:0;bottom:0;z-index:2147483600;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;padding:12px;box-sizing:border-box}',
+    '#gd-ov.open{display:flex}',
+    '#gd-dlg{box-sizing:border-box;margin:0;border:1px solid #e2ded6;border-radius:22px;padding:0;width:900px;max-width:100%;max-height:100%;overflow:hidden;background:#fff;color:#1b1b1b;',
+    'font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;box-shadow:0 20px 60px rgba(0,0,0,.35)}',
+    '#gd-dlg .gd-in{display:grid;gap:14px;padding:18px;overflow:auto;-webkit-overflow-scrolling:touch;max-height:calc(100vh - 24px);box-sizing:border-box}',
     '#gd-dlg .gd-head{display:flex;align-items:center;gap:12px}',
     '#gd-dlg .gd-head h3{margin:0;font-size:21px;flex:1}',
     '#gd-dlg .gd-count{color:#6b6b6b;font-size:14px;font-variant-numeric:tabular-nums}',
@@ -65,18 +67,23 @@
   if (!seen) btn.classList.add('gd-new');
   document.body.appendChild(btn);
 
-  // subito a destra del pulsante Home
+  // subito a destra del pulsante Home, alla stessa altezza: si parte dalla posizione fissa di Home
+  // (non dall'altezza della finestra, che su iPad cambia con la barra di Safari)
   function place() {
     var h = document.getElementById('suite-home');
-    if (!h) return;
-    var r = h.getBoundingClientRect();
-    if (r.width) { btn.style.left = Math.round(r.right + 8) + 'px'; btn.style.bottom = Math.round(window.innerHeight - r.bottom + (r.height - 44) / 2) + 'px'; }
+    if (!h || !h.offsetWidth) return;
+    var cs = getComputedStyle(h), left = parseFloat(cs.left), bottom = parseFloat(cs.bottom);
+    if (isNaN(left)) left = 14; if (isNaN(bottom)) bottom = 14;
+    btn.style.left = Math.round(left + h.offsetWidth + 8) + 'px';
+    btn.style.bottom = Math.round(bottom + (h.offsetHeight - btn.offsetHeight) / 2) + 'px';
   }
-  place(); window.addEventListener('resize', place); setTimeout(place, 500);
+  place(); window.addEventListener('resize', place); window.addEventListener('load', place); setTimeout(place, 500);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(place);
 
-  var dlg = document.createElement('dialog');
+  var ov = document.createElement('div');
+  ov.id = 'gd-ov'; ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true'); ov.setAttribute('aria-label', 'Guida di ' + NAMES[app]);
+  var dlg = document.createElement('div');
   dlg.id = 'gd-dlg'; dlg.style.setProperty('--gd-accent', accent);
-  dlg.setAttribute('aria-label', 'Guida di ' + NAMES[app]);
   dlg.innerHTML =
     '<div class="gd-in">' +
       '<div class="gd-head"><h3>Guida · ' + NAMES[app] + '</h3><span class="gd-count"></span><button type="button" class="gd-x" aria-label="Chiudi">×</button></div>' +
@@ -85,7 +92,10 @@
       '<div class="gd-nav"><button type="button" class="gd-arrow gd-prevb" aria-label="Pagina precedente">←</button><div class="gd-dots"></div><button type="button" class="gd-arrow gd-nextb" aria-label="Pagina successiva">→</button></div>' +
       '<p class="gd-note">' + (NOTES[app] || 'Schermate con dati di esempio.') + ' Sfoglia con le frecce o col dito.</p>' +
     '</div>';
-  document.body.appendChild(dlg);
+  ov.appendChild(dlg);
+  document.body.appendChild(ov);
+  function apri() { ov.classList.add('open'); var x = q('.gd-x'); if (x) try { x.focus({ preventScroll: true }); } catch (e) {} }
+  function chiudi() { ov.classList.remove('open'); }
   var q = function (s) { return dlg.querySelector(s); };
   var page = 0;
   function show(dir) {
@@ -104,18 +114,19 @@
   btn.addEventListener('click', function () {
     page = 0; show(0);
     btn.classList.remove('gd-new'); try { localStorage.setItem(seenKey, '1'); } catch (e) {}
-    if (dlg.showModal) dlg.showModal(); else dlg.setAttribute('open', '');
+    apri();
   });
-  q('.gd-x').addEventListener('click', function () { dlg.close(); });
+  q('.gd-x').addEventListener('click', chiudi);
   q('.gd-prevb').addEventListener('click', function () { go(-1); });
   q('.gd-nextb').addEventListener('click', function () { go(1); });
   q('.gd-dots').addEventListener('click', function (e) { var d = e.target.closest('.gd-dot'); if (!d) return; var n = +d.getAttribute('data-i'); if (n !== page) { var dir = n > page ? 1 : -1; page = n; show(dir); } });
-  dlg.addEventListener('click', function (e) { if (e.target === dlg) dlg.close(); });
+  ov.addEventListener('click', function (e) { if (e.target === ov) chiudi(); });
   // i tasti restano nella guida: non arrivano all'app sotto (es. Canc in Lavagna)
-  dlg.addEventListener('keydown', function (e) {
+  ov.addEventListener('keydown', function (e) {
     if (e.key === 'ArrowRight') { e.preventDefault(); go(1); }
     else if (e.key === 'ArrowLeft') { e.preventDefault(); go(-1); }
-    if (e.key !== 'Escape') e.stopPropagation();
+    else if (e.key === 'Escape') { e.preventDefault(); chiudi(); }
+    e.stopPropagation();
   });
   var sx = null, st = q('.gd-stage');
   st.addEventListener('pointerdown', function (e) { sx = e.clientX; });
